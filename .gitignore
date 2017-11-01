@@ -1,0 +1,13 @@
+### FILES
+*.[oa]
+*~
+*.m
+*.sh
+*.out
+*.dat
+*.txt
+*.bin
+octave-workspace
+
+### FOLDERS
+
