@@ -7,7 +7,9 @@
 *.dat
 *.txt
 *.bin
+*.gch
+*.swp
 octave-workspace
-
+.DS_Store
 ### FOLDERS
 
