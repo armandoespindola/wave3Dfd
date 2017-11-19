@@ -8,13 +8,26 @@
 class SDM {
 
 protected:
+
+
+        // GI INITIAL GLOBAL LIMIT
+	// GF END GLOBAL LIMIT 
+	// NodG NUMBER OF GLOBAL NODES
+	// IlimI INITIAL LIMIT LOCAL DOMAIN
+	// IlimF END LIMIT LOCAL DOMAIN
+	// INOD   NUMBER OF LOCAL NODES
+	// f0 FREQUENCY
+	// dt DELTA T
+        // Nsdm SUBDOMAIN INDEX
+
 	VecF GI,GF;
 	DPML *pml_x,*pml_y,*pml_z;
 	geometry3D *SDMGeom;
 	VecI HALO,NodG;
 	Dfloat f0,dt;
 	VecF thickness_PML;
-	VecI NT;
+	VecI NT,Nsdm;
+	VecI NodLoc;
 
 	// WAVE PROPAGATION VARIABLES  
 	Dfloat *sxx,*syy,*szz;
@@ -43,15 +56,30 @@ public:
 	// f0 FREQUENCY
 	// dt DELTA T 
 
-	SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-		Dfloat If0, Dfloat Idt);
 
-	~SDM();
+  SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
+		Dfloat If0, Dfloat Idt, VecI INsdm);
 
 
-	// STABILITY CONDITION
+  ~SDM();
 
-	int CFL();
+  // INDEX_IJK
+  
+  int IJK(int i,int j, int k);
+
+  // MODEL READ MODEL
+
+  void ModelRead(Dfloat *model, char *param);
+
+  // STABILITY CONDITION
+  int CFL();
+
+  
+
+
+  
+
+
 
 
 

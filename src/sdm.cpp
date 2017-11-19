@@ -1,7 +1,7 @@
 #include "sdm.hpp"
 
 SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-		Dfloat If0, Dfloat Idt) {
+		Dfloat If0, Dfloat Idt, VecI INsdm) {
 
 	// GI INITIAL GLOBAL LIMIT
 	// GF END GLOBAL LIMIT 
@@ -10,7 +10,8 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	// IlimF END LIMIT LOCAL DOMAIN
 	// INOD   NUMBER OF LOCAL NODES
 	// f0 FREQUENCY
-	// dt DELTA T 
+	// dt DELTA T
+    // Nsdm SUBDOMAIN INDEX
 
 	GI = IGI;
 	GF = IGF;
@@ -20,6 +21,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	HALO.x = KHALO;
 	HALO.y = KHALO;
 	HALO.z = KHALO;
+	NodLoc = INod;  
 
 	VecI ELE={INod.x-1,INod.y-1,INod.z-1};
 
@@ -66,9 +68,9 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	dsxz_dx = new Dfloat [SDMGeom->HALO_Node()];
 	dsyz_dy = new Dfloat [SDMGeom->HALO_Node()];
 	dszz_dz = new Dfloat [SDMGeom->HALO_Node()];
-    dvx_dx = new Dfloat [SDMGeom->HALO_Node()];
-    dvy_dy = new Dfloat [SDMGeom->HALO_Node()];
-    dvz_dz = new Dfloat [SDMGeom->HALO_Node()];
+	dvx_dx = new Dfloat [SDMGeom->HALO_Node()];
+	dvy_dy = new Dfloat [SDMGeom->HALO_Node()];
+	dvz_dz = new Dfloat [SDMGeom->HALO_Node()];
 	dvx_dy = new Dfloat [SDMGeom->HALO_Node()];
 	dvy_dx = new Dfloat [SDMGeom->HALO_Node()];
 	dvx_dz = new Dfloat [SDMGeom->HALO_Node()];
@@ -110,9 +112,9 @@ SDM::~SDM(){
 	delete [] dsxz_dx;
 	delete [] dsyz_dy;
 	delete [] dszz_dz;
-    delete [] dvx_dx;
-    delete [] dvy_dy;
-    delete [] dvz_dz;
+	delete [] dvx_dx;
+	delete [] dvy_dy;
+	delete [] dvz_dz;
 	delete [] dvx_dy;
 	delete [] dvy_dx;
 	delete [] dvx_dz;
@@ -122,6 +124,44 @@ SDM::~SDM(){
 
 }
 
+
+// INDEX_IJK
+
+int SDM::IJK(int i, int j, int k){
+
+  int indx = i + j * NodLoc.x + k * NodLoc.x * NodLoc.y;
+
+  return indx;
+
+}
+
+
+void SDM::ModelRead(Dfloat *model,char *param){
+
+  if (strcmp("RHO",param) == 0){
+
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+      rho[i] = model[i];
+
+  }
+
+  
+  if (strcmp("MU",param) == 0){
+
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+      mu[i] = model[i];
+
+  }
+
+  
+  if (strcmp("LAMB",param) == 0){
+
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+      lamb[i] = model[i];
+
+  }
+
+}
 
 
 int SDM::CFL(){
@@ -133,6 +173,10 @@ int SDM::CFL(){
 			std::cout<<"ERROR IN MODEL PARAMETERS"<<std::endl;
 
 		} else {
+
+
+		       if ((mu[i] == 0.0) || (rho[i] == 0.0) || (lamb[i] == 0.0))
+			   break;
 
 			Dfloat vp;
 
