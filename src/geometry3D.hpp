@@ -69,13 +69,13 @@ public:
 
 
   // NUMBER OF ELEMENTS WITH (HALO OR PML)
-  inline Dfloat HALO_NelemX() { return NE.x;}
+  inline int HALO_NelemX() { return NE.x;}
 
   // NUMBER OF ELEMENTS WITH (HALO OR PML)
-  inline Dfloat HALO_NelemY() { return NE.y;}
+  inline int HALO_NelemY() { return NE.y;}
 
   // NUMBER OF ELEMENTS WITH (HALO OR PML)
-  inline Dfloat HALO_NelemZ() { return NE.z;}
+  inline int HALO_NelemZ() { return NE.z;}
 
   // RETURN NUMBER OF TOTAL NODES WITH (HALO OR PML)
   inline int HALO_Node() { return (NOD.x * NOD.y * NOD.z); }
@@ -122,7 +122,7 @@ public:
   
 
   // FIND NODE
-  //void FindNode(VecF coord,VecI ind);
+  VecI FindNode(VecF coord);
 
   
   

@@ -57,8 +57,8 @@ const int KHALO = 2;  // Half of the order on space (k/2)
 
 // STENCIL COEFFICIENTS
 
-const Dfloat C0 = 9.0 / 8.0;
-const Dfloat C1 = 1.0 / 24.0;
+const Dfloat C0 = 1.0 / 24.0;
+const Dfloat C1 = 9.0 / 8.0;
 
 // CONSTANTS
 

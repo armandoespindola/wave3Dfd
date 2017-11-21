@@ -9,13 +9,12 @@ class SDM {
 
 protected:
 
-
-        // GI INITIAL GLOBAL LIMIT
-	// GF END GLOBAL LIMIT 
-	// NodG NUMBER OF GLOBAL NODES
-	// IlimI INITIAL LIMIT LOCAL DOMAIN
-	// IlimF END LIMIT LOCAL DOMAIN
-	// INOD   NUMBER OF LOCAL NODES
+        // GI INITIAL GLOBAL LIMIT WITH PML 
+	// GF END GLOBAL LIMIT WITH PML
+	// NodG NUMBER OF GLOBAL NODES WITHOUT PML
+	// IlimI INITIAL LIMIT SUB DOMAIN 
+	// IlimF END LIMIT SUB DOMAIN
+	// INOD   NUMBER OF LOCAL NODES WITHOUT HALO SUBDOMAIN
 	// f0 FREQUENCY
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
@@ -74,7 +73,110 @@ public:
   // STABILITY CONDITION
   int CFL();
 
+
+  // Initialize Veriables Propagation
+
+  void InitVar(Dfloat f);
+
+  // EXPORT BOUNDARY
+  void EB(Dfloat *BN, Dfloat *DomLoc, char *TBound);
+  void ExpBoundary(Dfloat *BN, char *TBound,char *NameVar);
+
+  // IMPORT BOUNDARY
+  void IB(Dfloat *BN, Dfloat *DomLoc, char *TBound);
+  void ImpBoundary(Dfloat *BN, char *TBound,char *NameVar);
   
+   // X COORDINATE
+
+  Dfloat SCoorX(int indx);
+
+  // Y COORDINATE
+
+  Dfloat SCoorY(int indx);
+
+  // Z Coordinate
+
+  Dfloat SCoorZ(int indx);
+
+   // X COORDINATE
+
+  Dfloat SCoorXHalf(int indx);
+
+  // Y COORDINATE
+
+  Dfloat SCoorYHalf(int indx);
+
+  // Z COORDINATE
+
+  Dfloat SCoorZHalf(int indx);
+
+  // LOCAL NODE TO GLOBAL NODE
+
+  VecI Loc2Glo(VecI indx);
+
+  // FIND NODE IN DOMAIN  
+  VecI SFindNode(VecI coord);
+
+  // FIND NODE IN DOMAIN 
+  //VecI SFindNodeHalf(VecI coord);
+
+  // ADD VALUE 
+  void AddVal(VecI Indx,char *NameVar, Dfloat Val);
+
+  // GET VALUE
+  Dfloat GetVal(VecI Indx,char *NameVar);
+
+    // FINITE DIFFERENCE STRESS SII
+
+  void FD_SII(VecI Init,VecI Iend);
+
+  // FINITE DIFFERENCE STRESS SIJ
+  
+  //void FD_SIJ(VecI Init,VecI Iend,Dfloat * pamU, Dfloat *VI, Dfloat *VJ, \
+  //	      Dfloat *VI_dJ, Dfloat *VJ_dI, Dfloat *SIJ);
+
+  // FINITE DIFFERENCE VELOCITY VX,VY,VZ
+  
+  void FD_VX(VecI Init,VecI Iend);
+
+  void FD_VY(VecI Init,VecI Iend);
+
+  void FD_VZ(VecI Init,VecI Iend);
+
+  void FD_SXY(VecI Init,VecI Iend);
+
+  void FD_SXZ(VecI Init,VecI Iend);
+
+  void FD_SYZ(VecI Init,VecI Iend);
+
+
+  // FINITE DIFFERENCES SXX, SYY, SZZ
+  void FDSII();
+
+  // FINITE DIFFERENCES SXY
+  void FDSXY();
+
+  // FINITE DIFFERENCES SXZ
+  void FDSXZ();
+
+  // FINITE DIFFERENCES SYZ
+  void FDSYZ();
+
+  // FINITE DIFFERENCES SVX
+  void FDVX();
+
+  // FINITE DIFFERENCES SVY
+  void FDSVY();
+
+  // FINITE DIFFERENCES SVZ
+  void FDSVZ();
+
+  
+
+  
+
+
+
 
 
   

@@ -104,9 +104,9 @@ geometry3D::geometry3D(VecF IlimI,VecF IlimF,VecI InElem, VecI IHALO){
 Dfloat geometry3D::CoorX(int i){
   Dfloat coord;
 
-  if (i < nod.x){
+  if (i < NOD.x){
 
-    coord = limI.x + (Dfloat) i * Dx();
+    coord = limI.x + (Dfloat) i * Dx() - thickness_HALO().x;
 
   return coord;
 
@@ -121,9 +121,9 @@ Dfloat geometry3D::CoorX(int i){
 Dfloat geometry3D::CoorY(int i){
   Dfloat coord;
 
-  if (i < nod.y){
+  if (i < NOD.y){
     
-    coord = limI.y + (Dfloat) i * Dy();
+    coord = limI.y + (Dfloat) i * Dy() - thickness_HALO().y;
 
   return coord;
 
@@ -138,8 +138,8 @@ Dfloat geometry3D::CoorY(int i){
 Dfloat geometry3D::CoorZ(int i){
   Dfloat coord;
 
-  if (i < nod.z) {
-    coord = limI.z + (Dfloat) i * Dz();
+  if (i < NOD.z) {
+    coord = limI.z + (Dfloat) i * Dz() - thickness_HALO().z;
     return coord;
     
   }else{
@@ -154,9 +154,9 @@ Dfloat geometry3D::CoorZ(int i){
 Dfloat geometry3D::CoorXHalf(int i){
   Dfloat coord;
 
-  if (i < nod.x-1){
+  if (i < NOD.x-1){
 
-    coord = limI.x + (Dx() / 2.0) + (Dfloat) i * Dx();
+    coord = limI.x + (Dx() / 2.0) + (Dfloat) i * Dx() - thickness_HALO().x;
 
   return coord;
 
@@ -171,9 +171,9 @@ Dfloat geometry3D::CoorXHalf(int i){
 Dfloat geometry3D::CoorYHalf(int i){
   Dfloat coord;
 
-  if (i < nod.y-1){
+  if (i < NOD.y-1){
     
-    coord = limI.y + (Dy() / 2.0) + (Dfloat) i * Dy();
+    coord = limI.y + (Dy() / 2.0) + (Dfloat) i * Dy() - thickness_HALO().y;
 
   return coord;
 
@@ -188,8 +188,8 @@ Dfloat geometry3D::CoorYHalf(int i){
 Dfloat geometry3D::CoorZHalf(int i){
   Dfloat coord;
 
-  if (i < nod.z-1) {
-    coord = limI.z + (Dz() / 2.0) + (Dfloat) i * Dz();
+  if (i < NOD.z-1) {
+    coord = limI.z + (Dz() / 2.0) + (Dfloat) i * Dz() - thickness_HALO().z;
     return coord;
     
   }else{
@@ -227,34 +227,36 @@ VecF geometry3D::thickness_HALO(){
   
 }
 
-/*
-void geometry3D::FindNode(VecF coord, VecI ind){
+
+VecI geometry3D::FindNode(VecF coord){
 
   Dfloat dist1 = 1.0e30;
   Dfloat dist2;
+  VecI ind;
   
-   for (int iz=0;iz<nod.z;iz++){
-     for (int iy=0;iy<nod.y;iy++){
-       for (int ix=0;ix<nod.x;ix++){
+   for (int iz=0;iz<NOD.z;iz++){
+     for (int iy=0;iy<NOD.y;iy++){
+       for (int ix=0;ix<NOD.x;ix++){
 	 
-	 dist2 = sqrt( pow( coord.x - CoorDx(ix),2.0) +	\
-		       pow( coord.y - CoorDy(iy),2.0) +	\
-		       pow( coord.z - CoorDz(iz),2.0) );
+	 dist2 = sqrt( pow( coord.x - CoorX(ix),2.0) +	\
+		       pow( coord.y - CoorY(iy),2.0) +	\
+		       pow( coord.z - CoorZ(iz),2.0) );
 	 
 	 if (dist2 < dist1){
 	   dist1 = dist2;
-	   ind.x = ix + PML.x;
-	   ind.y = iy + PML.y;
-	   ind.z = (nod.z - 1) - (iz + PML.z);
+	   ind.x = ix;
+	   ind.y = iy;
+	   ind.z = (NOD.z - 1) - iz;
 	 }
 		       	 
        }
      }
    }
 
+   return ind;
 }
 
-*/
+
 
 
 
