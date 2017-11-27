@@ -246,7 +246,7 @@ VecI geometry3D::FindNode(VecF coord){
 	   dist1 = dist2;
 	   ind.x = ix;
 	   ind.y = iy;
-	   ind.z = (NOD.z - 1) - iz;
+	   ind.z = (NOD.z - 1) - iz + PML.z;
 	 }
 		       	 
        }
@@ -255,9 +255,6 @@ VecI geometry3D::FindNode(VecF coord){
 
    return ind;
 }
-
-
-
 
 
 

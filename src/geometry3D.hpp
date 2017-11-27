@@ -68,6 +68,7 @@ public:
   inline Dfloat Dz() { return Delta.z;}
 
 
+  inline int HALO_Nelem() { return (NE.x * NE.y * NE.z); }
   // NUMBER OF ELEMENTS WITH (HALO OR PML)
   inline int HALO_NelemX() { return NE.x;}
 
@@ -123,6 +124,8 @@ public:
 
   // FIND NODE
   VecI FindNode(VecF coord);
+
+  
 
   
   

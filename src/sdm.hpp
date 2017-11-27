@@ -18,6 +18,7 @@ protected:
 	// f0 FREQUENCY
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
+        // TOTAL NUMBER SUBDOMAIN NumSubDom
 
 	VecF GI,GF;
 	DPML *pml_x,*pml_y,*pml_z;
@@ -25,7 +26,7 @@ protected:
 	VecI HALO,NodG;
 	Dfloat f0,dt;
 	VecF thickness_PML;
-	VecI NT,Nsdm;
+        VecI NT,Nsdm,NumSubDom;
 	VecI NodLoc;
 
 	// WAVE PROPAGATION VARIABLES  
@@ -57,7 +58,7 @@ public:
 
 
   SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-		Dfloat If0, Dfloat Idt, VecI INsdm);
+      Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom);
 
 
   ~SDM();
@@ -68,7 +69,7 @@ public:
 
   // MODEL READ MODEL
 
-  void ModelRead(Dfloat *model, char *param);
+  void ModelRead(Dfloat *model, char param[]);
 
   // STABILITY CONDITION
   int CFL();
@@ -130,10 +131,6 @@ public:
 
   void FD_SII(VecI Init,VecI Iend);
 
-  // FINITE DIFFERENCE STRESS SIJ
-  
-  //void FD_SIJ(VecI Init,VecI Iend,Dfloat * pamU, Dfloat *VI, Dfloat *VJ, \
-  //	      Dfloat *VI_dJ, Dfloat *VJ_dI, Dfloat *SIJ);
 
   // FINITE DIFFERENCE VELOCITY VX,VY,VZ
   
@@ -153,6 +150,8 @@ public:
   // FINITE DIFFERENCES SXX, SYY, SZZ
   void FDSII();
 
+  void FreeS_SII(VecI Init ,VecI Iend);
+
   // FINITE DIFFERENCES SXY
   void FDSXY();
 
@@ -166,10 +165,24 @@ public:
   void FDVX();
 
   // FINITE DIFFERENCES SVY
-  void FDSVY();
+  void FDVY();
 
   // FINITE DIFFERENCES SVZ
-  void FDSVZ();
+  void FDVZ();
+
+  // Source Function 
+  Dfloat source(int T_SRC,int itime, Dfloat t0);
+
+  void printfile(Dfloat * Var,char *nfile, int ktime);
+
+  void print(char* NameVar,int time);
+
+  int BNorth();
+  int BSouth();
+  int BEast();
+  int BWest();
+  int BDown();
+  int BUp();
 
   
 

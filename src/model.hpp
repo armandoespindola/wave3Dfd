@@ -27,7 +27,18 @@ public:
   void PML_MODEL();
 
   void SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL);
-  
+
+// RETURN NUMBER OF TOTAL NODES WITH (HALO OR PML)
+  inline int HALO_Node() { return (NDL.x * NDL.y * NDL.z); }
+
+  // NUMBER OF NODES IN X DIRECTION WITH (HALO OR PML)
+  inline int HALO_NodeX() { return NDL.x; }
+
+  // NUMBER OF NODES IN Y DIRECTION WITH (HALO OR PML)
+  inline int HALO_NodeY() { return NDL.y; }
+
+  // NUMBER OF NODES IN Z DIRECTION WITH (HALO OR PML)
+  inline int HALO_NodeZ() { return NDL.z; }
   
   
 

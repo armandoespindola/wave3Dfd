@@ -9,6 +9,7 @@ MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN)
   R=fopen(FileR,"rb");
   P=fopen(FileP,"rb");
   S=fopen(FileS,"rb");
+  std::cout<<FileP<<std::endl;
 
   NDT.x = GDim.x + 2 * PML.x;
   NDT.y = GDim.y + 2 * PML.y;
@@ -32,6 +33,7 @@ MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN)
   Nsub.z = NDT.z / SubDomNodeN.z;  
 
   Dfloat rho_buff,vp_buff,vs_buff;
+  float buff;
 
   for (int k=0;k<GDim.z;k++){
     for (int j=0;j<GDim.y;j++){
@@ -39,9 +41,13 @@ MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN)
 
 	int indx =  (i + PML.x) + (j + PML.y) * NDT.x + (k+ PML.z) * NDT.x * NDT.y; 
   
-	fread(&rho[indx],sizeof(Dfloat),1,R);
-	fread(&vp_buff,sizeof(Dfloat),1,P);
-	fread(&vs_buff,sizeof(Dfloat),1,S);
+	fread(&buff,sizeof(float),1,R);
+  rho[indx] = (Dfloat) buff;
+	fread(&buff,sizeof(float),1,P);
+  vp_buff = (Dfloat) buff;
+	fread(&buff,sizeof(float),1,S);
+  vs_buff = (Dfloat) buff;
+
 
 	mu[indx] = pow(vs_buff,2.0) * rho[indx];
 	lamb[indx]= rho[indx]* pow(vp_buff,2.0) - (2.0 * mu[indx]);
@@ -55,7 +61,7 @@ MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN)
   fclose(P);
   fclose(S);
 
-  //PML_MODEL();
+  PML_MODEL();
   
   
 
@@ -86,8 +92,10 @@ void MODEL::PML_MODEL(){
     for (int j=0;j<GDim.y;j++){
       for (int i=0;i<PML.x;i++){
 
-	indx1 = i + j * NDT.x + k * NDT.x * NDT.y;
-	indx2 = PML.x + j * NDT.x + k * NDT.x * NDT.y;
+	indx1 = i + (PML.y + j) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
+	indx2 = PML.x + (j + PML.y) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
 
 	// LEFT SIDE
 	
@@ -98,8 +106,11 @@ void MODEL::PML_MODEL(){
 	// RIGHT SIDE
 	
 
-	indx1 = (PML.x + NDT.x + i) + j * NDT.x + k * NDT.x * NDT.y;
-	indx2 = (PML.x + NDT.x - 1) + j * NDT.x + k * NDT.x * NDT.y;
+	indx1 = (PML.x + GDim.x + i) + (j+PML.y) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
+	
+  indx2 = (PML.x + GDim.x - 1) + (j+PML.y) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
 	
 	mu[indx1] = mu[indx2];
 	rho[indx1] = rho[indx2];
@@ -114,10 +125,12 @@ void MODEL::PML_MODEL(){
   
     for (int k=0;k<GDim.z;k++){
     for (int j=0;j<PML.y;j++){
-      for (int i=0;i<GDim.x;i++){
+      for (int i=0;i<NDT.x;i++){
 
-	indx1 = i + j * NDT.x + k * NDT.x * NDT.y;
-	indx2 = i + PML.y * NDT.x + k * NDT.x * NDT.y;
+	indx1 = i + j * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
+	indx2 = i + PML.y * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
 
 	// LEFT SIDE
 	
@@ -128,8 +141,10 @@ void MODEL::PML_MODEL(){
 	// RIGHT SIDE
 	
 
-	indx1 = i + (PML.x + NDT.x + j) * NDT.x + k * NDT.x * NDT.y;
-	indx2 = i + (PML.x + NDT.x - 1) * NDT.x + k * NDT.x * NDT.y;
+	indx1 = i + (PML.y + GDim.y + j) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
+	indx2 = i + (PML.y + GDim.y - 1) * NDT.x + \
+  (PML.z + k) * NDT.x * NDT.y;
 	
 	mu[indx1] = mu[indx2];
 	rho[indx1] = rho[indx2];
@@ -142,8 +157,8 @@ void MODEL::PML_MODEL(){
       // Z DIRECTION
   
     for (int k=0;k<PML.z;k++){
-    for (int j=0;j<GDim.y;j++){
-      for (int i=0;i<GDim.x;i++){
+    for (int j=0;j<NDT.y;j++){
+      for (int i=0;i<NDT.x;i++){
 
 	indx1 = i + j * NDT.x + k * NDT.x * NDT.y;
 	indx2 = i + j * NDT.x + PML.z * NDT.x * NDT.y;
@@ -170,17 +185,17 @@ void MODEL::SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL){
     for (int j=0;j<NDL.y;j++){
       for (int i=0;i<NDL.x;i++){
 
-	ii = i + NumSub.x * SubDomNodeN.x;
-	jj = j + NumSub.y * SubDomNodeN.y;
-	kk = k + NumSub.z * SubDomNodeN.z;
+	ii = i + (NumSub.x * SubDomNodeN.x) - KHALO;
+	jj = j + (NumSub.y * SubDomNodeN.y) - KHALO;
+	kk = k + (NumSub.z * SubDomNodeN.z) - KHALO;
 
 
-	indx1 = i + j * NDL.y + k * NDL.x * NDL.y;
+	indx1 = i + j * NDL.x + k * NDL.x * NDL.y;
 	
-	indx2 = ii + jj * NDT.y + kk * NDT.x * NDT.y;
+	indx2 = ii + jj * NDT.x + kk * NDT.x * NDT.y;
 
-	if ( ((ii-KHALO) < 0) || ((jj-KHALO) < 0) || ((kk-KHALO) < 0) || \
-	     ((ii+KHALO) >= NDT.x) || ((jj+KHALO) >= NDT.y) || ((kk+KHALO) >= NDT.z) ) {
+	if ( (ii < 0) || (jj < 0) || (kk < 0) || \
+	     (ii >= NDT.x) || (jj >= NDT.y) || (kk >= NDT.z) ) {
 	  
 	SubR[indx1] = 0.0;
 	SubM[indx1] = 0.0;

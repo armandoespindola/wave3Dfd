@@ -1,7 +1,7 @@
 #include "sdm.hpp"
 
 SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-		Dfloat If0, Dfloat Idt, VecI INsdm) {
+	 Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom) {
 
 	// GI INITIAL GLOBAL LIMIT WITH PML 
 	// GF END GLOBAL LIMIT WITH PML
@@ -12,6 +12,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	// f0 FREQUENCY
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
+  // NumSubDom Number total of subdomains
 
 	GI = IGI;
 	GF = IGF;
@@ -23,7 +24,8 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	HALO.z = KHALO;
 	NodLoc = INod;
 	Nsdm = INsdm;
-
+	NumSubDom = INumSubDom;
+	
 	VecI ELE={INod.x-1,INod.y-1,INod.z-1};
 
 	SDMGeom = new geometry3D(IlimI,IlimF,ELE,HALO);
@@ -85,10 +87,10 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 
 SDM::~SDM(){
 
-	delete [] pml_x;
-	delete [] pml_y;
-	delete [] pml_z;
-	delete [] SDMGeom;
+	delete  pml_x;
+	delete  pml_y;
+	delete  pml_z;
+	delete  SDMGeom;
 	delete [] sxx;
 	delete [] syy;
 	delete [] szz;
@@ -138,28 +140,34 @@ int SDM::IJK(int i, int j, int k){
 }
 
 
-void SDM::ModelRead(Dfloat *model,char *param){
+void SDM::ModelRead(Dfloat *model,char param[]){
 
   if (strcmp("RHO",param) == 0){
 
-    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i){
       rho[i] = model[i];
+    }
+    
 
   }
 
   
   if (strcmp("MU",param) == 0){
 
-    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i){
       mu[i] = model[i];
+
+
+    }
 
   }
 
   
   if (strcmp("LAMB",param) == 0){
 
-    for (int i=0; i<SDMGeom->HALO_Node(); ++i)
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i){
       lamb[i] = model[i];
+    }
 
   }
 
@@ -168,44 +176,43 @@ void SDM::ModelRead(Dfloat *model,char *param){
 
 int SDM::CFL(){
 
-	for (int i=0; i<SDMGeom->HALO_Node(); ++i){
+  int cfl;
 
-		if ((mu[i] < 0.0) || (rho[i] < 0.0) || (lamb[i] < 0.0))
-		{
-			std::cout<<"ERROR IN MODEL PARAMETERS"<<std::endl;
+  for (int i=0; i<SDMGeom->HALO_Node(); ++i){
 
-		} else {
+     if ((mu[i] < 0.0) || (rho[i] < 0.0) || (lamb[i] < 0.0))
+      {
+	std::cout<<"ERROR IN MODEL PARAMETERS"<<std::endl;
+      } else {
+      if ((mu[i] == 0.0) || (rho[i] == 0.0) || (lamb[i] == 0.0))
+	goto NOMODEL;
+    }
 
-
-		       if ((mu[i] == 0.0) || (rho[i] == 0.0) || (lamb[i] == 0.0))
-			   break;
-
-			Dfloat vp;
-
-			vp = sqrt((lamb[i] + 2.0 * mu[i]) / rho[i]);
-
-			VecF K;
-
-			K.x = SDMGeom->Dx() / ( dt * sqrt(2.0 * vp * (C0 + C1)));
-			K.y = SDMGeom->Dy() / ( dt * sqrt(2.0 * vp * (C0 + C1)));
-			K.z = SDMGeom->Dz() / ( dt * sqrt(2.0 * vp * (C0 + C1)));
-
-			if ((K.x >= 1.0) || (K.y >= 1.0) || (K.z >= 1.0))
-			{
-				std::cout<<"CFL NOT SATISFIED"<<std::endl;
-				return 0;	
-			} else{
-
-				return 1;
-			}
-
-		}
+    Dfloat vp;
+    vp = sqrt((lamb[i] + 2.0 * mu[i]) / rho[i]);      
+    VecF K;
+    K.x = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dx() ;
+    K.y = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dy() ;
+    K.z = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dz() ;
 
 
-	}
+    if ((K.x >= 1.0) || (K.y >= 1.0) || (K.z >= 1.0)) {
+      printf("CFL NOT SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
+      cfl = 0;
+      return cfl;
+     }else{
+      //printf("CFL SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
+      cfl = 1;
+       }
+       
+  NOMODEL: int b = cfl;
+  }
 
+  return cfl;
 
 }
+
+
 
 
 
@@ -280,7 +287,7 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
 
 	  indx1 = i + j * NodLoc.x + k * HALO.y * NodLoc.x;
-	  indx2 = (HALO.x + i) + (j + SDMGeom->HALO_NodeY() - 2) * SDMGeom->HALO_NodeX() \
+	  indx2 = (HALO.x + i) + (j + SDMGeom->HALO_NodeY() - 2*HALO.y) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  BN[indx1] = DomLoc[indx2];
@@ -318,7 +325,7 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 	for (int i=0;i<HALO.x;i++){
 
 	  indx1 = i + j * HALO.x + k * NodLoc.y * HALO.x;
-	  indx2 = (SDMGeom->HALO_NodeX() + i - 2) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
+	  indx2 = (SDMGeom->HALO_NodeX() + i - 2*HALO.x) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  BN[indx1] = DomLoc[indx2];
@@ -337,7 +344,7 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 
 	  indx1 = i + j * NodLoc.x + k * NodLoc.y * NodLoc.x;
 	  indx2 = (HALO.x + i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
-	    + (k + SDMGeom->HALO_NodeZ() - 2 ) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
+	    + (k + SDMGeom->HALO_NodeZ() - 2*HALO.z ) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
 
 	  BN[indx1] = DomLoc[indx2];
 	  
@@ -388,7 +395,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
 
 	  indx1 = i + j * NodLoc.x + k * HALO.y * NodLoc.x;
-	  indx2 = (HALO.x + i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
+	  indx2 = (HALO.x + i) + (j) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  DomLoc[indx2] = BN[indx1];
@@ -405,7 +412,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
 
 	  indx1 = i + j * NodLoc.x + k * HALO.y * NodLoc.x;
-	  indx2 = (HALO.x + i) + (j + SDMGeom->HALO_NodeY() - 2) * SDMGeom->HALO_NodeX() \
+	  indx2 = (HALO.x + i) + (j + SDMGeom->HALO_NodeY() - HALO.y) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  DomLoc[indx2] = BN[indx1];
@@ -423,7 +430,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 	for (int i=0;i<HALO.x;i++){
 
 	  indx1 = i + j * HALO.x + k * NodLoc.y * HALO.x;
-	  indx2 = (HALO.x + i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
+	  indx2 = (i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  DomLoc[indx2] = BN[indx1];
@@ -443,7 +450,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 	for (int i=0;i<HALO.x;i++){
 
 	  indx1 = i + j * HALO.x + k * NodLoc.y * HALO.x;
-	  indx2 = (SDMGeom->HALO_NodeX() + i - 2) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
+	  indx2 = (SDMGeom->HALO_NodeX() + i - HALO.x) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
 	    + (k + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY() ;	  
 
 	  DomLoc[indx2] = BN[indx1];
@@ -462,7 +469,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 
 	  indx1 = i + j * NodLoc.x + k * NodLoc.y * NodLoc.x;
 	  indx2 = (HALO.x + i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
-	    + (k + SDMGeom->HALO_NodeZ() - 2 ) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
+	    + (k + SDMGeom->HALO_NodeZ() - HALO.z ) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
 
 	  DomLoc[indx2] = BN[indx1];
 	  
@@ -482,7 +489,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 
 	  indx1 = i + j * NodLoc.x + k * NodLoc.y * NodLoc.x;
 	  indx2 = (HALO.x + i) + (j + HALO.y) * SDMGeom->HALO_NodeX() \
-	    + (k + HALO.z ) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
+	    + (k) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();	  
 
 	  DomLoc[indx2] = BN[indx1];
 	  
@@ -666,62 +673,62 @@ void SDM::AddVal(VecI indx, char *NameVar, Dfloat Val){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    sxx[i] = Val;
+    sxx[i] += Val;
   }
   if (strcmp("SYY",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    syy[i] = Val;
+    syy[i] += Val;
   }
 
   if (strcmp("SZZ",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    szz[i] = Val;
+    szz[i] += Val;
   }
 
   if (strcmp("SXY",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    sxy[i] = Val;
+    sxy[i] += Val;
   }
 
   if (strcmp("SXZ",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    sxz[i] = Val;
+    sxz[i] += Val;
   }
 
   if (strcmp("SYZ",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    syz[i] = Val;
+    syz[i] += Val;
   }
 
   if (strcmp("VX",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    vx[i] = Val;
+    vx[i] += Val;
   }
 
   if (strcmp("VY",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    vy[i] = Val;
+    vy[i] += Val;
   }
 
   if (strcmp("VZ",NameVar) == 0){
     ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
-    vz[i] = Val;
+    vz[i] += Val;
   }
   
 }
@@ -794,6 +801,7 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
     Val = vz[i];
   }
   
+  return Val;
 }
 
 void SDM:: FD_SII(VecI Init,VecI Iend){
@@ -830,9 +838,9 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 	dvz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dvz_dz[IJK(ix,iy,iz)]  \
 	  + pml_z->A_HALF(Gindx.z) * df_dK;
 
-	df_dI += df_dI;
-	df_dJ += df_dJ;
-	df_dK += df_dK;
+	df_dI += dvx_dx[IJK(ix,iy,iz)];
+	df_dJ += dvy_dy[IJK(ix,iy,iz)];
+	df_dK += dvz_dz[IJK(ix,iy,iz)];
 
 	// Average properties
 	
@@ -901,9 +909,9 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 	dsxz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsxz_dz[IJK(ix,iy,iz)]  \
 	  + pml_z->A_HALF(Gindx.z) * df_dK;
 
-	df_dI += df_dI;
-	df_dJ += df_dJ;
-	df_dK += df_dK;
+	df_dI += dsxx_dx[IJK(ix,iy,iz)];
+	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
+	df_dK += dsxz_dz[IJK(ix,iy,iz)];
 
 
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + (dt / rho[IJK(ix,iy,iz)]) * \
@@ -954,12 +962,12 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 	dsyy_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dsyy_dy[IJK(ix,iy,iz)] \
 	  + pml_y->A(Gindx.y) * df_dJ;
 
-	dszz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dszz_dz[IJK(ix,iy,iz)]  \
+	dsyz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsyz_dz[IJK(ix,iy,iz)]  \
 	  + pml_z->A_HALF(Gindx.z) * df_dK;
 
-	df_dI += df_dI;
-	df_dJ += df_dJ;
-	df_dK += df_dK;
+	df_dI += dsxy_dx[IJK(ix,iy,iz)];
+	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
+	df_dK += dsyz_dz[IJK(ix,iy,iz)];
 
 
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
@@ -1017,9 +1025,9 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 	dszz_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dszz_dz[IJK(ix,iy,iz)]  \
 	  + pml_z->A(Gindx.z) * df_dK;
 
-	df_dI += df_dI;
-	df_dJ += df_dJ;
-	df_dK += df_dK;
+	df_dI += dsxz_dx[IJK(ix,iy,iz)];
+	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
+	df_dK += dszz_dz[IJK(ix,iy,iz)];
 
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
@@ -1070,8 +1078,8 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy+1,iz)]) / 2.0;
 
 
-	df_dI += df_dI;
-	df_dJ += df_dJ;
+	df_dI += dvy_dx[IJK(ix,iy,iz)];
+	df_dJ += dvx_dy[IJK(ix,iy,iz)];
 
 
 	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + (dt * mu_avg) * \
@@ -1110,15 +1118,15 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
 	dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
 
-	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.y) * dvx_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.y) * df_dK;
+	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
+	  + pml_z->A(Gindx.z) * df_dK;
 
 
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
 
 
-	df_dI += df_dI;
-	df_dK += df_dK;
+	df_dI += dvz_dx[IJK(ix,iy,iz)];
+	df_dK += dvx_dz[IJK(ix,iy,iz)];
 
 
 	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
@@ -1160,11 +1168,11 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 		  C0 * (vy[IJK(ix,iy,iz+2)] - vy[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
 	
 
-	dvz_dy[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dJ;
+	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A(Gindx.x) * df_dJ;
 
-	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.y) * dvy_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.y) * df_dK;
+	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
+	  + pml_z->A(Gindx.z) * df_dK;
 
 
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
@@ -1173,8 +1181,8 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
 
 
-	df_dJ += df_dJ;
-	df_dK += df_dK;
+	df_dJ += dvz_dy[IJK(ix,iy,iz)];
+	df_dK += dvy_dz[IJK(ix,iy,iz)];
 
 
 	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
@@ -1188,6 +1196,467 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 
   
 }
+
+
+void SDM::FreeS_SII(VecI Init,VecI Iend){
+
+  int iz = Iend.z + HALO.z - 1;
+  VecI Lindx,Gindx;
+  Dfloat mu_avg,lamb_avg,df_dI,df_dJ,df_dK;
+
+   // Free Surface Implementation Stress Imaging
+  
+   for (int iy=HALO.y+Init.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=HALO.x+Init.x; ix<Iend.x + HALO.x; ++ix){
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+
+	// Average properties
+
+	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)]) / 2.0;
+	lamb_avg = (lamb[IJK(ix,iy,iz)] + lamb[IJK(ix+1,iy,iz)]) / 2.0;
+
+	df_dI = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
+		  C0 * (vx[IJK(ix+2,iy,iz)] - vx[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
+	
+	df_dJ = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
+		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
+	
+	df_dK = - (df_dI + df_dJ) * (mu_avg / (lamb_avg + 2.0 * mu_avg));
+
+
+	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
+	  + pml_x->A(Gindx.x) * df_dI;
+
+	dvy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dvy_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+
+	dvz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dvz_dz[IJK(ix,iy,iz)]  \
+	  + pml_z->A_HALF(Gindx.z) * df_dK;
+
+	df_dI += dvx_dx[IJK(ix,iy,iz)];
+	df_dJ += dvy_dy[IJK(ix,iy,iz)];
+	df_dK += dvz_dz[IJK(ix,iy,iz)];
+	
+	// SXX
+
+	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] + \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + \
+	  dt * lamb_avg *  (df_dJ + df_dK);
+
+	// SYY
+	
+	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + \
+	  dt * lamb_avg *  (df_dI + df_dK);
+
+
+	// SZZ
+	
+	szz[IJK(ix,iy,iz)] = 0.0;
+
+      }
+   }
+
+
+
+}
+
+
+
+
+
+void SDM::FDSII() {
+  VecI init,end;
+ 
+  init = {0,0,0};
+  
+
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+  
+  if (Nsdm.x == NumSubDom.x-1) { 
+    end.x = NodLoc.x - 1;
+  }
+
+
+  if (Nsdm.z == NumSubDom.z-1){
+    end.z = NodLoc.z - 1;
+  }
+  
+  
+  FD_SII(init,end);
+
+
+  if (Nsdm.z == NumSubDom.z-1) {
+    FreeS_SII(init,end);
+  }
+
+
+}
+
+
+void SDM::FDSXY() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+  if (Nsdm.y == NumSubDom.y - 1) { 
+    end.y = NodLoc.y - 1;
+  }
+  
+  
+  FD_SXY(init,end);
+
+}
+
+void SDM::FDSXZ() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+
+  if (Nsdm.z == NumSubDom.z - 1) { 
+    end.z = NodLoc.z - 1;
+  }
+
+  
+  FD_SXZ(init,end);
+
+  // Stress imaging 
+   if (Nsdm.z == NumSubDom.z - 1) { 
+ 
+    for (int iy=HALO.y; iy<NodLoc.y+HALO.y; ++iy){
+      for (int ix=HALO.x; ix<NodLoc.x+HALO.x; ++ix){
+
+	int iz = HALO.z + NodLoc.z - 2;
+
+	sxz[IJK(ix,iy,iz+1)] = -sxz[IJK(ix,iy,iz)];
+	sxz[IJK(ix,iy,iz+2)] = -sxz[IJK(ix,iy,NodLoc.z-1)];
+	sxz[IJK(ix,iy,iz+3)] = -sxz[IJK(ix,iy,NodLoc.z-2)];
+      }
+    }
+    
+   }
+
+}
+
+void SDM::FDSYZ() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+
+   if (Nsdm.x == NumSubDom.x - 1) { 
+    end.x = NodLoc.x - 1;
+  }
+
+   if (Nsdm.y == NumSubDom.y - 1) { 
+    end.y = NodLoc.y - 1;
+  }
+
+  
+  if (Nsdm.z == NumSubDom.z - 1) { 
+    end.z = NodLoc.z - 1;
+  }
+  
+  FD_SYZ(init,end);
+
+
+    // Stress imaging 
+   if (Nsdm.z == NumSubDom.z - 1) { 
+ 
+    for (int iy=HALO.y; iy<NodLoc.y+HALO.y; ++iy){
+      for (int ix=HALO.x; ix<NodLoc.x+HALO.x; ++ix){
+
+	int iz = HALO.z + NodLoc.z - 2;
+
+	syz[IJK(ix,iy,iz+1)] = -syz[IJK(ix,iy,iz)];
+	syz[IJK(ix,iy,iz+2)] = -syz[IJK(ix,iy,NodLoc.z-1)];
+	syz[IJK(ix,iy,iz+3)] = -syz[IJK(ix,iy,NodLoc.z-2)];
+      }
+    }
+    
+   }
+
+
+}
+
+void SDM::FDVX() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+
+  if (Nsdm.z == 0) { 
+    init.z = 1;
+  }
+
+  if (Nsdm.x == 0) { 
+    init.x = 1;
+  }
+
+  if (Nsdm.x == NumSubDom.x - 1) { 
+    end.x = NodLoc.x - 1;
+  }
+
+  if (Nsdm.y == 0) { 
+    init.y = 1;
+  }
+
+  if (Nsdm.y == NumSubDom.y - 1) { 
+    end.y = NodLoc.y - 1;
+  }
+  
+  FD_VX(init,end);
+
+}
+
+void SDM::FDVY() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+  if (Nsdm.z == 0) { 
+    init.z = 1;
+  }
+
+  if (Nsdm.y == NumSubDom.y - 1) { 
+    end.y = NodLoc.y - 1;
+  }
+
+  if (Nsdm.x == NumSubDom.x - 1) { 
+    end.x = NodLoc.x - 1;
+  }
+  
+  FD_VY(init,end);
+
+}
+
+void SDM::FDVZ() {
+  VecI init,end;
+
+  init = {0,0,0};
+  end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
+
+  if (Nsdm.y == NumSubDom.y - 1) { 
+    end.y = NodLoc.y - 1;
+  }
+
+   if (Nsdm.y == 0) { 
+    init.y = 1;
+  }
+
+    if (Nsdm.x == NumSubDom.x - 1) { 
+    end.x = NodLoc.x - 1;
+  }
+
+
+    if (Nsdm.z == NumSubDom.z - 1) { 
+    end.z = NodLoc.z - 1;
+  }
+
+   
+  
+  FD_VZ(init,end);
+
+}
+
+
+Dfloat SDM::source(int T_SRC, int itime,Dfloat t0){
+
+
+  Dfloat src,a_fu,amp,time;
+
+  //time = 0.5 * dt + itime  * dt;
+  time = itime  * dt;
+  a_fu= pow (pi*f0,2.0);
+  src = 0.0;
+
+  // GAUSSIAN 
+  
+  if (T_SRC==0){ 
+    src = exp(-a_fu * pow(time - t0,2.0));
+  }
+  
+  // FIRST DERIVATIVE OF A GAUSSIAN
+  
+  if (T_SRC==1){
+    src = 4.0 * a_fu *(time - t0) * exp(-2.0 * a_fu * pow( (time  - t0),2.0) );
+  }
+
+  // SECOND DERIVATIVE OF A GAUSSIAN (RICKER PULSE)
+  
+  if (T_SRC==2){
+    src = (1.0 - 2.0 * a_fu * pow((time - t0),2.0)) * exp(-a_fu * pow((time - t0),2.0)) ;
+  }
+
+  // HEAVISIDE STEP FUNCTION
+  
+  if (T_SRC==3){
+    src = 1.0 * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m
+  }
+
+  
+  return src;
+
+}
+
+
+void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
+  FILE *R;
+  char times[200];
+
+  int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
+  sprintf(times,"src/example/%s_%d-%d.bin",nfile,subindx,ktime);
+
+  
+  
+   R=fopen(times,"wb");
+   
+    for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
+	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
+
+	 fwrite(&Var[indx],sizeof(Dfloat),1,R);
+
+
+       }
+     }
+    }
+
+    fclose(R);
+
+  
+}
+
+void SDM::print(char *NameVar, int time ){
+
+
+   if (strcmp("SXX",NameVar) == 0){
+
+     printfile(sxx,NameVar,time);
+  }
+  if (strcmp("SYY",NameVar) == 0){
+
+    printfile(syy,NameVar,time);
+    
+  }
+
+  if (strcmp("SZZ",NameVar) == 0){
+
+    printfile(szz,NameVar,time);
+  }
+
+  if (strcmp("SXY",NameVar) == 0){
+
+    printfile(sxy,NameVar,time);
+  }
+
+  if (strcmp("SXZ",NameVar) == 0){
+
+    printfile(sxz,NameVar,time);
+  }
+
+  if (strcmp("SYZ",NameVar) == 0){
+
+    printfile(syz,NameVar,time);
+  }
+
+  if (strcmp("VX",NameVar) == 0){
+
+    printfile(vx,NameVar,time);
+  }
+
+  if (strcmp("VY",NameVar) == 0){
+
+    printfile(vy,NameVar,time);
+  }
+
+  if (strcmp("VZ",NameVar) == 0){
+
+    printfile(vz,NameVar,time);
+  }
+
+
+}
+
+int SDM::BNorth(){
+
+if (Nsdm.y == NumSubDom.y-1){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+int SDM::BSouth(){
+
+if (Nsdm.y == 0){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+int SDM::BWest(){
+
+if (Nsdm.x == 0){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+
+int SDM::BEast(){
+
+if (Nsdm.x == NumSubDom.x-1){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+int SDM::BDown(){
+
+if (Nsdm.z == 0){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+int SDM::BUp(){
+
+if (Nsdm.z == NumSubDom.z-1){
+return 0;
+}else {
+  return 1;
+} 
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
