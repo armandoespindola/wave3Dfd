@@ -144,9 +144,9 @@ if (rank == 0) {
   
 
 // Read Model Domain
-  char FileVP[] = "src/example/VP.bin";
-  char FileVS[] = "src/example/VS.bin";
-  char FileR[] = "src/example/RHO.bin";
+  char FileVP[] = "../src/example/VP.bin";
+  char FileVS[] = "../src/example/VS.bin";
+  char FileR[] = "../src/example/RHO.bin";
 
   model = new MODEL(FileVP,FileVS,FileR, \
         GNod,SubNodes);
@@ -263,13 +263,13 @@ MPI_Barrier(MPI_COMM_WORLD);
     time += (time2-time1)/nt;
 
     
-    /*if (kk == k){
+    if (kk == k){
       sdm->print("VZ",k);
       //sdm.print("VY",k);
       //sdm.print("SXX",k);
       kk += 100;
       }
-    */
+    
     
   }
 
