@@ -39,7 +39,7 @@ for (int k = 0; k<n; ++k){
 		for (int i = 0; i<l; ++i){
 
 
-			printf("  %10.4f",f[i + j * l + k * l * m]);
+			printf("  %f",f[i + j * l + k * l * m]);
 
 
 

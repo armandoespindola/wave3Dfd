@@ -263,8 +263,10 @@ void SDM::InitVar(Dfloat f){
 void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
   int indx1,indx2;
   
-  if (strcmp("S",param) == 0){
+  if (strcmp("South",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<HALO.y;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -280,8 +282,10 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
     }
 
 
-  }else if (strcmp("N",param) == 0){
+  }else if (strcmp("North",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<HALO.y;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -297,9 +301,10 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
     }
 
 
-  }else if (strcmp("O",param) == 0){
+  }else if (strcmp("West",param) == 0){
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<HALO.x;i++){
@@ -317,9 +322,10 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 
 
 
-  }else if (strcmp("E",param) == 0){
+  }else if (strcmp("East",param) == 0){
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<HALO.x;i++){
@@ -338,6 +344,8 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 
   }else if (strcmp("UP",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<HALO.z;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -357,7 +365,8 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
   }else if (strcmp("DOWN",param) == 0){
 
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<HALO.z;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -376,7 +385,7 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 
   } else {
 
-    std::cout<<"THAT IS NOT AN BOUNDARY OPTION"<<std::endl;
+    std::cout<<"SDM::EB THAT IS NOT A BOUNDARY OPTION:"<<param<<std::endl;
 
 
   }
@@ -388,8 +397,10 @@ void SDM::EB(Dfloat *BN,Dfloat* DomLoc, char *param){
 void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
   int indx1,indx2;
 
-  if (strcmp("S",param) == 0){
+  if (strcmp("South",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<HALO.y;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -405,8 +416,10 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
     }
 
 
-  }else if (strcmp("N",param) == 0){
+  }else if (strcmp("North",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<HALO.y;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -422,9 +435,10 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
     }
 
 
-  }else if (strcmp("O",param) == 0){
+  }else if (strcmp("West",param) == 0){
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<HALO.x;i++){
@@ -442,9 +456,10 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 
 
 
-  }else if (strcmp("E",param) == 0){
+  }else if (strcmp("East",param) == 0){
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<HALO.x;i++){
@@ -463,6 +478,8 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 
   }else if (strcmp("UP",param) == 0){
 
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<HALO.z;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -482,7 +499,8 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
   }else if (strcmp("DOWN",param) == 0){
 
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(indx1,indx2)
     for (int k=0;k<HALO.z;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
@@ -501,7 +519,7 @@ void SDM::IB(Dfloat *BN, Dfloat *DomLoc, char *param) {
 
   } else {
 
-    std::cout<<"THAT IS NOT AN BOUNDARY OPTION"<<std::endl;
+    std::cout<<"SDM::IB THAT IS NOT A BOUNDARY OPTION:"<<param<<std::endl;
 
 
   }
@@ -515,37 +533,24 @@ void SDM::ExpBoundary(Dfloat *BN, char *TBound,char *NameVar) {
 
   if (strcmp("SXX",NameVar) == 0){
     EB(BN,sxx,TBound);
-  }
-  if (strcmp("SYY",NameVar) == 0){
+  } else if (strcmp("SYY",NameVar) == 0){
     EB(BN,syy,TBound);
-  }
-
-  if (strcmp("SZZ",NameVar) == 0){
+  }else if (strcmp("SZZ",NameVar) == 0){
     EB(BN,szz,TBound);
-  }
-
-  if (strcmp("SXY",NameVar) == 0){
+  } else if (strcmp("SXY",NameVar) == 0){
     EB(BN,sxy,TBound);
-  }
-
-  if (strcmp("SXZ",NameVar) == 0){
+  }else if (strcmp("SXZ",NameVar) == 0){
     EB(BN,sxz,TBound);
-  }
-
-  if (strcmp("SYZ",NameVar) == 0){
+  } else if (strcmp("SYZ",NameVar) == 0){
     EB(BN,syz,TBound);
-  }
-
-  if (strcmp("VX",NameVar) == 0){
+  }else if (strcmp("VX",NameVar) == 0){
     EB(BN,vx,TBound);
-  }
-
-  if (strcmp("VY",NameVar) == 0){
+  }else if (strcmp("VY",NameVar) == 0){
     EB(BN,vy,TBound);
-  }
-
-  if (strcmp("VZ",NameVar) == 0){
+  }else if (strcmp("VZ",NameVar) == 0){
     EB(BN,vz,TBound);
+  } else {
+    std::cout<<"SDM::ExpBoundary:: IT IS NOT A BOUNDARY OPTION:"<<NameVar<<std::endl;
   }
   
 }
@@ -555,39 +560,25 @@ void SDM::ImpBoundary(Dfloat *BN, char *TBound,char *NameVar) {
 
   if (strcmp("SXX",NameVar) == 0){
     IB(BN,sxx,TBound);
-  }
-  if (strcmp("SYY",NameVar) == 0){
+  } else if (strcmp("SYY",NameVar) == 0){
     IB(BN,syy,TBound);
-  }
-
-  if (strcmp("SZZ",NameVar) == 0){
+  } else if (strcmp("SZZ",NameVar) == 0){
     IB(BN,szz,TBound);
-  }
-
-  if (strcmp("SXY",NameVar) == 0){
+  } else if (strcmp("SXY",NameVar) == 0){
     IB(BN,sxy,TBound);
-  }
-
-  if (strcmp("SXZ",NameVar) == 0){
+  } else if (strcmp("SXZ",NameVar) == 0){
     IB(BN,sxz,TBound);
-  }
-
-  if (strcmp("SYZ",NameVar) == 0){
+  } else if (strcmp("SYZ",NameVar) == 0){
     IB(BN,syz,TBound);
-  }
-
-  if (strcmp("VX",NameVar) == 0){
+  } else if (strcmp("VX",NameVar) == 0){
     IB(BN,vx,TBound);
-  }
-
-  if (strcmp("VY",NameVar) == 0){
+  } else if (strcmp("VY",NameVar) == 0){
     IB(BN,vy,TBound);
-  }
-
-  if (strcmp("VZ",NameVar) == 0){
+  }else if (strcmp("VZ",NameVar) == 0){
     IB(BN,vz,TBound);
+  } else {
+    std::cout<<"SDM::ImpBoundary:: IT IS NOT A BOUNDARY OPTION:"<<NameVar<<std::endl;
   }
-  
 }
 
 Dfloat SDM::SCoorX(int indx){
@@ -635,7 +626,7 @@ VecI SDM::Loc2Glo(VecI indx){
 
 VecI SDM::SFindNode(VecI Nodef){
 
-  VecI ind;
+  VecI ind = {-1,-1,-1};
 
   VecI Global,Local;
   
@@ -669,67 +660,50 @@ void SDM::AddVal(VecI indx, char *NameVar, Dfloat Val){
   VecI ind;
   int i;
   
+  ind = SFindNode(indx);
+
+  if ((ind.x > 0) && (ind.y > 0) && (ind.z > 0)) {
+
    if (strcmp("SXX",NameVar) == 0){
-    ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     sxx[i] += Val;
-  }
-  if (strcmp("SYY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SYY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     syy[i] += Val;
-  }
-
-  if (strcmp("SZZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SZZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     szz[i] += Val;
-  }
-
-  if (strcmp("SXY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SXY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     sxy[i] += Val;
-  }
-
-  if (strcmp("SXZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SXZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     sxz[i] += Val;
-  }
-
-  if (strcmp("SYZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SYZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     syz[i] += Val;
-  }
-
-  if (strcmp("VX",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VX",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     vx[i] += Val;
-  }
-
-  if (strcmp("VY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     vy[i] += Val;
-  }
-
-  if (strcmp("VZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     vz[i] += Val;
+  } else {
+    std::cout<<"SDM::AddVal:: IT IS NOT A VARIABLE OPTION:"<<NameVar<<std::endl;
   }
+}
   
 }
 
@@ -738,70 +712,53 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
   VecI ind;
   Dfloat Val;
   int i;
+
+  ind = SFindNode(indx);
+
+  if ((ind.x > 0) && (ind.y > 0) && (ind.z > 0)) {
   
    if (strcmp("SXX",NameVar) == 0){
-    ind = SFindNode(indx);
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = sxx[i];
-  }
-  if (strcmp("SYY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SYY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = syy[i];
-  }
-
-  if (strcmp("SZZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SZZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = szz[i];
-  }
-
-  if (strcmp("SXY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SXY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = sxy[i];
-  }
-
-  if (strcmp("SXZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SXZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = sxz[i];
-  }
-
-  if (strcmp("SYZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("SYZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = syz[i];
-  }
-
-  if (strcmp("VX",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VX",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = vx[i];
-  }
-
-  if (strcmp("VY",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VY",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = vy[i];
-  }
-
-  if (strcmp("VZ",NameVar) == 0){
-    ind = SFindNode(indx);
+  } else if (strcmp("VZ",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = vz[i];
+  } else {
+    std::cout<<"SDM::GetVal:: IT IS NOT A VARIABLE OPTION:"<<NameVar<<std::endl;
   }
-  
   return Val;
+}
+
 }
 
 void SDM:: FD_SII(VecI Init,VecI Iend){
@@ -810,7 +767,8 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
   Dfloat mu_avg,lamb_avg;
   
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,lamb_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -881,7 +839,8 @@ void SDM::FD_VX(VecI Init,VecI Iend){
   Dfloat df_dI,df_dJ,df_dK;
   
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -937,7 +896,8 @@ void SDM::FD_VY(VecI Init,VecI Iend){
   Dfloat rho_avg;
   
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -973,7 +933,7 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
-	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + (dt / rho[IJK(ix,iy,iz)]) * \
+	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
@@ -997,7 +957,8 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
   Dfloat rho_avg;
   
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -1052,7 +1013,8 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
   Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -1099,7 +1061,8 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
   Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -1152,7 +1115,8 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
   Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
   for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
     for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
@@ -1206,6 +1170,9 @@ void SDM::FreeS_SII(VecI Init,VecI Iend){
 
    // Free Surface Implementation Stress Imaging
   
+  #pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,lamb_avg,Lindx,Gindx)\
+  firstprivate(iz)
    for (int iy=HALO.y+Init.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=HALO.x+Init.x; ix<Iend.x + HALO.x; ++ix){
 

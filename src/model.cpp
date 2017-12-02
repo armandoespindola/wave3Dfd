@@ -9,7 +9,6 @@ MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN)
   R=fopen(FileR,"rb");
   P=fopen(FileP,"rb");
   S=fopen(FileS,"rb");
-  std::cout<<FileP<<std::endl;
 
   NDT.x = GDim.x + 2 * PML.x;
   NDT.y = GDim.y + 2 * PML.y;
@@ -191,7 +190,6 @@ void MODEL::SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL){
 
 
 	indx1 = i + j * NDL.x + k * NDL.x * NDL.y;
-	
 	indx2 = ii + jj * NDT.x + kk * NDT.x * NDT.y;
 
 	if ( (ii < 0) || (jj < 0) || (kk < 0) || \

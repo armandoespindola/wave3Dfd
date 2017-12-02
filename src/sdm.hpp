@@ -28,6 +28,7 @@ protected:
 	VecF thickness_PML;
         VecI NT,Nsdm,NumSubDom;
 	VecI NodLoc;
+  int N_omp;
 
 	// WAVE PROPAGATION VARIABLES  
 	Dfloat *sxx,*syy,*szz;
@@ -183,6 +184,41 @@ public:
   int BWest();
   int BDown();
   int BUp();
+
+  int SNodeT(){
+
+    return SDMGeom->HALO_Node();
+
+  };
+
+  // NUMBER OF NODES IN X DIRECTION WITH (HALO OR PML)
+  inline int SNodeX() { return SDMGeom->HALO_NodeX(); }
+
+  // NUMBER OF NODES IN Y DIRECTION WITH (HALO OR PML)
+  inline int SNodeY() { return SDMGeom->HALO_NodeY(); }
+
+  // NUMBER OF NODES IN Z DIRECTION WITH (HALO OR PML)
+  inline int SNodeZ() { return SDMGeom->HALO_NodeZ(); }
+
+  // NUMBER OF NODES IN X DIRECTION 
+  inline int L_SNodeX() { return SDMGeom->L_NodeX(); }
+
+  // NUMBER OF NODES IN Y DIRECTION 
+  inline int L_SNodeY() { return SDMGeom->L_NodeY(); }
+
+  // NUMBER OF NODES IN Z DIRECTION
+  inline int L_SNodeZ() { return SDMGeom->L_NodeZ(); }
+
+  // INDEX SUBDOMAIN
+  inline VecI SubIdx() { return Nsdm; }
+
+  // NUMBER SUBDOMAINS
+  inline VecI SubNum() { return NumSubDom; }
+
+  inline void set_omp(int num) {N_omp = num;}
+
+  
+
 
   
 

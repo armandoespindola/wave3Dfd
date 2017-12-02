@@ -9,6 +9,7 @@ protected:
   // PRINT VARIABLES ON SCREEN
 public:
 
+
 void print (Dfloat f);
 
 void print(Dfloat *f, int l);

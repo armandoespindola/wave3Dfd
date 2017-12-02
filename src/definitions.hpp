@@ -1,6 +1,5 @@
 #ifndef __definitions__
 #define __definitions__
-#include "definitions.hpp"
 
 
 // PRECISION OF OPERATIONS //
@@ -19,7 +18,8 @@ typedef DREAL Dfloat;
 #include <string.h>
 #include <math.h>
 #include <omp.h>
-//#include <mpi.h>
+#include <mpi.h>
+#include <iomanip>
 
 //  VEC 3 ELEMENTS FLOAT
 struct VecF{
@@ -48,7 +48,7 @@ const bool PML_ZMAX = false;
 
 // PML NODES
 
-const VecF PML={10,10,10};
+const VecF PML={8,8,16};
 
 
 // # FINITE DIFFERENCES PARAMETERS 4TH ORDER SPACE
@@ -63,6 +63,8 @@ const Dfloat C1 = 9.0 / 8.0;
 // CONSTANTS
 
 const Dfloat pi = 3.141592653589793;
+
+//const int N_omp = 2;
 
 
 #endif
