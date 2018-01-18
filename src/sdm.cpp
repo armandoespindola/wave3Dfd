@@ -1164,7 +1164,7 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 
 void SDM::FreeS_SII(VecI Init,VecI Iend){
 
-  int iz = Iend.z + HALO.z - 1;
+  int iz = Iend.z + HALO.z ;
   VecI Lindx,Gindx;
   Dfloat mu_avg,lamb_avg,df_dI,df_dJ,df_dK;
 
@@ -1191,7 +1191,7 @@ void SDM::FreeS_SII(VecI Init,VecI Iend){
 	df_dJ = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
 		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = - (df_dI + df_dJ) * (mu_avg / (lamb_avg + 2.0 * mu_avg));
+	df_dK = - (df_dI + df_dJ) * (lamb_avg / (lamb_avg + 2.0 * mu_avg));
 
 
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
@@ -1223,6 +1223,8 @@ void SDM::FreeS_SII(VecI Init,VecI Iend){
 	// SZZ
 	
 	szz[IJK(ix,iy,iz)] = 0.0;
+	szz[IJK(ix,iy,iz+1)] = -szz[IJK(ix,iy,iz-1)];
+	
 
       }
    }
@@ -1247,20 +1249,18 @@ void SDM::FDSII() {
     end.x = NodLoc.x - 1;
   }
 
-
+ 
   if (Nsdm.z == NumSubDom.z-1){
+
     end.z = NodLoc.z - 1;
-  }
-  
-  
-  FD_SII(init,end);
-
-
-  if (Nsdm.z == NumSubDom.z-1) {
+    FD_SII(init,end);
     FreeS_SII(init,end);
+
+  } else {
+
+    FD_SII(init,end);
   }
-
-
+  
 }
 
 

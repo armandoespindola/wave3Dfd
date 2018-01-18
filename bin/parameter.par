@@ -1,0 +1,23 @@
+// MODEL DIMENSIONS
+-xi 0.0
+-xf 11100.0
+-yi 0.0
+-yf 11100.0
+-zi 0.0
+-zf 11100.0
+// NUMBER OF NODES IN EVERY DIRECTION
+-nx 112
+-ny 112
+-nz 112
+// SIMULATION TIME [s]
+-t 4.0
+// TIME STEP
+-dt 0.001 
+// SOURCE FREQUENCY
+-f0 4.0
+// NUMBER OF SUBDOMAINS
+-sx 2
+-sy 2
+-sz 2
+// NUMBER OMP THREADS
+-nomp 3

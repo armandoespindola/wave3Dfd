@@ -20,6 +20,7 @@ typedef DREAL Dfloat;
 #include <omp.h>
 #include <mpi.h>
 #include <iomanip>
+#include <fstream>
 
 //  VEC 3 ELEMENTS FLOAT
 struct VecF{
@@ -48,7 +49,7 @@ const bool PML_ZMAX = false;
 
 // PML NODES
 
-const VecF PML={8,8,16};
+const VecF PML={16,16,16};
 
 
 // # FINITE DIFFERENCES PARAMETERS 4TH ORDER SPACE
@@ -64,7 +65,6 @@ const Dfloat C1 = 9.0 / 8.0;
 
 const Dfloat pi = 3.141592653589793;
 
-//const int N_omp = 2;
 
 
 #endif

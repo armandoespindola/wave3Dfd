@@ -4,51 +4,81 @@
 #include "show.hpp"
 #include "sdm.hpp"
 #include "mpi_trans.hpp"
-
-int parameter(int argi, char** param,char b[]){
-  int value = 0;
-  char *c;
-  
-  if (argi > 0) {
-    for (int i = 0; i<argi; ++i){
-      if (strcmp(b,param[i]) == 0){
-	value = atoi(param[i+1]);
-      }
-    }
-  }
-  return value;
-};
+#include "parameters.hpp"
 
 
 int main (int argc, char* argv[]) {
-  int Sx,Sy,Sz,N_omp;
+
+
+  // READ PARAMETERS FILE 
+
+  PAR par(argc,argv,"-nFile");
+
+
+  // ####### PARAMETERS #######
+  // ##########################
+
 
   // PARAMETERS SUBDOMAINS
-  Sx = parameter(argc,argv,"-sx");
-  Sy = parameter(argc,argv,"-sy");
-  Sz = parameter(argc,argv,"-sz");
+ 
+  const int Sx = std::stoi(par.ParamReturn("-sx"));
+  const int Sy = std::stoi(par.ParamReturn("-sy"));
+  const int Sz = std::stoi(par.ParamReturn("-sz"));
+
 
   // NUMBER OMP THREADS
-  N_omp = parameter(argc,argv,"-nomp");
-  VecF Ilim = {0.0,0.0,0.0};                                  // INITIAL LIMIT DOMAIN
-  VecF Flim = {11100,11100,11100};;                         // END LIMIT DOMAIN
-  VecI Nelem = {111,111,111};                                    // NUMBER OF ELEMENTS
-  Dfloat dt = 0.001;                                          // TIME STEP
-  Dfloat f0 = 4.0;                                            // SOURCE FREQUENCY
-  Dfloat t = 4.0;                                             // SIMULATION TIME
+
+  const int N_omp = std::stoi(par.ParamReturn("-nomp"));
+
+
+  // INITIAL LIMIT DOMAIN
+
+  const VecF Ilim = {std::stof(par.ParamReturn("-xi")), \
+                     std::stof(par.ParamReturn("-yi")), \
+                     std::stof(par.ParamReturn("-zi"))};          
+
+
+  // END LIMIT DOMAIN
+
+  const VecF Flim = {std::stof(par.ParamReturn("-xf")), \
+                     std::stof(par.ParamReturn("-yf")), \
+                     std::stof(par.ParamReturn("-zf"))};          
+
+ // NUMBER OF ELEMENTS
+
+  const VecI Nelem = {std::stoi(par.ParamReturn("-nx"))-1, \
+                          std::stoi(par.ParamReturn("-ny"))-1, \
+                          std::stoi(par.ParamReturn("-nz"))-1};
+
+
+  // TIME STEP
+
+  const Dfloat dt = std::stof(par.ParamReturn("-dt"));
+
+
+  // SOURCE FREQUENCY
+
+  const Dfloat f0 = std::stof(par.ParamReturn("-f0"));
+
+
+  // SIMULATION TIME
+
+  const Dfloat t = std::stof(par.ParamReturn("-t")); 
+
+
   int  nt = (int) t / dt;                                     // TIME MARCHING STEP
-  VecF SrcPosition = {6000/2.0,6000/2.0,10000};      // SOURCE POSITION
-  VecI SubN = {Sx,Sy,Sz};                                        // NUMBER OF SUBDOMAINS
+  VecF SrcPosition = {11000/2.0,11000/2.0,11000/2.0};               // SOURCE POSITION
+  VecI SubN = {Sx,Sy,Sz};                                     // NUMBER OF SUBDOMAINS
   Dfloat time1,time2,time;
 
 
-  SDM *sdm;                                     //Pointer SubDomains
+  SDM *sdm;                                     // Pointer SubDomains
   Dfloat *SubMu,*SubRho,*SubLamb;               // Model Subdomains
   int N_mpi = SubN.x * SubN.y * SubN.z;         // Number MPI processors
   geometry3D *Gdomain;                          // Domain
   Show show;                                    // Print Class
-  MPI_DATA *sHALO;                               // Subdoamin HALO Transfer Class
-  MODEL *model;    // Model
+  MPI_DATA *sHALO;                              // Subdoamin HALO Transfer Class
+  MODEL *model;                                 // Model
  
 
 
