@@ -833,6 +833,73 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 }
 
 
+void SDM::Free_VX(VecI Init,VecI Iend,int zh){
+  int iz = Iend.z + HALO.z - zh ;
+  VecI Lindx,Gindx;
+  Dfloat df_dI,df_dJ,df_dK;
+  
+
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,Lindx,Gindx)\
+  firstprivate(zh,iz)
+    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+	df_dI = ( C1 * (sxx[IJK(ix,iy,iz)] - sxx[IJK(ix-1,iy,iz)]) - \
+		  C0 * (sxx[IJK(ix+1,iy,iz)] - sxx[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
+	
+	df_dJ = ( C1 * (sxy[IJK(ix,iy,iz)] - sxy[IJK(ix,iy-1,iz)]) - \
+		  C0 * (sxy[IJK(ix,iy+1,iz)] - sxy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
+
+
+	if (zh == 1) { // Free Surface Z = 0;
+	
+	  df_dK = -( (35.0 / 8.0) * sxz[IJK(ix,iy,iz-1)] \
+		    - (35.0 / 24.0) * sxz[IJK(ix,iy,iz-2)] \
+		    + (21.0 / 40.0) * sxz[IJK(ix,iy,iz-3)] \
+		    - (5.0 / 56.0) * sxz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
+
+	} else if (zh == 2) { // Free Surface Z == h;
+
+
+	  df_dK = -( - (31.0 / 24.0) * sxz[IJK(ix,iy,iz)] \
+		    + (29.0 / 24.0) * sxz[IJK(ix,iy,iz-1)] \
+		    - (3.0 / 40.0) * sxz[IJK(ix,iy,iz-2)] \
+		    + (1.0 / 168.0) * sxz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	  
+	}
+
+
+	dsxx_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dsxx_dx[IJK(ix,iy,iz)] \
+	  + pml_x->A_HALF(Gindx.x) * df_dI;
+
+	dsxy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsxy_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+
+	dsxz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsxz_dz[IJK(ix,iy,iz)]  \
+	  + pml_z->A_HALF(Gindx.z) * df_dK;
+
+	df_dI += dsxx_dx[IJK(ix,iy,iz)];
+	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
+	df_dK += dsxz_dz[IJK(ix,iy,iz)];
+
+
+	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + (dt / rho[IJK(ix,iy,iz)]) * \
+	  (df_dI + df_dJ + df_dK);
+
+
+	
+      }
+    }
+
+  
+}
+
+
 void SDM::FD_VX(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
@@ -884,6 +951,78 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 
 
   
+
+  
+}
+
+
+void SDM::Free_VY(VecI Init,VecI Iend, int zh){
+  int iz = Iend.z + HALO.z - zh;
+  VecI Lindx,Gindx;
+  Dfloat df_dI,df_dJ,df_dK;
+  Dfloat rho_avg;
+  
+
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)\
+  firstprivate(zh,iz)
+    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+	df_dI = ( C1 * (sxy[IJK(ix+1,iy,iz)] - sxy[IJK(ix,iy,iz)]) - \
+		  C0 * (sxy[IJK(ix+2,iy,iz)] - sxy[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
+	
+	df_dJ = ( C1 * (syy[IJK(ix,iy+1,iz)] - syy[IJK(ix,iy,iz)]) - \
+		  C0 * (syy[IJK(ix,iy+2,iz)] - syy[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
+
+
+	if (zh == 1) { // Free Surface Z = 0;
+	
+	  df_dK = -( (35.0 / 8.0) * syz[IJK(ix,iy,iz-1)] \
+		    - (35.0 / 24.0) * syz[IJK(ix,iy,iz-2)] \
+		    + (21.0 / 40.0) * syz[IJK(ix,iy,iz-3)] \
+		    - (5.0 / 56.0) * syz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
+
+	} else if (zh == 2) { // Free Surface Z == h;
+
+
+	  df_dK = -( - (31.0 / 24.0) * syz[IJK(ix,iy,iz)] \
+		    + (29.0 / 24.0) * syz[IJK(ix,iy,iz-1)] \
+		    - (3.0 / 40.0) * syz[IJK(ix,iy,iz-2)] \
+		    + (1.0 / 168.0) * syz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	  
+	}	
+
+       
+
+	dsxy_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxy_dx[IJK(ix,iy,iz)] \
+	  + pml_x->A(Gindx.x) * df_dI;
+
+	dsyy_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dsyy_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A(Gindx.y) * df_dJ;
+
+	dsyz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsyz_dz[IJK(ix,iy,iz)]  \
+	  + pml_z->A_HALF(Gindx.z) * df_dK;
+
+	df_dI += dsxy_dx[IJK(ix,iy,iz)];
+	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
+	df_dK += dsyz_dz[IJK(ix,iy,iz)];
+
+
+	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
+		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+	  (df_dI + df_dJ + df_dK);
+
+
+	
+      }
+    }
 
   
 }
@@ -948,6 +1087,65 @@ void SDM::FD_VY(VecI Init,VecI Iend){
   
 }
 
+void SDM::Free_VZ(VecI Init,VecI Iend){
+
+  int iz = Iend.z + HALO.z;
+  VecI Lindx,Gindx;
+  Dfloat df_dI,df_dJ,df_dK;
+  Dfloat rho_avg;
+  
+
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)\
+  firstprivate(iz)
+    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+	df_dI = ( C1 * (sxz[IJK(ix+1,iy,iz)] - sxz[IJK(ix,iy,iz)]) - \
+		  C0 * (sxz[IJK(ix+2,iy,iz)] - sxz[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
+	
+	df_dJ = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy-1,iz)]) - \
+		  C0 * (syz[IJK(ix,iy+1,iz)] - syz[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
+
+
+	df_dK = -( - (11.0 / 12.0) * szz[IJK(ix,iy,iz+1)] \
+		  + (17.0 / 24.0) * szz[IJK(ix,iy,iz)] \
+		  + (3.0 / 8.0) * szz[IJK(ix,iy,iz-1)]\
+		  - (5.0 / 24.0) * szz[IJK(ix,iy,iz-2)] \
+		  + (1.0 / 24.0) * szz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	
+	
+
+
+	dsxz_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxz_dx[IJK(ix,iy,iz)] \
+	  + pml_x->A(Gindx.x) * df_dI;
+
+	dsyz_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsyz_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+
+	dszz_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dszz_dz[IJK(ix,iy,iz)]  \
+	  + pml_z->A(Gindx.z) * df_dK;
+
+	df_dI += dsxz_dx[IJK(ix,iy,iz)];
+	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
+	df_dK += dszz_dz[IJK(ix,iy,iz)];
+
+	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
+		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+
+	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+	  (df_dI + df_dJ + df_dK);
+
+
+	
+      }
+    }
+  
+}
 
 
 void SDM::FD_VZ(VecI Init,VecI Iend){
@@ -1055,6 +1253,60 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
 
 }
 
+
+void SDM::Free_SXZ(VecI Init,VecI Iend){
+
+  int iz = Iend.z + HALO.z;
+  VecI Lindx,Gindx;
+  Dfloat df_dI,df_dJ,df_dK;
+  Dfloat mu_avg;
+
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)\
+  firstprivate(iz)
+    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+	df_dI = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix-1,iy,iz)]) - \
+		  C0 * (vz[IJK(ix+1,iy,iz)] - vz[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
+
+
+	df_dK = -( - (11.0 / 12.0) * vx[IJK(ix,iy,iz+1)] \
+		  + (17.0 / 24.0) * vx[IJK(ix,iy,iz)] \
+		  + (3.0 / 8.0) * vx[IJK(ix,iy,iz-1)]\
+		  - (5.0 / 24.0) * vx[IJK(ix,iy,iz-2)] \
+		  + (1.0 / 24.0) * vx[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	
+	
+
+	dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
+	  + pml_x->A_HALF(Gindx.x) * df_dI;
+
+	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
+	  + pml_z->A(Gindx.z) * df_dK;
+
+
+	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
+
+
+	df_dI += dvz_dx[IJK(ix,iy,iz)];
+	df_dK += dvx_dz[IJK(ix,iy,iz)];
+
+
+	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	  (df_dI + df_dK);
+
+
+	
+      }
+    }
+
+}
+
 void SDM::FD_SXZ(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
@@ -1104,6 +1356,63 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
 
 
   
+
+  
+}
+
+
+void SDM::Free_SYZ(VecI Init,VecI Iend){
+
+  int iz = Iend.z + HALO.z;
+  VecI Lindx,Gindx;
+  Dfloat df_dI,df_dJ,df_dK;
+  Dfloat mu_avg;
+
+#pragma omp parallel for num_threads(N_omp)\
+  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)\
+  firstprivate(iz)
+    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
+      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+
+
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
+	df_dJ = ( C1 * (vz[IJK(ix,iy+1,iz)] - vz[IJK(ix,iy,iz)]) - \
+		  C0 * (vz[IJK(ix,iy+2,iz)] - vz[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
+
+	df_dK = -( - (11.0 / 12.0) * vy[IJK(ix,iy,iz+1)] \
+		  + (17.0 / 24.0) * vy[IJK(ix,iy,iz)] \
+		  + (3.0 / 8.0) * vy[IJK(ix,iy,iz-1)]\
+		  - (5.0 / 24.0) * vy[IJK(ix,iy,iz-2)] \
+		  + (1.0 / 24.0) * vy[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	
+	
+
+	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A(Gindx.x) * df_dJ;
+
+	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
+	  + pml_z->A(Gindx.z) * df_dK;
+
+
+	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
+		mu[IJK(ix,iy+1,iz)] + mu[IJK(ix+1,iy+1,iz)] + \
+		mu[IJK(ix,iy,iz+1)] + mu[IJK(ix+1,iy,iz+1)] + \
+		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
+
+
+	df_dJ += dvz_dy[IJK(ix,iy,iz)];
+	df_dK += dvy_dz[IJK(ix,iy,iz)];
+
+
+	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	  (df_dJ + df_dK);
+
+
+	
+      }
+    }
 
   
 }
@@ -1162,17 +1471,19 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 }
 
 
-void SDM::FreeS_SII(VecI Init,VecI Iend){
+void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
-  int iz = Iend.z + HALO.z ;
+  int iz = Iend.z + HALO.z - zh ;
+  Dfloat d_free;
   VecI Lindx,Gindx;
   Dfloat mu_avg,lamb_avg,df_dI,df_dJ,df_dK;
+  Dfloat df_dI_free,df_dJ_free;
 
    // Free Surface Implementation Stress Imaging
   
   #pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,lamb_avg,Lindx,Gindx)\
-  firstprivate(iz)
+    private(df_dI,df_dJ,df_dI_free,df_dJ_free,df_dK,mu_avg,lamb_avg,Lindx,Gindx,d_free)	\
+    firstprivate(iz,zh)
    for (int iy=HALO.y+Init.y; iy<Iend.y + HALO.y; ++iy){
       for (int ix=HALO.x+Init.x; ix<Iend.x + HALO.x; ++ix){
 
@@ -1185,13 +1496,36 @@ void SDM::FreeS_SII(VecI Init,VecI Iend){
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)]) / 2.0;
 	lamb_avg = (lamb[IJK(ix,iy,iz)] + lamb[IJK(ix+1,iy,iz)]) / 2.0;
 
+	
+
 	df_dI = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
 		  C0 * (vx[IJK(ix+2,iy,iz)] - vx[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
 	df_dJ = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
 		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
+
+	
+	if (zh == 1) { // z = 0; Free Surface
 	
 	df_dK = - (df_dI + df_dJ) * (lamb_avg / (lamb_avg + 2.0 * mu_avg));
+
+	} else if (zh == 2) { // z = h; Free Surface
+
+
+	df_dI_free = ( C1 * (vx[IJK(ix+1,iy,iz+1)] - vx[IJK(ix,iy,iz+1)]) - \
+		  C0 * (vx[IJK(ix+2,iy,iz+1)] - vx[IJK(ix-1,iy,iz+1)]) ) / SDMGeom->Dx();
+	
+	df_dJ_free = ( C1 * (vy[IJK(ix,iy,iz+1)] - vy[IJK(ix,iy-1,iz+1)]) - \
+		  C0 * (vy[IJK(ix,iy+1,iz+1)] - vy[IJK(ix,iy-2,iz+1)]) ) / SDMGeom->Dy();
+
+
+	  d_free = - (df_dI_free + df_dJ_free) * (lamb_avg / (lamb_avg + 2.0 * mu_avg)) * SDMGeom->Dz();
+
+	  df_dK = -(1.0 / SDMGeom->Dz()) * ( - (1.0 / 22.0) * d_free - (577.0 / 528.0) * vz[IJK(ix,iy,iz)] \
+				    + (201.0 / 176.0) * vz[IJK(ix,iy,iz-1)] \
+				    - (9.0 / 176.0) * vz[IJK(ix,iy,iz-2)] \
+					    + (1.0 / 528.0) * vz[IJK(ix,iy,iz-3)] );
+	}
 
 
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
@@ -1221,9 +1555,18 @@ void SDM::FreeS_SII(VecI Init,VecI Iend){
 
 
 	// SZZ
-	
+
+	if (zh == 1) {
+	  
 	szz[IJK(ix,iy,iz)] = 0.0;
-	szz[IJK(ix,iy,iz+1)] = -szz[IJK(ix,iy,iz-1)];
+	
+	} else if (zh == 2) {
+
+	  szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) +  \
+	  dt * lamb_avg *  (df_dJ + df_dI);
+	}
+
 	
 
       }
@@ -1252,14 +1595,18 @@ void SDM::FDSII() {
  
   if (Nsdm.z == NumSubDom.z-1){
 
-    end.z = NodLoc.z - 1;
-    FD_SII(init,end);
-    FreeS_SII(init,end);
+    // FREE SURFACE 
 
-  } else {
+    // H - AFDA Kristek(2002);
+    Free_SII(init,end,1); // z = 0;
+    Free_SII(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
+    
+  } 
 
-    FD_SII(init,end);
-  }
+
+  FD_SII(init,end);
+  
   
 }
 
@@ -1286,28 +1633,15 @@ void SDM::FDSXZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if (Nsdm.z == NumSubDom.z - 1) { 
-    end.z = NodLoc.z - 1;
+  if (Nsdm.z == NumSubDom.z - 1) {
+    // FREE SURFACE
+    // H - AFDA Kristek(2002);
+    end.z = NodLoc.z - 2;
+    Free_SXZ(init,end);
   }
-
-  
-  FD_SXZ(init,end);
-
-  // Stress imaging 
-   if (Nsdm.z == NumSubDom.z - 1) { 
- 
-    for (int iy=HALO.y; iy<NodLoc.y+HALO.y; ++iy){
-      for (int ix=HALO.x; ix<NodLoc.x+HALO.x; ++ix){
-
-	int iz = HALO.z + NodLoc.z - 2;
-
-	sxz[IJK(ix,iy,iz+1)] = -sxz[IJK(ix,iy,iz)];
-	sxz[IJK(ix,iy,iz+2)] = -sxz[IJK(ix,iy,NodLoc.z-1)];
-	sxz[IJK(ix,iy,iz+3)] = -sxz[IJK(ix,iy,NodLoc.z-2)];
-      }
-    }
     
-   }
+
+  FD_SXZ(init,end);
 
 }
 
@@ -1326,30 +1660,17 @@ void SDM::FDSYZ() {
     end.y = NodLoc.y - 1;
   }
 
-  
-  if (Nsdm.z == NumSubDom.z - 1) { 
-    end.z = NodLoc.z - 1;
-  }
-  
-  FD_SYZ(init,end);
 
+   if (Nsdm.z == NumSubDom.z - 1) {
 
-    // Stress imaging 
-   if (Nsdm.z == NumSubDom.z - 1) { 
- 
-    for (int iy=HALO.y; iy<NodLoc.y+HALO.y; ++iy){
-      for (int ix=HALO.x; ix<NodLoc.x+HALO.x; ++ix){
-
-	int iz = HALO.z + NodLoc.z - 2;
-
-	syz[IJK(ix,iy,iz+1)] = -syz[IJK(ix,iy,iz)];
-	syz[IJK(ix,iy,iz+2)] = -syz[IJK(ix,iy,NodLoc.z-1)];
-	syz[IJK(ix,iy,iz+3)] = -syz[IJK(ix,iy,NodLoc.z-2)];
-      }
-    }
+     // FREE SURFACE
+    // H - AFDA Kristek(2002);
+    end.z = NodLoc.z - 2;
+    Free_SYZ(init,end);
     
    }
-
+    
+  FD_SYZ(init,end);
 
 }
 
@@ -1379,6 +1700,18 @@ void SDM::FDVX() {
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
   }
+
+  
+  if (Nsdm.z == NumSubDom.z-1){
+    // FREE SURFACE 
+
+    // H - AFDA Kristek(2002);
+    Free_VX(init,end,1); // z = 0;
+    Free_VX(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
+  }
+
+
   
   FD_VX(init,end);
 
@@ -1400,6 +1733,16 @@ void SDM::FDVY() {
 
   if (Nsdm.x == NumSubDom.x - 1) { 
     end.x = NodLoc.x - 1;
+  }
+
+
+  if (Nsdm.z == NumSubDom.z-1){
+    // FREE SURFACE 
+
+    // H - AFDA Kristek(2002);
+    Free_VY(init,end,1); // z = 0;
+    Free_VY(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
   }
   
   FD_VY(init,end);
@@ -1427,12 +1770,12 @@ void SDM::FDVZ() {
 
 
     if (Nsdm.z == NumSubDom.z - 1) { 
-    end.z = NodLoc.z - 1;
-  }
+    end.z = NodLoc.z - 2;
+    Free_VZ(init,end);
+    }
 
-   
-  
-  FD_VZ(init,end);
+    FD_VZ(init,end);
+    
 
 }
 

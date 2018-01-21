@@ -149,26 +149,30 @@ public:
 
 
   // FINITE DIFFERENCES SXX, SYY, SZZ
+  void Free_SII(VecI Init ,VecI Iend, int );
   void FDSII();
-
-  void FreeS_SII(VecI Init ,VecI Iend);
 
   // FINITE DIFFERENCES SXY
   void FDSXY();
 
   // FINITE DIFFERENCES SXZ
+  void Free_SXZ(VecI Init ,VecI Iend);
   void FDSXZ();
 
   // FINITE DIFFERENCES SYZ
+  void Free_SYZ(VecI Init ,VecI Iend);
   void FDSYZ();
 
   // FINITE DIFFERENCES SVX
+  void Free_VX(VecI Init ,VecI Iend, int);
   void FDVX();
 
   // FINITE DIFFERENCES SVY
+  void Free_VY(VecI Init ,VecI Iend, int);
   void FDVY();
 
   // FINITE DIFFERENCES SVZ
+  void Free_VZ(VecI Init ,VecI Iend);
   void FDVZ();
 
   // Source Function 
