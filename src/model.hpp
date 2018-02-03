@@ -20,7 +20,7 @@ protected:
 
 public:
 
-  MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN);
+  MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN);
 
   ~MODEL();
 

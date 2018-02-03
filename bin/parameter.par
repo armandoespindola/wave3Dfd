@@ -1,23 +1,38 @@
 // MODEL DIMENSIONS
 -xi 0.0
--xf 11100.0
+-xf 9900.0
 -yi 0.0
--yf 11100.0
+-yf 9900.0
 -zi 0.0
--zf 11100.0
+-zf 4900.0
 // NUMBER OF NODES IN EVERY DIRECTION
--nx 112
--ny 112
--nz 112
+-nx 100
+-ny 100
+-nz 50
 // SIMULATION TIME [s]
--t 4.0
+-t 3.0
 // TIME STEP
 -dt 0.001 
 // SOURCE FREQUENCY
--f0 4.0
+-f0 6.0
+// SOURCE TYPE
+-stype 3
 // NUMBER OF SUBDOMAINS
 -sx 2
 -sy 2
 -sz 2
 // NUMBER OMP THREADS
 -nomp 3
+// SNAPSHOT
+-snap 0
+-t_snap 100
+// NUMBER OF SOURCES
+-ns 1
+-sf ../data/sources.dat
+// NUMBER OF RECEPTORS
+-nr 1
+-rf ../data/receptors.dat
+// MODEL DATA FILES
+-VP_F ../data/VP.bin
+-VS_F ../data/VS.bin
+-RHO_F ../data/RHO.bin

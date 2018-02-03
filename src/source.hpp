@@ -1,49 +1,44 @@
 // -*- c++ -*-
+
+
 #ifndef __SOURCE__
 #define __SOURCE__
-#include "source.hpp"
 
 #include <stdio.h>
 #include "definitions.hpp"
-#include "parameters.hpp"
+#include "geometry3D.hpp"
 #include <math.h>
 
+class source {
 
-Dfloat source(Dfloat t0 , int itime) {
+protected:
 
-  Dfloat src,a_fu,amp,time;
+  geometry3D *GDomain;
+  std::string FileS,line;
+  std::ifstream R;
+  char data[200],*token;
 
-  time = 0.5 * dt + itime  * dt; 
-  a_fu= pow (pi*f0,2.0);
-  src = 0.0;
+public:
 
-  // GAUSSIAN 
-  
-  if (T_SRC==0){ 
-    src = exp(-a_fu * pow(time - t0,2.0));
-  }
-  
-  // FIRST DERIVATIVE OF A GAUSSIAN
-  
-  if (T_SRC==1){
-    src = 4.0 * a_fu *(time - t0) * exp(-2.0 * a_fu * pow( (time  - t0),2.0) );
-  }
+  Dfloat *Mxx,*Myy,*Mzz,*Mxy,*Mxz,*Myz;
+  Dfloat *strike,*dip,*slip,*azimuth,*M0,*d_t0;
+  Dfloat *xcoord,*ycoord,*zcoord;
+  VecI *pos_src;
+  int ns;
 
-  // SECOND DERIVATIVE OF A GAUSSIAN (RICKER PULSE)
-  
-  if (T_SRC==2){
-    src = (1.0 - 2.0 * a_fu * pow((time - t0),2.0)) * exp(-a_fu * pow((time - t0),2.0)) ;
-  }
+  source(geometry3D* domain, std::string nFile,int nsource);
 
-  // HEAVISIDE STEP FUNCTION
-  
-  if (T_SRC==3){
-    src = 1.0 * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m
-  }
+  ~source();
+
+  Dfloat sourceType(Dfloat t0,Dfloat f0, int itime,Dfloat dt, int Tsrc);
 
   
-  return src;
+  void smoment();
+
+  
+  
 
 };
+
 
 #endif

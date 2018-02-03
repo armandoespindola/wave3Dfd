@@ -56,18 +56,41 @@ int main (int argc, char* argv[]) {
   const Dfloat dt = std::stof(par.ParamReturn("-dt"));
 
 
+  // NUMBER OF SOURCES
+
+  const int nsource = std::stoi(par.ParamReturn("-ns"));
+
+  // SOURCES FILE
+
+  const std::string sourceFile = par.ParamReturn("-sf");
+
+  // NUMBER OF RECEPTORS
+
+  const int nrecep = std::stoi(par.ParamReturn("-nr"));
+
+  // RECEPTORS FILE
+
+  const std::string recepFile = par.ParamReturn("-rf");
+
   // SOURCE FREQUENCY
 
   const Dfloat f0 = std::stof(par.ParamReturn("-f0"));
 
+  // SOURCE TIME FUNCTION
+
+  const int s_type = std::stoi(par.ParamReturn("-stype"));
+
 
   // SIMULATION TIME
 
-  const Dfloat t = std::stof(par.ParamReturn("-t")); 
+  const Dfloat t = std::stof(par.ParamReturn("-t"));
 
+  // SNAPSOTH
+
+  const int t_snap = std::stoi(par.ParamReturn("-t_snap"));
+  const int snap = std::stoi(par.ParamReturn("-snap"));
 
   int  nt = (int) t / dt;                                     // TIME MARCHING STEP
-  VecF SrcPosition = {11000/2.0,11000/2.0,11000/2.0};               // SOURCE POSITION
   VecI SubN = {Sx,Sy,Sz};                                     // NUMBER OF SUBDOMAINS
   Dfloat time1,time2,time;
 
@@ -84,9 +107,6 @@ int main (int argc, char* argv[]) {
 
 // General Domain
   Gdomain = new geometry3D(Ilim,Flim,Nelem); 
-
- // Source position 
-  VecI pos_src = Gdomain->FindNode(SrcPosition);  
 
 // Local nodes domain
   VecI GNod = {Gdomain->L_NodeX(),Gdomain->L_NodeY(),Gdomain->L_NodeZ()}; 
@@ -170,15 +190,21 @@ if (rank == 0) {
   std::cout<<"Nodes_Subdomain Y "<<SubNodes.y<<std::endl;
   std::cout<<"Nodes_Subdomain Z "<<SubNodes.z<<std::endl;
   std::cout<<"Time steps: "<<nt<<std::endl;
+  std::cout<<"Source File: "<<sourceFile<<std::endl;
+ 
 
   
 
 // Read Model Domain
-  char FileVP[] = "../src/example/VP.bin";
-  char FileVS[] = "../src/example/VS.bin";
-  char FileR[] = "../src/example/RHO.bin";
+  std::string FileVP = par.ParamReturn("-VP_F"); // "../src/example/VP.bin";
+  std::string FileVS = par.ParamReturn("-VS_F"); // "../src/example/VS.bin";
+  std::string FileR =  par.ParamReturn("-RHO_F"); //"../src/example/RHO.bin";
 
-  model = new MODEL(FileVP,FileVS,FileR, \
+   std::cout<<"File VP: "<<FileVP<<std::endl;
+   std::cout<<"File VS: "<<FileVS<<std::endl;
+   std::cout<<"File RHO: "<<FileR<<std::endl;
+
+  model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
         GNod,SubNodes);
 
   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN); 
@@ -238,23 +264,30 @@ MPI_Barrier(MPI_COMM_WORLD);
   //#########################
 
 
+// MODEL INITIALIZATION
+ 
   sdm->ModelRead(SubRho,"RHO");
   sdm->ModelRead(SubMu,"MU");
   sdm->ModelRead(SubLamb,"LAMB");
+
+  // SOURCE INITIALIZATION
+  sdm->InitSource(Gdomain,sourceFile,nsource);
+  sdm->InitRecept(Gdomain,recepFile,nrecep);
+  
   int a=sdm->CFL();
   sdm->InitVar(ZERO);
   sHALO = new MPI_DATA(sdm);
 
   time = 0.0;
 
-  int kk = 100;
+  int kk = t_snap;
   for (int k = 0; k<nt; ++k){
 
 
     time1 = MPI::Wtime();
     //printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
   
-    Dfloat source = 100000000.0 * sdm->source(1,k,0.25);
+    
     //printf("%f\n",source);
     sdm->FDSII();
     sdm->FDSXY();
@@ -262,9 +295,8 @@ MPI_Barrier(MPI_COMM_WORLD);
     sdm->FDSYZ();
 
      // Source #########
-    sdm->AddVal(pos_src,"SXX",source);
-    sdm->AddVal(pos_src,"SYY",source);
-    sdm->AddVal(pos_src,"SZZ",source);
+     sdm->Addsource(k,s_type);
+     sdm->GetRecept();
 
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -292,13 +324,14 @@ MPI_Barrier(MPI_COMM_WORLD);
 
     time += (time2-time1)/nt;
 
-    
-    if (kk == k){
-      sdm->print("VZ",k);
-      //sdm.print("VY",k);
-      //sdm.print("SXX",k);
+    if (snap){ 
+      if (kk == k){
+	sdm->print("VZ",k);
+	sdm->print("VY",k);
+	sdm->print("VX",k);
       kk += 100;
       }
+    }
     
     
   }
@@ -308,6 +341,8 @@ MPI_Barrier(MPI_COMM_WORLD);
     delete model;
     printf("END\t TIME(STEP): %f\t HOLE TIME: %f\n",time,time*nt);
   }
+
+  sdm->EndRecept();
   
   delete sdm;
   delete [] SubMu;

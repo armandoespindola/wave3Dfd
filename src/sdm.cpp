@@ -201,7 +201,7 @@ int SDM::CFL(){
       cfl = 0;
       return cfl;
      }else{
-      //printf("CFL SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
+      // printf("CFL SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
       cfl = 1;
        }
        
@@ -630,11 +630,11 @@ VecI SDM::SFindNode(VecI Nodef){
 
   VecI Global,Local;
   
-  for (int iz=0;iz<SDMGeom->HALO_NodeZ();iz++){
-     for (int iy=0;iy<SDMGeom->HALO_NodeY();iy++){
-       for (int ix=0;ix<SDMGeom->HALO_NodeX();ix++){
+  for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
 
-	 Local = {ix,iy,iz};
+	 Local = {ix+HALO.x,iy+HALO.y,iz+HALO.z};
 	 Global = Loc2Glo(Local);
    
 	 if ( ((Nodef.x - Global.x) == 0) &&	\
@@ -1780,44 +1780,99 @@ void SDM::FDVZ() {
 }
 
 
-Dfloat SDM::source(int T_SRC, int itime,Dfloat t0){
+void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource){
+  sourceM = new source(GDomain,nFile,nsource);
+}
 
 
-  Dfloat src,a_fu,amp,time;
-
-  //time = 0.5 * dt + itime  * dt;
-  time = itime  * dt;
-  a_fu= pow (pi*f0,2.0);
-  src = 0.0;
-
-  // GAUSSIAN 
+void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep){
   
-  if (T_SRC==0){ 
-    src = exp(-a_fu * pow(time - t0,2.0));
+  station  = new receptor(GDomain,nFile,nrecep);
+
+  idx_station = new VecI[nrecep];
+
+  for (int i = 0; i<station->nr; ++i){
+    idx_station[i] = SFindNode(station->pos_recep[i]);
+
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) && \
+	   (idx_station[i].z > -1) ){
+
+	station->FileOpen(i);
+
+      }
+    
   }
   
-  // FIRST DERIVATIVE OF A GAUSSIAN
-  
-  if (T_SRC==1){
-    src = 4.0 * a_fu *(time - t0) * exp(-2.0 * a_fu * pow( (time  - t0),2.0) );
-  }
+ 
+}
 
-  // SECOND DERIVATIVE OF A GAUSSIAN (RICKER PULSE)
-  
-  if (T_SRC==2){
-    src = (1.0 - 2.0 * a_fu * pow((time - t0),2.0)) * exp(-a_fu * pow((time - t0),2.0)) ;
-  }
 
-  // HEAVISIDE STEP FUNCTION
+void SDM::EndRecept(){
   
-  if (T_SRC==3){
-    src = 1.0 * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m
-  }
+  for (int i = 0; i<station->nr; ++i){
+ 
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) &&\
+	   (idx_station[i].z > -1) ){
 
+	station->FileClose(i);
+
+      }
+    
+  }
   
-  return src;
+}
+
+
+void SDM::GetRecept(){
+  Dfloat Rvx,Rvy,Rvz;
+
+   for (int i = 0; i<station->nr; ++i){
+    
+     
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
+	   (idx_station[i].z > -1) ){
+
+	Rvx = 0;
+	Rvy = 0;
+	Rvz = 0;
+
+	Rvx = GetVal(station->pos_recep[i],"VX");
+	Rvy = GetVal(station->pos_recep[i],"VY");
+	Rvz = GetVal(station->pos_recep[i],"VZ");
+
+	station->WriteFile(i,Rvx,Rvy,Rvz);
+	
+      }
+    
+   }
+  
 
 }
+
+
+
+void SDM::Addsource(int itime, int T_SRC){
+
+  Dfloat st = 0;
+
+
+  for (int i = 0; i<sourceM->ns; ++i){
+        
+    st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
+    st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
+
+    AddVal(sourceM->pos_src[i],"SXX", st * sourceM->Mxx[i]);
+    AddVal(sourceM->pos_src[i],"SYY", st * sourceM->Myy[i]);
+    AddVal(sourceM->pos_src[i],"SZZ", st * sourceM->Mzz[i]);
+    AddVal(sourceM->pos_src[i],"SXY", st * sourceM->Mxy[i]);
+    AddVal(sourceM->pos_src[i],"SXZ", st * sourceM->Mxz[i]);
+    AddVal(sourceM->pos_src[i],"SYZ", st * sourceM->Myz[i]);
+ 
+  }
+  
+
+}
+
 
 
 void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
@@ -1825,7 +1880,7 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   char times[200];
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
-  sprintf(times,"../src/example/%s_%d-%d.bin",nfile,subindx,ktime);
+  sprintf(times,"../data/%s_%d-%d.bin",nfile,subindx,ktime);
 
   
   

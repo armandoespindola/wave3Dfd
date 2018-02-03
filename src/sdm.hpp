@@ -4,6 +4,8 @@
 #include "definitions.hpp"
 #include "pml.hpp"
 #include "geometry3D.hpp"
+#include "source.hpp"
+#include "receptor.hpp"
 
 class SDM {
 
@@ -28,7 +30,7 @@ protected:
 	VecF thickness_PML;
         VecI NT,Nsdm,NumSubDom;
 	VecI NodLoc;
-  int N_omp;
+        int N_omp;
 
 	// WAVE PROPAGATION VARIABLES  
 	Dfloat *sxx,*syy,*szz;
@@ -45,6 +47,17 @@ protected:
 	Dfloat *dvx_dx,*dvy_dy,*dvz_dz;
 	Dfloat *dvx_dy,*dvy_dx,*dvx_dz;
 	Dfloat *dvz_dx,*dvy_dz,*dvz_dy;
+
+  // SOURCE MOMENT TENSOR
+
+  source *sourceM;
+
+  // RECEPTORS
+
+  receptor *station;
+  VecI *idx_station;
+
+  
 
 public:
 
@@ -175,8 +188,23 @@ public:
   void Free_VZ(VecI Init ,VecI Iend);
   void FDVZ();
 
-  // Source Function 
-  Dfloat source(int T_SRC,int itime, Dfloat t0);
+  // SOURCE MOMENT TENSOR
+
+  // INITIALIZE SOURCE
+  void InitSource(geometry3D *GDomain,std::string nFile,int nsource);
+
+  // ADD VALUES SOURCE
+  void Addsource(int itime,int T_SRC);
+
+  // INITIALIZE RECEPTORS
+    void InitRecept(geometry3D *GDomain,std::string nFile,int nrecep);
+
+ // FINALIZE RECEPTORS
+  void EndRecept();
+
+
+  // ADD VALUES RECEPTORS
+    void GetRecept();
 
   void printfile(Dfloat * Var,char *nfile, int ktime);
 

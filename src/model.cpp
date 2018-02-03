@@ -1,14 +1,14 @@
 #include "model.hpp"
 
-MODEL::MODEL(char *FileP,char *FileS,char *FileR, VecI iGDim, VecI iSubDomNodeN) {
+MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN) {
 
   GDim = iGDim;
   SubDomNodeN = iSubDomNodeN;
   FILE *R,*P,*S;
 
-  R=fopen(FileR,"rb");
-  P=fopen(FileP,"rb");
-  S=fopen(FileS,"rb");
+  R=fopen(FileR.c_str(),"rb");
+  P=fopen(FileP.c_str(),"rb");
+  S=fopen(FileS.c_str(),"rb");
 
   NDT.x = GDim.x + 2 * PML.x;
   NDT.y = GDim.y + 2 * PML.y;

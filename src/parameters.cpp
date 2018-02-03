@@ -9,7 +9,7 @@ PAR::PAR(int argi, char** param,char *b){
 
   if (R.is_open()) {
 
-    std::cout<<"\n### PARAMETERS FILE: Read ###"<<std::endl;
+    // std::cout<<"\n### PARAMETERS FILE: Read ###"<<std::endl;
   } else {
 
     std::cout<<"PARAMETERS FILE: Read error"<<std::endl;
@@ -28,7 +28,7 @@ std::string PAR::ParamReturn(std::string namePar){
 
   std::string line,var;
 
-  while ( std::getline (R,line) )
+  while ( std::getline(R,line) )
       {
 
 	if (line.find(namePar) == 0){
