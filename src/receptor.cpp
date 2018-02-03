@@ -66,9 +66,9 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
 
 void receptor::FileOpen(int i){
 
-  RX[i].open("../data/"+nameStation[i] + "-VX",std::ios::binary | std::ios::trunc);
-  RY[i].open("../data/"+nameStation[i] + "-VY",std::ios::binary | std::ios::trunc);
-  RZ[i].open("../data/"+nameStation[i] + "-VZ",std::ios::binary | std::ios::trunc);
+  RX[i].open("../data/"+nameStation[i] + "-VX.bin",std::ios::binary | std::ios::trunc);
+  RY[i].open("../data/"+nameStation[i] + "-VY.bin",std::ios::binary | std::ios::trunc);
+  RZ[i].open("../data/"+nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::trunc);
   
   
 
