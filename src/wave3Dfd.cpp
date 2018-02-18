@@ -90,7 +90,7 @@ int main (int argc, char* argv[]) {
   const int t_snap = std::stoi(par.ParamReturn("-t_snap"));
   const int snap = std::stoi(par.ParamReturn("-snap"));
 
-  int  nt = (int) t / dt;                                     // TIME MARCHING STEP
+  int  nt = round(t / dt);                                     // TIME MARCHING STEP
   VecI SubN = {Sx,Sy,Sz};                                     // NUMBER OF SUBDOMAINS
   Dfloat time1,time2,time;
 

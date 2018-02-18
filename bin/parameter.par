@@ -10,13 +10,13 @@
 -ny 100
 -nz 50
 // SIMULATION TIME [s]
--t 3.0
+-t 8.0
 // TIME STEP
--dt 0.001 
+-dt 0.01 
 // SOURCE FREQUENCY
--f0 6.0
+-f0 3.0
 // SOURCE TYPE
--stype 3
+-stype 2
 // NUMBER OF SUBDOMAINS
 -sx 2
 -sy 2
@@ -30,7 +30,7 @@
 -ns 1
 -sf ../data/sources.dat
 // NUMBER OF RECEPTORS
--nr 1
+-nr 8
 -rf ../data/receptors.dat
 // MODEL DATA FILES
 -VP_F ../data/VP.bin

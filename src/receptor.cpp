@@ -55,8 +55,12 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
     zcoord[i] = std::stof(line.substr(npos1));
     //std::cout<<" azimuth:"<<azimuth[i]<<std::endl;
 
+   npos1 = 0;
+   npos2 = 0;
+
     pos_recep[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]});
-    
+  
+//   std::cout<<pos_recep[i].x<<pos_recep[i].y<<pos_recep[i].z<<"Receptor"<<std::endl;  
   }
   
 

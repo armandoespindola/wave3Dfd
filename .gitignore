@@ -10,6 +10,8 @@
 *.swp
 *.gch
 *#
+*.py
+*.sem*
 octave-workspace
 .DS_Store
 ._.*

@@ -91,7 +91,12 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
     azimuth[i] = std::stof(line.substr(npos1));
     //std::cout<<" azimuth:"<<azimuth[i]<<std::endl;
 
+    npos1 = 0;
+    npos2 = 0;
+
     pos_src[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]});
+
+//   std::cout<<pos_src[i].x<<pos_src[i].y<<pos_src[i].z<<"SOURCE"<<std::endl;
     
   }
   
@@ -142,16 +147,19 @@ void source::smoment(){
     
       Mxx[i] =sin(d)*cos(rake)*sin(2.0*str) + sin(2.0*d)*sin(rake)*pow(sin(str),2.0);
       Myy[i] =sin(d)*cos(rake)*sin(2.0*str) - sin(2.0*d)*sin(rake)*pow(cos(str),2.0);
-      Mzz[i] = sin(2.0*d)*sin(rake);
+      //Mzz[i] = Mxx[i] + Myy[i];
       Mxy[i] = sin(d)*cos(rake)*cos(2.0*str) + 0.5*sin(2.0*d)*sin(rake)*sin(2.0*str);
       Mxz[i] = cos(d)*cos(rake)*cos(str) + cos(2.0*d)*sin(rake)*sin(str) ;
       Myz[i] = cos(d)*cos(rake)*sin(str) - cos(2.0*d)*sin(rake)*cos(str) ;  
       Mxx[i] *= -M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Myy[i] *= M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Mzz[i] *= M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m; 
+      Myy[i] *=  M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+      Mzz[i] = -(Mxx[i] + Myy[i]); 
       Mxy[i] *= M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Mxz[i] *= -M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Myz[i] *= -M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+      Mxz[i] *= - M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+      Myz[i] *= - M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+
+//std::cout<<"M11,M22,M33,M12,M13,M23: "<<std::endl;
+//std::cout<<Mxx[i] <<Myy[i] <<Mzz[i] <<Mxy[i] <<Mxz[i] <<Myz[i] <<std::endl;
   }
 
   
@@ -166,7 +174,7 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
 
   Dfloat src,a_fu,amp,time;
 
-  time = 0.5 * dt + itime  * dt; 
+  time = itime  * dt; 
   a_fu= pow (pi*f0,2.0);
   src = 0.0;
 
@@ -191,7 +199,8 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   // HEAVISIDE STEP FUNCTION
   
   if (T_SRC==3){
-    src = 1.0; //dyn*cm -> N*m
+	if (itime <4)    
+	src = 1.0; //dyn*cm -> N*m
   }
 
   

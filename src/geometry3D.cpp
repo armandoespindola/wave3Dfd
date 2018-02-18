@@ -139,7 +139,7 @@ Dfloat geometry3D::CoorZ(int i){
   Dfloat coord;
 
   if (i < NOD.z) {
-    coord = limI.z + (Dfloat) i * Dz() - thickness_HALO().z;
+    coord = limI.z + (Dfloat) i * Dz();
     return coord;
     
   }else{
@@ -246,7 +246,7 @@ VecI geometry3D::FindNode(VecF coord){
 	   dist1 = dist2;
 	   ind.x = ix;
 	   ind.y = iy;
-	   ind.z = (NOD.z - 1) - iz + PML.z;
+	   ind.z = (NOD.z - 1) - iz;
 	 }
 		       	 
        }

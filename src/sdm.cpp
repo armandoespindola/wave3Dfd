@@ -662,7 +662,11 @@ void SDM::AddVal(VecI indx, char *NameVar, Dfloat Val){
   
   ind = SFindNode(indx);
 
-  if ((ind.x > 0) && (ind.y > 0) && (ind.z > 0)) {
+  if ((ind.x > -1) && (ind.y > -1) && (ind.z > -1)) {
+
+   ind.x += HALO.x;
+   ind.y += HALO.y;
+   ind.z += HALO.z;
 
    if (strcmp("SXX",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
@@ -715,7 +719,11 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
 
   ind = SFindNode(indx);
 
-  if ((ind.x > 0) && (ind.y > 0) && (ind.z > 0)) {
+  if ((ind.x > -1) && (ind.y > -1) && (ind.z > -1)) {
+
+   ind.x += HALO.x;
+   ind.y += HALO.y;
+   ind.z += HALO.z;
   
    if (strcmp("SXX",NameVar) == 0){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
@@ -1861,12 +1869,23 @@ void SDM::Addsource(int itime, int T_SRC){
     st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
     st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
 
-    AddVal(sourceM->pos_src[i],"SXX", st * sourceM->Mxx[i]);
-    AddVal(sourceM->pos_src[i],"SYY", st * sourceM->Myy[i]);
-    AddVal(sourceM->pos_src[i],"SZZ", st * sourceM->Mzz[i]);
-    AddVal(sourceM->pos_src[i],"SXY", st * sourceM->Mxy[i]);
-    AddVal(sourceM->pos_src[i],"SXZ", st * sourceM->Mxz[i]);
-    AddVal(sourceM->pos_src[i],"SYZ", st * sourceM->Myz[i]);
+
+    VecI prub = SFindNode(sourceM->pos_src[i]);
+
+  //  std::cout<<prub.x<<prub.y<<prub.z<<"SLOCAL"<<std::endl;
+
+    VecI b = sourceM->pos_src[i]; 
+
+    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Mxx[i]);
+    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Myy[i]);
+    AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]);
+    AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]);
+    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Mxz[i]);
+    AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Myz[i]);
+
+   // AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
+   // AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
+   // AddVal(sourceM->pos_src[i],"SZZ", st * 1e20);
  
   }
   
