@@ -16,4 +16,4 @@ octave-workspace
 .DS_Store
 ._.*
 ### FOLDERS
-
+!Example/*.*

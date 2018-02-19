@@ -1899,7 +1899,7 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   char times[200];
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
-  sprintf(times,"../data/%s_%d-%d.bin",nfile,subindx,ktime);
+  sprintf(times,"%s_%d-%d.bin",nfile,subindx,ktime);
 
   
   

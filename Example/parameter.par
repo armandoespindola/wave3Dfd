@@ -28,11 +28,11 @@
 -t_snap 100
 // NUMBER OF SOURCES
 -ns 1
--sf ../data/sources.dat
+-sf sources.par
 // NUMBER OF RECEPTORS
 -nr 8
--rf ../data/receptors.dat
+-rf receptors.par
 // MODEL DATA FILES
--VP_F ../data/VP.bin
--VS_F ../data/VS.bin
--RHO_F ../data/RHO.bin
+-VP_F VP.bin
+-VS_F VS.bin
+-RHO_F RHO.bin
