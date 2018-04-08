@@ -11,4 +11,4 @@ octave-workspace
 .DS_Store
 ._.*
 ### FOLDERS
-!DATA/
+!DATA/.gitignore
