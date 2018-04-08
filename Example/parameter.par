@@ -4,17 +4,17 @@
 -yi 0.0
 -yf 9900.0
 -zi 0.0
--zf 4900.0
+-zf 9900.0
 // NUMBER OF NODES IN EVERY DIRECTION
 -nx 100
 -ny 100
--nz 50
+-nz 100
 // SIMULATION TIME [s]
 -t 8.0
 // TIME STEP
--dt 0.01 
+-dt 0.005 
 // SOURCE FREQUENCY
--f0 3.0
+-f0 4.5
 // SOURCE TYPE
 -stype 2
 // NUMBER OF SUBDOMAINS
@@ -22,10 +22,10 @@
 -sy 2
 -sz 2
 // NUMBER OMP THREADS
--nomp 3
+-nomp 2
 // SNAPSHOT
 -snap 0
--t_snap 100
+-t_snap 50
 // NUMBER OF SOURCES
 -ns 1
 -sf sources.par
@@ -36,3 +36,10 @@
 -VP_F VP.bin
 -VS_F VS.bin
 -RHO_F RHO.bin
+// ADJOINT
+-snapR 0
+-t_snapR 50
+-adj 1
+// FREQUENCIES
+-nfq 5
+-rfq frequency.par

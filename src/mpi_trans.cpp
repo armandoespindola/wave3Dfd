@@ -41,7 +41,9 @@ MPI_DATA::~MPI_DATA(){
   delete [] BW1;
   delete [] BE1;
   delete [] BUp1;
-  delete [] BDown1; 
+  delete [] BDown1;
+
+  sdm = NULL;
 }
 
 
@@ -63,8 +65,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BN0,"North",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BN0,N_SN,MPI_DOUBLE,indxD,0,BN1,	\
-       		       N_SN,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BN0,N_SN,MY_MPI_Dfloat,indxD,0,BN1,	\
+       		       N_SN,MY_MPI_Dfloat,indxD,0);
 
       sdm->ImpBoundary(BN1,"North",VarName);
 
@@ -82,8 +84,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BS0,"South",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BS0,N_SN,MPI_DOUBLE,indxD,0,BS1,	\
-			       N_SN,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BS0,N_SN,MY_MPI_Dfloat,indxD,0,BS1,	\
+			       N_SN,MY_MPI_Dfloat,indxD,0);
 
       sdm->ImpBoundary(BS1,"South",VarName);
   }
@@ -100,8 +102,8 @@ void MPI_DATA::TRANSFER(char *VarName){
      
       sdm->ExpBoundary(BE0,"East",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BE0,N_WE,MPI_DOUBLE,indxD,0,BE1,	\
-			       N_WE,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BE0,N_WE,MY_MPI_Dfloat,indxD,0,BE1,	\
+			       N_WE,MY_MPI_Dfloat,indxD,0);
 
 
       sdm->ImpBoundary(BE1,"East",VarName);
@@ -120,8 +122,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BW0,"West",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BW0,N_WE,MPI_DOUBLE,indxD,0,BW1,	\
-			       N_WE,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BW0,N_WE,MY_MPI_Dfloat,indxD,0,BW1,	\
+			       N_WE,MY_MPI_Dfloat,indxD,0);
 
       sdm->ImpBoundary(BW1,"West",VarName);
 
@@ -139,8 +141,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BUp0,"UP",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BUp0,N_UpDown,MPI_DOUBLE,indxD,0,BUp1, \
-			       N_UpDown,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BUp0,N_UpDown,MY_MPI_Dfloat,indxD,0,BUp1, \
+			       N_UpDown,MY_MPI_Dfloat,indxD,0);
 
       sdm->ImpBoundary(BUp1,"UP",VarName);
 
@@ -158,12 +160,180 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BDown0,"DOWN",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BDown0,N_UpDown,MPI_DOUBLE,indxD,0,BDown1, \
-			       N_UpDown,MPI_DOUBLE,indxD,0);
+      MPI::COMM_WORLD.Sendrecv(BDown0,N_UpDown,MY_MPI_Dfloat,indxD,0,BDown1, \
+			       N_UpDown,MY_MPI_Dfloat,indxD,0);
 
       sdm->ImpBoundary(BDown1,"DOWN",VarName);
 
 
   } 
+
+}
+
+void MPI_DATA::Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank){
+
+  if (rank == 0) {
+
+    Dfloat *buff,*GlobVar;
+    VecI indx;
+    int GlobIdx;
+    int LocIdx;
+    int Nsub = sdm->NumSubDom.x * sdm->NumSubDom.y * sdm->NumSubDom.z; 
+
+    buff = new Dfloat[sdm->SNodeX() * sdm->SNodeY() * sdm->SNodeZ()];
+    GlobVar = new Dfloat[NX * NY * NZ];
+
+
+    for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+      for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+	for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+	  indx = sdm->Loc2Glo({i,j,k});
+	  GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY; 
+	    
+	    GlobVar[GlobIdx] = LocVar[sdm->IJK(i,j,k)];
+
+
+	}
+      }
+    }
+
+
+    for (int ii = 1; ii<Nsub;++ii) {
+
+
+      MPI::COMM_WORLD.Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0);
+      
+
+      for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+	for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+	  for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+
+	    indx.x =  i - KHALO + subi[ii].x * sdm->NodLoc.x;
+	    indx.y =  j - KHALO + subi[ii].y * sdm->NodLoc.y;
+	    indx.z =  k - KHALO + subi[ii].z * sdm->NodLoc.z;
+	    
+	    GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY; 
+	    GlobVar[GlobIdx] = buff[sdm->IJK(i,j,k)];
+
+	  }
+	}
+      }
+
+
+    } // Loop Subdomains
+
+
+    
+
+
+  } if (rank >0) {
+    
+
+    MPI::COMM_WORLD.Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+
+
+  }
+
+
+  
+
+}
+
+
+
+
+void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name){
+
+  if (rank == 0) {
+
+    Dfloat *buff,*GlobVar;
+    VecI indx;
+    int GlobIdx;
+    int LocIdx;
+    int Nsub = sdm->NumSubDom.x * sdm->NumSubDom.y * sdm->NumSubDom.z; 
+
+    buff = new Dfloat[sdm->SNodeX() * sdm->SNodeY() * sdm->SNodeZ()];
+    GlobVar = new Dfloat[NX * NY * NZ];
+
+
+    for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+      for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+	for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+	  indx = sdm->Loc2Glo({i,j,k});
+	  GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY; 
+	    
+	    GlobVar[GlobIdx] = LocVar[sdm->IJK(i,j,k)];
+
+
+	}
+      }
+    }
+
+
+    for (int ii = 1; ii<Nsub;++ii) {
+
+
+      MPI::COMM_WORLD.Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0);
+      
+      // printf("\n proc %d ; %d \n",Nsub,ii);
+
+      for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+	for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+	  for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+
+	    indx.x =  i - KHALO + subi[ii].x * sdm->NodLoc.x;
+	    indx.y =  j - KHALO + subi[ii].y * sdm->NodLoc.y;
+	    indx.z =  k - KHALO + subi[ii].z * sdm->NodLoc.z;
+	    
+	    GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY; 
+	    GlobVar[GlobIdx] = buff[sdm->IJK(i,j,k)];
+
+	  }
+	}
+      }
+
+
+    } // Loop Subdomains
+
+
+    FILE *R;
+
+    R=fopen(name,"wb");
+
+    for (int k=PML.z;k<NZ;k++){
+	for (int j=PML.y;j<NY-PML.y;j++){
+	  for (int i=PML.x;i<NX-PML.x;i++){
+
+
+	     GlobIdx = i + j * NX + k * NX * NY;
+	     
+	    fwrite(&GlobVar[GlobIdx],sizeof(Dfloat),1,R);
+
+	  }
+	}
+    }
+
+    fclose(R);
+
+    
+
+
+    
+
+
+  } if (rank >0) {
+    
+
+    MPI::COMM_WORLD.Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+
+
+  }
+
+
+  
 
 }

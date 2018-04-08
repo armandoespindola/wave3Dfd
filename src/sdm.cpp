@@ -1,7 +1,7 @@
 #include "sdm.hpp"
 
 SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-	 Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom) {
+	 Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom,int iPROPAGATION) {
 
 	// GI INITIAL GLOBAL LIMIT WITH PML 
 	// GF END GLOBAL LIMIT WITH PML
@@ -25,6 +25,13 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	NodLoc = INod;
 	Nsdm = INsdm;
 	NumSubDom = INumSubDom;
+	PROPAGATION = iPROPAGATION;
+
+	if (PROPAGATION == 0){
+	  sgn = 1.0;
+	}else if (PROPAGATION == 1 ){
+	  sgn = -1.0;
+	}
 	
 	VecI ELE={INod.x-1,INod.y-1,INod.z-1};
 
@@ -795,6 +802,8 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 		  C0 * (vz[IJK(ix,iy,iz+1)] - vz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
 
 
+	if (PROPAGATION == 0) {
+	  
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
 
@@ -808,6 +817,9 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 	df_dJ += dvy_dy[IJK(ix,iy,iz)];
 	df_dK += dvz_dz[IJK(ix,iy,iz)];
 
+	
+	}
+	
 	// Average properties
 	
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)]) / 2.0;
@@ -815,20 +827,20 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 	
 	// SXX
 
-	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + \
+	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] + sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + sgn * \
 	  dt * lamb_avg *  (df_dJ + df_dK);
 
 	// SYY
 	
-	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + \
+	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + sgn *\
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + sgn *\
 	  dt * lamb_avg *  (df_dI + df_dK);
 
 	// SZZ
 	
-	szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) +  \
+	szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) +  sgn *\
 	  dt * lamb_avg *  (df_dJ + df_dI);
 
 
@@ -882,6 +894,8 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	}
 
 
+	if (PROPAGATION == 0) {
+	  
 	dsxx_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dsxx_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
 
@@ -895,10 +909,19 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
 	df_dK += dsxz_dz[IJK(ix,iy,iz)];
 
+	}
 
-	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + (dt / rho[IJK(ix,iy,iz)]) * \
+
+	if (PROPAGATION == 1){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
+	
+	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
 
+	if (PROPAGATION == 0){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
 
 	
       }
@@ -933,6 +956,7 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 	df_dK = ( C1 * (sxz[IJK(ix,iy,iz)] - sxz[IJK(ix,iy,iz-1)]) - \
 		  C0 * (sxz[IJK(ix,iy,iz+1)] - sxz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
 
+	if (PROPAGATION == 0) {
 
 	dsxx_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dsxx_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
@@ -947,9 +971,19 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
 	df_dK += dsxz_dz[IJK(ix,iy,iz)];
 
+	}
 
-	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + (dt / rho[IJK(ix,iy,iz)]) * \
+
+	if (PROPAGATION == 1){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
+	
+	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
+
+	if (PROPAGATION == 0){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
 
 
 	
@@ -1005,7 +1039,8 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 	  
 	}	
 
-       
+
+	if (PROPAGATION == 0){
 
 	dsxy_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxy_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
@@ -1020,12 +1055,24 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
 	df_dK += dsyz_dz[IJK(ix,iy,iz)];
 
-
+	}
+	
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
-	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+
+	if (PROPAGATION == 1){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
+
+	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
+
+
+	if (PROPAGATION == 0){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
+
 
 
 	
@@ -1063,6 +1110,8 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 		  C0 * (syz[IJK(ix,iy,iz+1)] - syz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
 
 
+	if (PROPAGATION == 0) {
+
 	dsxy_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxy_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
 
@@ -1076,12 +1125,25 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
 	df_dK += dsyz_dz[IJK(ix,iy,iz)];
 
+	}
 
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
-	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+
+
+	if (PROPAGATION == 1){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
+
+	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
+
+
+	if (PROPAGATION == 0){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
+
 
 
 	
@@ -1128,6 +1190,7 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 	
 	
 
+	if (PROPAGATION == 0) {
 
 	dsxz_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxz_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
@@ -1142,11 +1205,24 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
 	df_dK += dszz_dz[IJK(ix,iy,iz)];
 
+	}
+
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
-	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+
+	if (PROPAGATION == 1){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
+
+
+	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
+
+
+	if (PROPAGATION == 0){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
 
 
 	
@@ -1183,6 +1259,8 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 		  C0 * (szz[IJK(ix,iy,iz+2)] - szz[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
 
 
+	if (PROPAGATION == 0) {
+	  
 	dsxz_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxz_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
 
@@ -1196,13 +1274,27 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
 	df_dK += dszz_dz[IJK(ix,iy,iz)];
 
+	}
+	
 	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
-	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + (dt / rho_avg) * \
+
+
+	if (PROPAGATION == 1){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
+
+	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
+	if (PROPAGATION == 0){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
+
+
+	
 	
       }
     }
@@ -1236,21 +1328,24 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
 		  C0 * (vy[IJK(ix+1,iy,iz)] - vy[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
 	
 
+	if (PROPAGATION == 0) {
+	  
 	dvy_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvy_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
 
 	dvx_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvx_dy[IJK(ix,iy,iz)] \
 	  + pml_y->A(Gindx.y) * df_dJ;
 
-
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy+1,iz)]) / 2.0;
-
-
 	df_dI += dvy_dx[IJK(ix,iy,iz)];
 	df_dJ += dvx_dy[IJK(ix,iy,iz)];
 
 
-	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	}
+      
+	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy+1,iz)]) / 2.0;
+
+
+	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dI + df_dJ);
 
 
@@ -1291,21 +1386,23 @@ void SDM::Free_SXZ(VecI Init,VecI Iend){
 	
 	
 
-	dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
+	if (PROPAGATION == 0) {
+
+	  dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
 
-	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
+	  dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
 
+	  df_dI += dvz_dx[IJK(ix,iy,iz)];
+	  df_dK += dvx_dz[IJK(ix,iy,iz)];
 
+	}
+
+	
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
 
-
-	df_dI += dvz_dx[IJK(ix,iy,iz)];
-	df_dK += dvx_dz[IJK(ix,iy,iz)];
-
-
-	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dI + df_dK);
 
 
@@ -1338,21 +1435,23 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
 		  C0 * (vx[IJK(ix,iy,iz+2)] - vx[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
 	
 
+
+	if (PROPAGATION == 0) {
+	  
 	dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A_HALF(Gindx.x) * df_dI;
 
 	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
 
-
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
-
-
 	df_dI += dvz_dx[IJK(ix,iy,iz)];
 	df_dK += dvx_dz[IJK(ix,iy,iz)];
 
+	}
 
-	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
+
+	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dI + df_dK);
 
 
@@ -1395,26 +1494,31 @@ void SDM::Free_SYZ(VecI Init,VecI Iend){
 		  - (5.0 / 24.0) * vy[IJK(ix,iy,iz-2)] \
 		  + (1.0 / 24.0) * vy[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
 	
-	
 
+
+	if (PROPAGATION == 0) {
+	  
 	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
 	  + pml_y->A(Gindx.x) * df_dJ;
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
 
+	df_dJ += dvz_dy[IJK(ix,iy,iz)];
+	df_dK += dvy_dz[IJK(ix,iy,iz)];
 
+	}
+
+	
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
 		mu[IJK(ix,iy+1,iz)] + mu[IJK(ix+1,iy+1,iz)] + \
 		mu[IJK(ix,iy,iz+1)] + mu[IJK(ix+1,iy,iz+1)] + \
 		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
 
 
-	df_dJ += dvz_dy[IJK(ix,iy,iz)];
-	df_dK += dvy_dz[IJK(ix,iy,iz)];
+	
 
-
-	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dJ + df_dK);
 
 
@@ -1449,24 +1553,28 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 		  C0 * (vy[IJK(ix,iy,iz+2)] - vy[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
 	
 
+
+	if (PROPAGATION == 0) {
+	  
 	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
 	  + pml_y->A(Gindx.x) * df_dJ;
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
 
+	df_dJ += dvz_dy[IJK(ix,iy,iz)];
+	df_dK += dvy_dz[IJK(ix,iy,iz)];
 
+	}
+	
+	
 	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
 		mu[IJK(ix,iy+1,iz)] + mu[IJK(ix+1,iy+1,iz)] + \
 		mu[IJK(ix,iy,iz+1)] + mu[IJK(ix+1,iy,iz+1)] + \
 		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
 
 
-	df_dJ += dvz_dy[IJK(ix,iy,iz)];
-	df_dK += dvy_dz[IJK(ix,iy,iz)];
-
-
-	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + (dt * mu_avg) * \
+	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + sgn *  (dt * mu_avg) * \
 	  (df_dJ + df_dK);
 
 
@@ -1536,6 +1644,9 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 	}
 
 
+
+	if (PROPAGATION == 0) {
+	  
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
 	  + pml_x->A(Gindx.x) * df_dI;
 
@@ -1548,17 +1659,19 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 	df_dI += dvx_dx[IJK(ix,iy,iz)];
 	df_dJ += dvy_dy[IJK(ix,iy,iz)];
 	df_dK += dvz_dz[IJK(ix,iy,iz)];
+
+	}
 	
 	// SXX
 
-	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + \
+	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] +  sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + sgn * \
 	  dt * lamb_avg *  (df_dJ + df_dK);
 
 	// SYY
 	
-	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + \
+	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + sgn * \
 	  dt * lamb_avg *  (df_dI + df_dK);
 
 
@@ -1570,8 +1683,8 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 	
 	} else if (zh == 2) {
 
-	  szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) +  \
+	  szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) + sgn * \
 	  dt * lamb_avg *  (df_dJ + df_dI);
 	}
 
@@ -1590,12 +1703,13 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
 void SDM::FDSII() {
   VecI init,end;
- 
-  init = {0,0,0};
-  
 
+  init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
+
   
+  if (PROPAGATION == 0) {
+
   if (Nsdm.x == NumSubDom.x-1) { 
     end.x = NodLoc.x - 1;
   }
@@ -1614,6 +1728,45 @@ void SDM::FDSII() {
 
 
   FD_SII(init,end);
+
+  } else if (PROPAGATION == 1) {
+
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+
+    if (Nsdm.z == NumSubDom.z-1){
+
+    // FREE SURFACE 
+
+    // H - AFDA Kristek(2002);
+    Free_SII(init,end,1); // z = 0;
+    Free_SII(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
+    
+
+    } 
+    
+    FD_SII(init,end);
+    
+  }
   
   
 }
@@ -1625,12 +1778,40 @@ void SDM::FDSXY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
+  if (PROPAGATION == 0) {
+    
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
   }
   
-  
   FD_SXY(init,end);
+
+  } else if (PROPAGATION == 1) {
+
+
+   if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+    
+    FD_SXY(init,end);
+
+  }
 
 }
 
@@ -1641,6 +1822,8 @@ void SDM::FDSXZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
+  if (PROPAGATION == 0) {
+    
   if (Nsdm.z == NumSubDom.z - 1) {
     // FREE SURFACE
     // H - AFDA Kristek(2002);
@@ -1648,8 +1831,42 @@ void SDM::FDSXZ() {
     Free_SXZ(init,end);
   }
     
-
   FD_SXZ(init,end);
+
+  } else if (PROPAGATION == 1){
+
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+    
+
+    if (Nsdm.z == NumSubDom.z - 1) {
+    // FREE SURFACE
+    // H - AFDA Kristek(2002);
+    end.z = NodLoc.z - 2;
+    Free_SXZ(init,end);
+  }
+    
+  FD_SXZ(init,end);
+
+  }
 
 }
 
@@ -1660,6 +1877,8 @@ void SDM::FDSYZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
+  if (PROPAGATION == 0) {
+    
    if (Nsdm.x == NumSubDom.x - 1) { 
     end.x = NodLoc.x - 1;
   }
@@ -1680,6 +1899,43 @@ void SDM::FDSYZ() {
     
   FD_SYZ(init,end);
 
+  } else if (PROPAGATION == 1) {
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+
+
+    if (Nsdm.z == NumSubDom.z - 1) {
+
+     // FREE SURFACE
+    // H - AFDA Kristek(2002);
+    end.z = NodLoc.z - 2;
+    Free_SYZ(init,end);
+    
+   }
+    
+  FD_SYZ(init,end);
+    
+    
+  }
+
 }
 
 void SDM::FDVX() {
@@ -1689,6 +1945,8 @@ void SDM::FDVX() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
+  if (PROPAGATION == 0) {
+    
   if (Nsdm.z == 0) { 
     init.z = 1;
   }
@@ -1719,9 +1977,43 @@ void SDM::FDVX() {
     end.z = NodLoc.z - 2;
   }
 
-
-  
   FD_VX(init,end);
+
+  } else if (PROPAGATION == 1) {
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+    
+    if (Nsdm.z == NumSubDom.z-1){
+    // FREE SURFACE 
+
+    // H - AFDA Kristek(2002);
+    Free_VX(init,end,1); // z = 0;
+    Free_VX(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
+  }
+
+  FD_VX(init,end);
+
+
+  }
 
 }
 
@@ -1731,6 +2023,8 @@ void SDM::FDVY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
+  if (PROPAGATION == 0) {
+    
   if (Nsdm.z == 0) { 
     init.z = 1;
   }
@@ -1755,6 +2049,43 @@ void SDM::FDVY() {
   
   FD_VY(init,end);
 
+  } else if (PROPAGATION == 1) {
+
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+
+
+    if (Nsdm.z == NumSubDom.z-1){
+    // FREE SURFACE 
+
+    // H - AFDA Kristek(2002);
+    Free_VY(init,end,1); // z = 0;
+    Free_VY(init,end,2); // z = h;
+    end.z = NodLoc.z - 2;
+  }
+  
+  FD_VY(init,end);
+
+  }
+
 }
 
 void SDM::FDVZ() {
@@ -1764,6 +2095,8 @@ void SDM::FDVZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
+  if (PROPAGATION == 0) {
+    
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
   }
@@ -1777,13 +2110,55 @@ void SDM::FDVZ() {
   }
 
 
+    // FREE SURFACE H - AFDA KRISTEK(2002);
+    if (Nsdm.z == NumSubDom.z - 1) { 
+    end.z = NodLoc.z - 2;
+    Free_VZ(init,end);
+
+    for (int iy= HALO.y; iy<SNodeY(); ++iy){
+      for (int ix=HALO.x; ix<SNodeX(); ++ix){
+    vz[IJK(ix,iy,SNodeZ()-KHALO-1)] = vz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+    uz[IJK(ix,iy,SNodeZ()-KHALO-1)] = uz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+      }
+    }
+    
+    }
+
+    FD_VZ(init,end);
+
+  } else if (PROPAGATION == 1) {
+
+
+    if (Nsdm.x == 0) {
+      init.x = PML.x;
+    }
+
+    if (Nsdm.x == NumSubDom.x-1) {
+      end.x = SNodeX() - PML.x - 2 * HALO.x;
+    }
+
+    if (Nsdm.y == 0) {
+      init.y = PML.y;
+    }
+
+    if (Nsdm.y == NumSubDom.y-1) {
+      end.y = SNodeY() - PML.y - 2 * HALO.y;
+    }
+
+    if (Nsdm.z == 0) {
+      init.z = PML.z;
+    }
+
+
+    // FREE SURFACE H - AFDA KRISTEK(2002);
     if (Nsdm.z == NumSubDom.z - 1) { 
     end.z = NodLoc.z - 2;
     Free_VZ(init,end);
     }
 
     FD_VZ(init,end);
-    
+
+  }
 
 }
 
@@ -1793,9 +2168,9 @@ void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource){
 }
 
 
-void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep){
+void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
   
-  station  = new receptor(GDomain,nFile,nrecep);
+  station  = new receptor(GDomain,nFile,nrecep,nt);
 
   idx_station = new VecI[nrecep];
 
@@ -1805,7 +2180,7 @@ void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) && \
 	   (idx_station[i].z > -1) ){
 
-	station->FileOpen(i);
+	station->FileOpen(i,PROPAGATION);
 
       }
     
@@ -1813,6 +2188,51 @@ void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep){
   
  
 }
+
+
+void SDM::InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
+  
+  station  = new receptor(GDomain,nFile,nrecep,nt);
+
+  idx_station = new VecI[nrecep];
+
+  for (int i = 0; i<station->nr; ++i){
+    idx_station[i] = SFindNode(station->pos_recep[i]);
+
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) && \
+	   (idx_station[i].z > -1) ){
+
+	station->FileOpen(i,1);
+	station->LoadFile(i);
+
+      }
+    
+  }
+  
+ 
+}
+
+void SDM::AddSourceAdj(int itime){
+  Dfloat Rvx,Rvy,Rvz;
+
+   for (int i = 0; i<station->nr; ++i){
+    
+     
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
+	   (idx_station[i].z > -1) ){
+
+
+	AddVal(station->pos_recep[i],"VX", station->vx_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VY", station->vy_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VZ", station->vz_ad[itime + station->nt * i]);
+        
+      }
+   }
+  
+
+}
+
+
 
 
 void SDM::EndRecept(){
@@ -1859,7 +2279,7 @@ void SDM::GetRecept(){
 
 
 
-void SDM::Addsource(int itime, int T_SRC){
+void SDM::AddSource(int itime, int T_SRC){
 
   Dfloat st = 0;
 
@@ -1875,17 +2295,17 @@ void SDM::Addsource(int itime, int T_SRC){
   //  std::cout<<prub.x<<prub.y<<prub.z<<"SLOCAL"<<std::endl;
 
     VecI b = sourceM->pos_src[i]; 
-
-    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Mxx[i]);
-    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Myy[i]);
-    AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]);
-    AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]);
-    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Mxz[i]);
-    AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Myz[i]);
-
-   // AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
-   // AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
-   // AddVal(sourceM->pos_src[i],"SZZ", st * 1e20);
+   
+    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Mxx[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Myy[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Mxz[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Myz[i]*sgn);
+    
+    //AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
+    //AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
+    //AddVal(sourceM->pos_src[i],"SZZ", st * 1e20);
  
   }
   
@@ -1899,6 +2319,8 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   char times[200];
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
+
+  
   sprintf(times,"%s_%d-%d.bin",nfile,subindx,ktime);
 
   
@@ -1923,52 +2345,147 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   
 }
 
-void SDM::print(char *NameVar, int time ){
+
+
+void SDM::loadfile(Dfloat *Var,char *nfile,int ktime){
+  FILE *R;
+  char times[200];
+
+  int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
+  sprintf(times,"%s_%d-%d.bin",nfile,subindx,ktime);
+
+  
+  
+   R=fopen(times,"rb");
+   
+    for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
+	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
+
+	 fread(&Var[indx],sizeof(Dfloat),1,R);
+
+
+       }
+     }
+    }
+
+    fclose(R);
+
+  
+}
+
+void SDM::file(char *NameVar, int time ,int oi){
 
 
    if (strcmp("SXX",NameVar) == 0){
 
-     printfile(sxx,NameVar,time);
+     if (oi == 0)
+       printfile(sxx,NameVar,time);
+
+     if (oi == 1)
+       loadfile(sxx,NameVar,time);
+       
   }
   if (strcmp("SYY",NameVar) == 0){
 
-    printfile(syy,NameVar,time);
-    
+    if (oi == 0)
+      printfile(syy,NameVar,time);
+
+    if (oi == 1)
+      loadfile(syy,NameVar,time);
   }
 
   if (strcmp("SZZ",NameVar) == 0){
 
-    printfile(szz,NameVar,time);
+    if (oi == 0)
+      printfile(szz,NameVar,time);
+
+    if (oi == 1)
+      loadfile(szz,NameVar,time);
   }
 
   if (strcmp("SXY",NameVar) == 0){
 
-    printfile(sxy,NameVar,time);
+    if (oi == 0)
+      printfile(sxy,NameVar,time);
+
+    if (oi == 1)
+      loadfile(sxy,NameVar,time);
   }
 
   if (strcmp("SXZ",NameVar) == 0){
 
+    if (oi == 0)
     printfile(sxz,NameVar,time);
+
+    if (oi == 1)
+    loadfile(sxz,NameVar,time);
   }
 
   if (strcmp("SYZ",NameVar) == 0){
 
-    printfile(syz,NameVar,time);
+    if (oi == 0)
+      printfile(syz,NameVar,time);
+
+    if (oi == 1)
+      loadfile(syz,NameVar,time);
   }
 
   if (strcmp("VX",NameVar) == 0){
 
-    printfile(vx,NameVar,time);
+    if (oi == 0)   
+      printfile(vx,NameVar,time);
+
+    if (oi == 1)   
+      loadfile(vx,NameVar,time);
   }
 
   if (strcmp("VY",NameVar) == 0){
 
-    printfile(vy,NameVar,time);
+    if (oi == 0)
+      printfile(vy,NameVar,time);
+
+    if (oi == 1)
+      loadfile(vy,NameVar,time);
   }
 
   if (strcmp("VZ",NameVar) == 0){
 
-    printfile(vz,NameVar,time);
+    if (oi == 0)
+      printfile(vz,NameVar,time);
+
+    if (oi == 1)
+      loadfile(vz,NameVar,time);
+  }
+
+
+    if (strcmp("UX",NameVar) == 0){
+
+    if (oi == 0)   
+      printfile(ux,NameVar,time);
+
+    if (oi == 1)   
+      loadfile(ux,NameVar,time);
+  }
+
+  if (strcmp("UY",NameVar) == 0){
+
+    if (oi == 0)
+      printfile(uy,NameVar,time);
+
+    if (oi == 1)
+      loadfile(uy,NameVar,time);
+  }
+
+  if (strcmp("UZ",NameVar) == 0){
+
+    if (oi == 0)
+      printfile(uz,NameVar,time);
+
+    if (oi == 1)
+      loadfile(uz,NameVar,time);
   }
 
 
@@ -2029,11 +2546,500 @@ return 0;
 } 
 }
 
+void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
+
+    int indx;
+  // Left Side
+
+   FILE *R;
+   char times[200];
+
+
+   // SAVE BOUNDARY
+   if (inout == 0) {
+
+  if (side == 0){
+
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"wb");
+    
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<KHALO;i++){
+
+	  
+
+	  indx = IJK(PML.x + i,HALO.y + j,HALO.z + k);
+	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+
+    fclose(R);
+
+// Right Side
+} else if (side == 1) {
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"wb");
+
+
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<KHALO;i++){
+
+	  
+	  indx = IJK(SNodeX() - KHALO - PML.x + i,HALO.y + j,HALO.z + k);
+	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+	  
+	}
+      }
+    }
+
+    fclose(R);
+    
+      }
+
+  // READ BOUNDARY
+   } else if (inout == 1) {
 
 
 
+      if (side == 0){
 
 
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"rb");
+    
+     for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<KHALO;i++){
+
+	  
+
+	  indx = IJK(PML.x + i,HALO.y + j,HALO.z + k);
+	  fread(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+    fclose(R);
+    char cleanfile[100];
+    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    system (cleanfile);
+
+// Right Side
+} else if (side == 1) {
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"rb");
+
+
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<KHALO;i++){
+
+	  
+	  indx = IJK(SNodeX() - KHALO - PML.x + i,HALO.y + j,HALO.z + k);
+	  fread(&var[indx],sizeof(Dfloat),1,R);
+	  
+	}
+      }
+    }
+
+    fclose(R);
+    char cleanfile[100];
+    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    system (cleanfile);
+    
+      }
+
+   }
+
+}
+
+void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
+  int indx;
+  // Left Side
+
+   FILE *R;
+   char times[200];
+
+
+   // SAVE BOUNDARY
+   if (inout == 0) {
+
+  if (side == 0){
+
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"wb");
+    
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<KHALO;j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+
+	  indx = IJK(HALO.x + i,PML.y + j,HALO.z + k);
+	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+
+    fclose(R);
+
+// Right Side
+} else if (side == 1) {
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"wb");
+
+
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<KHALO;j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+	  indx = IJK(HALO.x + i,SNodeY() - KHALO - PML.y + j,HALO.z + k);
+	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+	  
+	}
+      }
+    }
+
+    fclose(R);
+    
+      }
+
+  // READ BOUNDARY
+   } else if (inout == 1) {
+
+
+
+      if (side == 0){
+
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"rb");
+    
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<KHALO;j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+
+	  indx = IJK(HALO.x + i,PML.y + j,HALO.z + k);
+	  fread(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+
+    fclose(R);
+    char cleanfile[100];
+    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    system (cleanfile);
+
+// Right Side
+} else if (side == 1) {
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"rb");
+
+
+    for (int k=0;k<SDMGeom->L_NodeZ();k++){
+      for (int j=0;j<KHALO;j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+	  indx = IJK(HALO.x + i,SNodeY() - KHALO - PML.y + j,HALO.z + k);
+	  fread(&var[indx],sizeof(Dfloat),1,R);
+	  
+	}
+      }
+    }
+
+    fclose(R);
+    char cleanfile[100];
+    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    system (cleanfile);
+    
+      }
+
+   }
+
+}
+
+void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
+
+    int indx;
+  // Left Side
+
+   FILE *R;
+   char times[200];
+
+
+   // SAVE BOUNDARY
+   if (inout == 0) {
+
+  if (side == 0){
+
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"wb");
+    
+    for (int k=0;k<KHALO;k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+
+	  indx = IJK(HALO.x + i,HALO.y + j,PML.z + k);
+	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+
+    fclose(R);
+
+  }
+
+  // READ BOUNDARY
+   } else if (inout == 1) {
+
+
+
+      if (side == 0){
+
+
+    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    R=fopen(times,"rb");
+
+
+    for (int k=0;k<KHALO;k++){
+      for (int j=0;j<SDMGeom->L_NodeY();j++){
+	for (int i=0;i<SDMGeom->L_NodeX();i++){
+
+	  
+
+	  indx = IJK(HALO.x + i,HALO.y + j,PML.z + k);
+	  fread(&var[indx],sizeof(Dfloat),1,R);
+
+	  
+	}
+      }
+    }
+
+	
+    fclose(R);
+    char cleanfile[100];
+    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
+    system (cleanfile);
+
+      } 
+
+   }
+
+
+}
+
+
+void SDM::SaveBoundaries_V(int time){
+
+
+  if (Nsdm.x == 0){
+
+    boundX(vx,0,0,time,"VX_Lx");
+    boundX(vy,0,0,time,"VY_Lx");
+    boundX(vz,0,0,time,"VZ_Lx");
+
+  }else if (Nsdm.x == NumSubDom.x-1) {
+
+    boundX(vx,1,0,time,"VX_Rx");
+    boundX(vy,1,0,time,"VY_Rx");
+    boundX(vz,1,0,time,"VZ_Rx");
+  }
+
+    if (Nsdm.y == 0){
+
+    boundY(vx,0,0,time,"VX_Ly");
+    boundY(vy,0,0,time,"VY_Ly");
+    boundY(vz,0,0,time,"VZ_Ly");
+
+  }else if (Nsdm.y == NumSubDom.y-1) {
+
+    boundY(vx,1,0,time,"VX_Ry");
+    boundY(vy,1,0,time,"VY_Ry");
+    boundY(vz,1,0,time,"VZ_Ry");
+  }
+
+    if (Nsdm.z == 0){
+
+    boundZ(vx,0,0,time,"VX_Lz");
+    boundZ(vy,0,0,time,"VY_Lz");
+    boundZ(vz,0,0,time,"VZ_Lz");
+
+  }
+  
+}
+
+void SDM::SaveBoundaries_S(int time){
+
+
+  if (Nsdm.x == 0){
+
+    boundX(sxx,0,0,time,"SXX_Lx");
+    boundX(syy,0,0,time,"SYY_Lx");
+    boundX(szz,0,0,time,"SZZ_Lx");
+    boundX(sxy,0,0,time,"SXY_Lx");
+    boundX(sxz,0,0,time,"SXZ_Lx");
+    boundX(syz,0,0,time,"SYZ_Lx");
+
+  }else if (Nsdm.x == NumSubDom.x-1) {
+
+    boundX(sxx,1,0,time,"SXX_Rx");
+    boundX(syy,1,0,time,"SYY_Rx");
+    boundX(szz,1,0,time,"SZZ_Rx");
+    boundX(sxy,1,0,time,"SXY_Rx");
+    boundX(sxz,1,0,time,"SXZ_Rx");
+    boundX(syz,1,0,time,"SYZ_Rx");
+  }
+
+    if (Nsdm.y == 0){
+
+    boundY(sxx,0,0,time,"SXX_Ly");
+    boundY(syy,0,0,time,"SYY_Ly");
+    boundY(szz,0,0,time,"SZZ_Ly");
+    boundY(sxy,0,0,time,"SXY_Ly");
+    boundY(sxz,0,0,time,"SXZ_Ly");
+    boundY(syz,0,0,time,"SYZ_Ly");
+
+  }else if (Nsdm.y == NumSubDom.y-1) {
+
+    boundY(sxx,1,0,time,"SXX_Ry");
+    boundY(syy,1,0,time,"SYY_Ry");
+    boundY(szz,1,0,time,"SZZ_Ry");
+    boundY(sxy,1,0,time,"SXY_Ry");
+    boundY(sxz,1,0,time,"SXZ_Ry");
+    boundY(syz,1,0,time,"SYZ_Ry");
+  }
+
+    if (Nsdm.z == 0){
+
+    boundZ(sxx,0,0,time,"SXX_Lz");
+    boundZ(syy,0,0,time,"SYY_Lz");
+    boundZ(szz,0,0,time,"SZZ_Lz");
+    boundZ(sxy,0,0,time,"SXY_Lz");
+    boundZ(sxz,0,0,time,"SXZ_Lz");
+    boundZ(syz,0,0,time,"SYZ_Lz");
+  }
+  
+}
+
+
+void SDM::LoadBoundaries_V(int time){
+
+  
+  if (Nsdm.x == 0){
+
+    boundX(vx,0,1,time,"VX_Lx");
+    boundX(vy,0,1,time,"VY_Lx");
+    boundX(vz,0,1,time,"VZ_Lx");
+
+  }else if (Nsdm.x == NumSubDom.x-1) {
+
+    boundX(vx,1,1,time,"VX_Rx");
+    boundX(vy,1,1,time,"VY_Rx");
+    boundX(vz,1,1,time,"VZ_Rx");
+  }
+
+   if (Nsdm.y == 0){
+
+    boundY(vx,0,1,time,"VX_Ly");
+    boundY(vy,0,1,time,"VY_Ly");
+    boundY(vz,0,1,time,"VZ_Ly");
+
+  }else if (Nsdm.y == NumSubDom.y-1) {
+
+    boundY(vx,1,1,time,"VX_Ry");
+    boundY(vy,1,1,time,"VY_Ry");
+    boundY(vz,1,1,time,"VZ_Ry");
+  }
+   
+    if (Nsdm.z == 0){
+
+    boundZ(vx,0,1,time,"VX_Lz");
+    boundZ(vy,0,1,time,"VY_Lz");
+    boundZ(vz,0,1,time,"VZ_Lz");
+
+  }
+  
+  
+}
+
+void SDM::LoadBoundaries_S(int time){
+
+
+  if (Nsdm.x == 0){
+
+    boundX(sxx,0,1,time,"SXX_Lx");
+    boundX(syy,0,1,time,"SYY_Lx");
+    boundX(szz,0,1,time,"SZZ_Lx");
+    boundX(sxy,0,1,time,"SXY_Lx");
+    boundX(sxz,0,1,time,"SXZ_Lx");
+    boundX(syz,0,1,time,"SYZ_Lx");
+
+  }else if (Nsdm.x == NumSubDom.x-1) {
+
+    boundX(sxx,1,1,time,"SXX_Rx");
+    boundX(syy,1,1,time,"SYY_Rx");
+    boundX(szz,1,1,time,"SZZ_Rx");
+    boundX(sxy,1,1,time,"SXY_Rx");
+    boundX(sxz,1,1,time,"SXZ_Rx");
+    boundX(syz,1,1,time,"SYZ_Rx");
+  }
+
+    if (Nsdm.y == 0){
+
+    boundY(sxx,0,1,time,"SXX_Ly");
+    boundY(syy,0,1,time,"SYY_Ly");
+    boundY(szz,0,1,time,"SZZ_Ly");
+    boundY(sxy,0,1,time,"SXY_Ly");
+    boundY(sxz,0,1,time,"SXZ_Ly");
+    boundY(syz,0,1,time,"SYZ_Ly");
+
+  }else if (Nsdm.y == NumSubDom.y-1) {
+
+    boundY(sxx,1,1,time,"SXX_Ry");
+    boundY(syy,1,1,time,"SYY_Ry");
+    boundY(szz,1,1,time,"SZZ_Ry");
+    boundY(sxy,1,1,time,"SXY_Ry");
+    boundY(sxz,1,1,time,"SXZ_Ry");
+    boundY(syz,1,1,time,"SYZ_Ry");
+  }
+
+    if (Nsdm.z == 0){
+
+    boundZ(sxx,0,1,time,"SXX_Lz");
+    boundZ(syy,0,1,time,"SYY_Lz");
+    boundZ(szz,0,1,time,"SZZ_Lz");
+    boundZ(sxy,0,1,time,"SXY_Lz");
+    boundZ(sxz,0,1,time,"SXZ_Lz");
+    boundZ(syz,0,1,time,"SYZ_Lz");
+    
+  }
+  
+}
 
 
 

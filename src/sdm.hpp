@@ -21,24 +21,17 @@ protected:
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
         // TOTAL NUMBER SUBDOMAIN NumSubDom
+	// PROPAGATION; 0 FORWARD PROPAGATION; 1 REVERSE PROPAGATION
 
 	VecF GI,GF;
 	DPML *pml_x,*pml_y,*pml_z;
-	geometry3D *SDMGeom;
 	VecI HALO,NodG;
-	Dfloat f0,dt;
 	VecF thickness_PML;
-        VecI NT,Nsdm,NumSubDom;
-	VecI NodLoc;
-        int N_omp;
+        VecI NT,Nsdm;
+	int PROPAGATION;
+        Dfloat sgn;
 
-	// WAVE PROPAGATION VARIABLES  
-	Dfloat *sxx,*syy,*szz;
-	Dfloat *sxy,*sxz,*syz;
-	Dfloat *vx,*vy,*vz;
-	Dfloat *ux,*uy,*uz;
-	Dfloat *mu,*lamb,*rho;
-
+	
 	 // ### SHARED VARIBALES PML DAMPING
 	Dfloat *dsxx_dx,*dsxy_dy,*dsxz_dz;
 	Dfloat *dsxy_dx,*dsyy_dy,*dsyz_dz;
@@ -61,6 +54,21 @@ protected:
 
 public:
 
+  // GEOMETRY MODEL
+  geometry3D *SDMGeom;
+  Dfloat f0,dt;
+  int N_omp;
+  
+  // WAVE PROPAGATION VARIABLES  
+	Dfloat *sxx,*syy,*szz;
+	Dfloat *sxy,*sxz,*syz;
+	Dfloat *vx,*vy,*vz;
+	Dfloat *ux,*uy,*uz;
+	Dfloat *mu,*lamb,*rho;
+
+        VecI NumSubDom;
+	VecI NodLoc;
+
 	// GI INITIAL GLOBAL LIMIT
 	// GF END GLOBAL LIMIT 
 	// NodG NUMBER OF GLOBAL NODES
@@ -72,7 +80,7 @@ public:
 
 
   SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-      Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom);
+      Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom,int iPROPAGATION);
 
 
   ~SDM();
@@ -194,10 +202,18 @@ public:
   void InitSource(geometry3D *GDomain,std::string nFile,int nsource);
 
   // ADD VALUES SOURCE
-  void Addsource(int itime,int T_SRC);
+  void AddSource(int itime,int T_SRC);
+
+  // ADD AJOINT SOURCE
+
+  void AddSourceAdj(int itime);
 
   // INITIALIZE RECEPTORS
-    void InitRecept(geometry3D *GDomain,std::string nFile,int nrecep);
+  void InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt);
+
+  // Adjoint Source
+
+  void InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt);
 
  // FINALIZE RECEPTORS
   void EndRecept();
@@ -208,7 +224,9 @@ public:
 
   void printfile(Dfloat * Var,char *nfile, int ktime);
 
-  void print(char* NameVar,int time);
+  void loadfile(Dfloat * Var,char *nfile, int ktime);
+
+  void file(char* NameVar,int time, int io);
 
   int BNorth();
   int BSouth();
@@ -248,6 +266,22 @@ public:
   inline VecI SubNum() { return NumSubDom; }
 
   inline void set_omp(int num) {N_omp = num;}
+
+  // BOUNDARIES FOR RETROPROPAGATION
+
+  void boundX(Dfloat *var,int side,int inout,int time,char *VarName);
+
+  void boundY(Dfloat *var,int side,int inout,int time,char *VarName);
+
+  void boundZ(Dfloat *var,int side,int inout,int time,char *VarName);
+
+  void SaveBoundaries_V(int time);
+
+  void SaveBoundaries_S(int time);
+
+  void LoadBoundaries_V(int time);
+
+  void LoadBoundaries_S(int time);
 
   
 

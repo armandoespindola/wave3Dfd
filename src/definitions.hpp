@@ -6,9 +6,8 @@
 
 #define ZERO 0.0
 #define ONE  1.0
-#define DREAL double
+#define DREAL float
 typedef DREAL Dfloat;
-
 
 #include <iostream>
 #include <stdio.h>
@@ -21,6 +20,8 @@ typedef DREAL Dfloat;
 #include <mpi.h>
 #include <iomanip>
 #include <fstream>
+
+#define MY_MPI_Dfloat MPI_FLOAT
 
 //  VEC 3 ELEMENTS FLOAT
 struct VecF{

@@ -1,8 +1,9 @@
 #include "receptor.hpp"
 
 
-receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
+receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
 
+  nt = in_nt;
   GDomain  = domain;
   FileS = nFile;
   nr = nrecep;
@@ -10,11 +11,15 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
   ycoord = new Dfloat[nr];
   zcoord = new Dfloat[nr];
   pos_recep = new VecI[nr];
+
+  vx_ad = new Dfloat[nt * nr];
+  vy_ad = new Dfloat[nt * nr];
+  vz_ad = new Dfloat[nt * nr];
   
   nameStation = new std::string[nr];
-  RX = new std::ofstream[nr];
-  RY = new std::ofstream[nr];
-  RZ = new std::ofstream[nr];
+  RX = new std::fstream[nr];
+  RY = new std::fstream[nr];
+  RZ = new std::fstream[nr];
   
   //std::cout<<FileS.c_str()<<std::endl;
   
@@ -60,7 +65,7 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
 
     pos_recep[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]});
   
-//   std::cout<<pos_recep[i].x<<pos_recep[i].y<<pos_recep[i].z<<"Receptor"<<std::endl;  
+   //std::cout<<pos_recep[i].x<<pos_recep[i].y<<pos_recep[i].z<<"Receptor"<<std::endl;  
   }
   
 
@@ -68,12 +73,21 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep) {
     
 }
 
-void receptor::FileOpen(int i){
+void receptor::FileOpen(int i, int PROPAGATION){
 
-  RX[i].open(nameStation[i] + "-VX.bin",std::ios::binary | std::ios::trunc);
-  RY[i].open(nameStation[i] + "-VY.bin",std::ios::binary | std::ios::trunc);
-  RZ[i].open(nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::trunc);
-  
+  if (!PROPAGATION){
+  RX[i].open("DATA/"+nameStation[i] + "-VX.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+  RY[i].open("DATA/"+nameStation[i] + "-VY.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+  RZ[i].open("DATA/"+nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+  }
+
+  if (PROPAGATION){
+    
+  RX[i].open("DATA/"+nameStation[i] + "-ADJX.bin",std::ios::binary | std::ios::in);
+  RY[i].open("DATA/"+nameStation[i] + "-ADJY.bin",std::ios::binary | std::ios::in);
+  RZ[i].open("DATA/"+nameStation[i] + "-ADJZ.bin",std::ios::binary | std::ios::in);
+
+  }
   
 
 }
@@ -97,6 +111,24 @@ void receptor::WriteFile(int i, Dfloat vx, Dfloat vy,Dfloat vz){
 }
 
 
+void receptor::LoadFile(int i){
+
+
+  for (int it = 0; it<nt;++it){
+    RX[i].read( (char*)&vx_ad[it + nt * i], sizeof(Dfloat));
+    RY[i].read( (char*)&vy_ad[it + nt * i], sizeof(Dfloat));
+    RZ[i].read( (char*)&vz_ad[it + nt * i], sizeof(Dfloat));
+  }
+
+
+  RX[i].close();
+  RY[i].close();
+  RZ[i].close();
+
+  
+}
+
+
 
 
 
@@ -109,6 +141,12 @@ receptor::~receptor(){
   delete [] xcoord;
   delete [] ycoord;
   delete [] zcoord;
+  delete [] vx_ad;
+  delete [] vy_ad;
+  delete [] vz_ad;
+  
+
+  GDomain = NULL;
 
   R.close();
   

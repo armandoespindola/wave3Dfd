@@ -6,14 +6,17 @@
 #include "model.hpp"
 #include "show.hpp"
 #include "sdm.hpp"
+#include "kernels.hpp"
+
 
 
 class MPI_DATA {
 protected:
-	SDM *sdm;
-	Dfloat *BS0,*BN0,*BW0,*BE0,*BUp0,*BDown0;     // Boundaries Subdomains OUT
-    Dfloat *BS1,*BN1,*BW1,*BE1,*BUp1,*BDown1;     // Boundaries Subdomains IN
-    int N_SN,N_WE,N_UpDown;
+
+  SDM *sdm;
+  Dfloat *BS0,*BN0,*BW0,*BE0,*BUp0,*BDown0;     // Boundaries Subdomains OUT
+  Dfloat *BS1,*BN1,*BW1,*BE1,*BUp1,*BDown1;     // Boundaries Subdomains IN
+  int N_SN,N_WE,N_UpDown;
     
 
 
@@ -22,7 +25,8 @@ public:
   MPI_DATA(SDM *Isdm);
   ~MPI_DATA();
   void TRANSFER(char *VarName);
- 
+  void Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank);
+  void MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name);
 };
 
 
