@@ -1,0 +1,14 @@
+### FILES
+*.[oa]
+*~
+*.m
+*.sh
+*.txt
+*.swp
+*.gch
+*#
+octave-workspace
+.DS_Store
+._.*
+### FOLDERS
+!DATA/.gitignore
