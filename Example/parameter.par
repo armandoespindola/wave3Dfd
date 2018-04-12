@@ -39,7 +39,7 @@
 // ADJOINT
 -snapR 0
 -t_snapR 50
--adj 1
+-adj 0
 // FREQUENCIES
 -nfq 5
 -rfq frequency.par

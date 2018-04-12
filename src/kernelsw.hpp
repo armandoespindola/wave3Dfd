@@ -63,6 +63,9 @@ public:
   Dfloat *KRHO,*KMU,*KLAMBDA,*KDEN,*KVP,*KVS;
   Dfloat *iKRHO,*iKMU,*iKLAMBDA,*iKDEN,*iKVP,*iKVS;
 
+  // Preconditioner
+  Dfloat *Pcond,*iPcond;
+
   KERNELW(DFT *inFWD,DFT *inADJ,SDM *sdm);
 
   ~KERNELW();

@@ -727,11 +727,15 @@ MPI_Barrier(MPI_COMM_WORLD);
       sprintf(name,"DATA/iKVS-%.2f.bin",uw_adj->freq[nfreq-1]);
       HALO_ADJ->MergePrint(K.iKVS,NXT,NYT,NZT,subi,rank,name);
 
-
       sprintf(name,"DATA/KVP-%.2f.bin",uw_adj->freq[nfreq-1]);
       HALO_ADJ->MergePrint(K.KVP,NXT,NYT,NZT,subi,rank,name);
       sprintf(name,"DATA/iKVP-%.2f.bin",uw_adj->freq[nfreq-1]);
       HALO_ADJ->MergePrint(K.iKVP,NXT,NYT,NZT,subi,rank,name);
+
+      sprintf(name,"DATA/Pcond-%.2f.bin",uw_adj->freq[nfreq-1]);
+      HALO_ADJ->MergePrint(K.Pcond,NXT,NYT,NZT,subi,rank,name);
+      sprintf(name,"DATA/iPcond-%.2f.bin",uw_adj->freq[nfreq-1]);
+      HALO_ADJ->MergePrint(K.iPcond,NXT,NYT,NZT,subi,rank,name);
   
       /*
    for (int i=0;i<nfreq;++i){

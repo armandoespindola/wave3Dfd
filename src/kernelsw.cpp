@@ -86,6 +86,9 @@ KERNELW::KERNELW(DFT *inFWD,DFT *inADJ,SDM *sdm){
   iuz_dy_ad = new Dfloat [FWD->SDMGeom->HALO_Node()];
   iuz_dz_ad = new Dfloat [FWD->SDMGeom->HALO_Node()];
 
+  iPcond = new Dfloat [FWD->SDMGeom->HALO_Node()];
+  Pcond = new Dfloat [FWD->SDMGeom->HALO_Node()];
+
   InitVar(ZERO);
 
 }
@@ -148,6 +151,9 @@ KERNELW::~KERNELW(){
   delete [] iuz_dx_ad;
   delete [] iuz_dy_ad;
   delete [] iuz_dz_ad;
+
+  delete [] iPcond;
+  delete [] Pcond;
 
   fwdDF = NULL;
   adjDF = NULL;
@@ -216,6 +222,9 @@ void KERNELW::InitVar(Dfloat f){
   iuz_dx_ad[i] = f;
   iuz_dy_ad[i] = f;
   iuz_dz_ad[i] = f;
+
+  iPcond[i] = f;
+  Pcond[i] = f;
 
   }
   
@@ -373,13 +382,15 @@ void KERNELW::RHO(int l){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	KRHO[FWD->IJK(i,j,k)] = fwdDF->freq[i] * fwdDF->freq[i] * \
+	KRHO[FWD->IJK(i,j,k)] = fwdDF->freq[l] * fwdDF->freq[l] * \
 	  ((fwdDF->Fux[l][FWD->IJK(i,j,k)] * adjDF->Fux[l][FWD->IJK(i,j,k)]   + \
 	   fwdDF->Fuy[l][FWD->IJK(i,j,k)] * adjDF->Fuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->Fuz[l][FWD->IJK(i,j,k)] * adjDF->Fuz[l][FWD->IJK(i,j,k)] )   + \
 	   (fwdDF->iFux[l][FWD->IJK(i,j,k)] * adjDF->iFux[l][FWD->IJK(i,j,k)]   + \
 	   fwdDF->iFuy[l][FWD->IJK(i,j,k)] * adjDF->iFuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->iFuz[l][FWD->IJK(i,j,k)] * adjDF->iFuz[l][FWD->IJK(i,j,k)])) * FWD->dt;
+
+	Pcond[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l]; 
 
       }
     }
@@ -394,13 +405,15 @@ void KERNELW::iRHO(int l){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	iKRHO[FWD->IJK(i,j,k)] =  fwdDF->freq[i] * fwdDF->freq[i] * \
+	iKRHO[FWD->IJK(i,j,k)] =  fwdDF->freq[l] * fwdDF->freq[l] * \
 	  ((fwdDF->iFux[l][FWD->IJK(i,j,k)] * adjDF->Fux[l][FWD->IJK(i,j,k)]   + \
 	   fwdDF->iFuy[l][FWD->IJK(i,j,k)] * adjDF->Fuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->iFuz[l][FWD->IJK(i,j,k)] * adjDF->Fuz[l][FWD->IJK(i,j,k)] )   - \
 	   (fwdDF->Fux[l][FWD->IJK(i,j,k)] * adjDF->iFux[l][FWD->IJK(i,j,k)]   + \
 	   fwdDF->Fuy[l][FWD->IJK(i,j,k)] * adjDF->iFuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->Fuz[l][FWD->IJK(i,j,k)] * adjDF->iFuz[l][FWD->IJK(i,j,k)])) * FWD->dt;
+
+	iPcond[FWD->IJK(i,j,k)] += iKRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l];
 
       }
     }
