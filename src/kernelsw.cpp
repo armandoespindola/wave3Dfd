@@ -391,7 +391,7 @@ void KERNELW::RHO(int l){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	KRHO[FWD->IJK(i,j,k)] = fwdDF->freq[l] * fwdDF->freq[l] * \
+	KRHO[FWD->IJK(i,j,k)] = 4.0 * pi * pi * fwdDF->freq[l] * fwdDF->freq[l] * \
 	  ((fwdDF->Fux[l][FWD->IJK(i,j,k)] * adjDF->Fux[l][FWD->IJK(i,j,k)]   + \
 	   fwdDF->Fuy[l][FWD->IJK(i,j,k)] * adjDF->Fuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->Fuz[l][FWD->IJK(i,j,k)] * adjDF->Fuz[l][FWD->IJK(i,j,k)] )   + \
@@ -399,9 +399,9 @@ void KERNELW::RHO(int l){
 	   fwdDF->iFuy[l][FWD->IJK(i,j,k)] * adjDF->iFuy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->iFuz[l][FWD->IJK(i,j,k)] * adjDF->iFuz[l][FWD->IJK(i,j,k)])) * FWD->dt;
 
-	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l];
+	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi  ;
 
-  PcondA[FWD->IJK(i,j,k)] += fwdDF->freq[l] * fwdDF->freq[l] * fwdDF->freq[l] * fwdDF->freq[l] * \
+  PcondA[FWD->IJK(i,j,k)] +=  16.0 * pi * pi * pi * pi * fwdDF->freq[l] * fwdDF->freq[l] * fwdDF->freq[l] * fwdDF->freq[l] * \
     ((fwdDF->Fux[l][FWD->IJK(i,j,k)] * fwdDF->Fux[l][FWD->IJK(i,j,k)]   + \
      fwdDF->Fuy[l][FWD->IJK(i,j,k)] * fwdDF->Fuy[l][FWD->IJK(i,j,k)]   + \
       fwdDF->Fuz[l][FWD->IJK(i,j,k)] * fwdDF->Fuz[l][FWD->IJK(i,j,k)] )   - \

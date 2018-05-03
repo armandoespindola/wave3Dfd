@@ -716,28 +716,23 @@ MPI_Barrier(MPI_COMM_WORLD);
      K.CALC(i);
        }
 
-      sprintf(name,"DATA/KRHO-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.KDEN,NXT,NYT,NZT,subi,rank,name);
-      sprintf(name,"DATA/iKRHO-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.iKDEN,NXT,NYT,NZT,subi,rank,name);
+      HALO_ADJ->MergePrint(K.KDEN,NXT,NYT,NZT,subi,rank,"DATA/KRHO.bin");
+      // name = "DATA/iKRHO.bin";
+      //HALO_ADJ->MergePrint(K.iKDEN,NXT,NYT,NZT,subi,rank,name);
 
+      HALO_ADJ->MergePrint(K.KVS,NXT,NYT,NZT,subi,rank,"DATA/KVS.bin");
+      // name = "DATA/iKVS.bin";
+      // HALO_ADJ->MergePrint(K.iKVS,NXT,NYT,NZT,subi,rank,name);
 
-      sprintf(name,"DATA/KVS-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.KVS,NXT,NYT,NZT,subi,rank,name);
-      sprintf(name,"DATA/iKVS-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.iKVS,NXT,NYT,NZT,subi,rank,name);
+      HALO_ADJ->MergePrint(K.KVP,NXT,NYT,NZT,subi,rank,"DATA/KVP.bin");
+      // name = "DATA/iKVP.bin";
+      // HALO_ADJ->MergePrint(K.iKVP,NXT,NYT,NZT,subi,rank,name);
 
-      sprintf(name,"DATA/KVP-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.KVP,NXT,NYT,NZT,subi,rank,name);
-      sprintf(name,"DATA/iKVP-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.iKVP,NXT,NYT,NZT,subi,rank,name);
+      HALO_ADJ->MergePrint(K.PcondA,NXT,NYT,NZT,subi,rank,"DATA/PcondA.bin");
 
-      sprintf(name,"DATA/PcondA-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.PcondA,NXT,NYT,NZT,subi,rank,name);
+      HALO_ADJ->MergePrint(K.PcondB,NXT,NYT,NZT,subi,rank,"DATA/PcondB.bin");
 
-      sprintf(name,"DATA/PcondB-%.2f.bin",uw_adj->freq[nfreq-1]);
-      HALO_ADJ->MergePrint(K.PcondB,NXT,NYT,NZT,subi,rank,name);
-  
+      
       /*
    for (int i=0;i<nfreq;++i){
 
