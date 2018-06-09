@@ -57,6 +57,13 @@ DFT::DFT(SDM *in_sdm,std::string nFile,int infreq){
   iFuy = new Dfloat*[nf];
   iFuz = new Dfloat*[nf];
 
+  Fvx = new Dfloat*[nf];
+  Fvy = new Dfloat*[nf];
+  Fvz = new Dfloat*[nf];
+  iFvx = new Dfloat*[nf];
+  iFvy = new Dfloat*[nf];
+  iFvz = new Dfloat*[nf];
+
   
   for (int i=0;i<nf;++i){
     Fux[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
@@ -65,6 +72,14 @@ DFT::DFT(SDM *in_sdm,std::string nFile,int infreq){
     iFux[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
     iFuy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
     iFuz[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+
+    Fvx[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    Fvy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    Fvz[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    iFvx[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    iFvy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    iFvz[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+    
   }
 
   InitVar(ZERO);
@@ -81,7 +96,14 @@ DFT::~DFT(){
     delete [] Fuz[i];
     delete [] iFux[i];
     delete [] iFuy[i];
-    delete [] iFuz[i]; 
+    delete [] iFuz[i];
+
+    delete [] Fvx[i];
+    delete [] Fvy[i];
+    delete [] Fvz[i];
+    delete [] iFvx[i];
+    delete [] iFvy[i];
+    delete [] iFvz[i];
   }
 
 
@@ -91,6 +113,13 @@ DFT::~DFT(){
   delete [] iFux;
   delete [] iFuy;
   delete [] iFuz;
+
+  delete [] Fvx;
+  delete [] Fvy;
+  delete [] Fvz;
+  delete [] iFvx;
+  delete [] iFvy;
+  delete [] iFvz;
 
 }
 
@@ -107,6 +136,14 @@ void DFT::InitVar(Dfloat f){
       iFux[l][i] = f;
       iFuy[l][i] = f;
       iFuz[l][i] = f;
+
+      Fvx[l][i] = f;
+      Fvy[l][i] = f;
+      Fvz[l][i] = f;
+
+      iFvx[l][i] = f;
+      iFvy[l][i] = f;
+      iFvz[l][i] = f;
 
     }
   }
@@ -138,6 +175,15 @@ void DFT::FD(Dfloat dt,int ktime){
 
 	  Fuz[l][sdm->IJK(i,j,k)] += sdm->uz[sdm->IJK(i,j,k)] * a1;
 	  iFuz[l][sdm->IJK(i,j,k)] += sdm->uz[sdm->IJK(i,j,k)] * a2;
+
+	  Fvx[l][sdm->IJK(i,j,k)] += sdm->vx[sdm->IJK(i,j,k)] * a1;
+	  iFvx[l][sdm->IJK(i,j,k)] += sdm->vx[sdm->IJK(i,j,k)] * a2;
+
+	  Fvy[l][sdm->IJK(i,j,k)] += sdm->vy[sdm->IJK(i,j,k)] * a1;
+	  iFvy[l][sdm->IJK(i,j,k)] += sdm->vy[sdm->IJK(i,j,k)] * a2;
+
+	  Fvz[l][sdm->IJK(i,j,k)] += sdm->vz[sdm->IJK(i,j,k)] * a1;
+	  iFvz[l][sdm->IJK(i,j,k)] += sdm->vz[sdm->IJK(i,j,k)] * a2;
 
 	  
 	  

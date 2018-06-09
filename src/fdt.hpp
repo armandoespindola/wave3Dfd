@@ -36,6 +36,8 @@ public:
 
   Dfloat **Fux,**Fuy,**Fuz;
   Dfloat **iFux,**iFuy,**iFuz;
+  Dfloat **Fvx,**Fvy,**Fvz;
+  Dfloat **iFvx,**iFvy,**iFvz;
   Dfloat *freq;
 
   DFT(SDM *in_sdm,std::string nFile,int infreq);

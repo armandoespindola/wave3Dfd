@@ -38,7 +38,10 @@ protected:
   // ADJ Adjoint Propagation
   
   SDM *FWD,*ADJ;
-  
+  int nfq;
+
+public:
+
   Dfloat *ux_dx,*ux_dy,*ux_dz;
   Dfloat *uy_dx,*uy_dy,*uy_dz;
   Dfloat *uz_dx,*uz_dy,*uz_dz;
@@ -46,9 +49,6 @@ protected:
   Dfloat *ux_dx_ad,*ux_dy_ad,*ux_dz_ad;
   Dfloat *uy_dx_ad,*uy_dy_ad,*uy_dz_ad;
   Dfloat *uz_dx_ad,*uz_dy_ad,*uz_dz_ad;
-  int nfq;
-
-public:
 
 
   Dfloat *KRHO,*KMU,*KLAMBDA,*KDEN,*KVP,*KVS;

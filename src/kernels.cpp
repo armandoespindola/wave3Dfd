@@ -287,7 +287,7 @@ void KERNEL::RHO(){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	KRHO[FWD->IJK(i,j,k)] = KRHO[FWD->IJK(i,j,k)] - (	\
+	KRHO[FWD->IJK(i,j,k)] = KRHO[FWD->IJK(i,j,k)] + (	\
 	  FWD->vx[FWD->IJK(i,j,k)] * ADJ->vx[ADJ->IJK(i,j,k)] + \
 	  FWD->vy[FWD->IJK(i,j,k)] * ADJ->vy[ADJ->IJK(i,j,k)] + \
 	  FWD->vz[FWD->IJK(i,j,k)] * ADJ->vz[ADJ->IJK(i,j,k)] ) * FWD->dt;
@@ -305,10 +305,10 @@ void KERNEL::LAMBDA(){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	KLAMBDA[FWD->IJK(i,j,k)] = KLAMBDA[FWD->IJK(i,j,k)] + (	\
+	KLAMBDA[FWD->IJK(i,j,k)] = KLAMBDA[FWD->IJK(i,j,k)] - (	\
 	  ux_dx[FWD->IJK(i,j,k)] + uy_dy[FWD->IJK(i,j,k)] + \
-	  uz_dz[FWD->IJK(i,j,k)] ) * (ux_dx_ad[ADJ->IJK(i,j,k)] + \
-		    uy_dy_ad[ADJ->IJK(i,j,k)] + uz_dz_ad[ADJ->IJK(i,j,k)]) * FWD->dt;
+	  uz_dz[FWD->IJK(i,j,k)] ) * (ux_dx_ad[ADJ->IJK(i,j,k)] +	\
+				      uy_dy_ad[ADJ->IJK(i,j,k)] + uz_dz_ad[ADJ->IJK(i,j,k)]) * FWD->dt;
 					    
 	  
       }
@@ -320,6 +320,7 @@ void KERNEL::LAMBDA(){
 
 void KERNEL::MU(){
   Dfloat e[3][3],e_ad[3][3],buff;
+  Dfloat isot;
 
 
   for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
@@ -328,26 +329,39 @@ void KERNEL::MU(){
   
 
 
-	e[0][0]= 2.0 * ux_dx[FWD->IJK(i,j,k)];
-	e[0][1]= ux_dy[FWD->IJK(i,j,k)] + uy_dx[FWD->IJK(i,j,k)];
-	e[0][2]= ux_dz[FWD->IJK(i,j,k)] + uz_dx[FWD->IJK(i,j,k)];
+	e[0][0]= ux_dx[FWD->IJK(i,j,k)];
+	e[0][1]= 0.5 * (ux_dy[FWD->IJK(i,j,k)] + uy_dx[FWD->IJK(i,j,k)]);
+	e[0][2]= 0.5 * (ux_dz[FWD->IJK(i,j,k)] + uz_dx[FWD->IJK(i,j,k)]);
 	e[1][0]= e[0][1];
-	e[1][1]= 2.0 * uy_dy[FWD->IJK(i,j,k)];
-	e[1][2]= uy_dz[FWD->IJK(i,j,k)] + uz_dy[FWD->IJK(i,j,k)];
+	e[1][1]= uy_dy[FWD->IJK(i,j,k)];
+	e[1][2]= 0.5 * (uy_dz[FWD->IJK(i,j,k)] + uz_dy[FWD->IJK(i,j,k)]);
 	e[2][0]= e[0][2];
 	e[2][1]= e[1][2];
-	e[2][2]= 2.0 * uz_dz[FWD->IJK(i,j,k)];
+	e[2][2]= uz_dz[FWD->IJK(i,j,k)];
+
+	isot = (e[0][0] + e[1][1] + e[2][2]) / 3.0;
 
 
-	e_ad[0][0]= 2.0 * ux_dx_ad[ADJ->IJK(i,j,k)];
-	e_ad[0][1]= ux_dy_ad[ADJ->IJK(i,j,k)] + uy_dx_ad[ADJ->IJK(i,j,k)];
-	e_ad[0][2]= ux_dz_ad[ADJ->IJK(i,j,k)] + uz_dx_ad[ADJ->IJK(i,j,k)];
+	e[0][0] -= isot;
+	e[1][1] -= isot;
+	e[2][2] -= isot;
+	
+	e_ad[0][0]= ux_dx_ad[ADJ->IJK(i,j,k)];
+	e_ad[0][1]= 0.5 * (ux_dy_ad[ADJ->IJK(i,j,k)] + uy_dx_ad[ADJ->IJK(i,j,k)]);
+	e_ad[0][2]= 0.5 * (ux_dz_ad[ADJ->IJK(i,j,k)] + uz_dx_ad[ADJ->IJK(i,j,k)]);
 	e_ad[1][0]= e_ad[0][1];
-	e_ad[1][1]= 2.0 * uy_dy_ad[ADJ->IJK(i,j,k)];
-	e_ad[1][2]= uy_dz_ad[ADJ->IJK(i,j,k)] + uz_dy_ad[ADJ->IJK(i,j,k)];
+	e_ad[1][1]= uy_dy_ad[ADJ->IJK(i,j,k)];
+	e_ad[1][2]= 0.5 * (uy_dz_ad[ADJ->IJK(i,j,k)] + uz_dy_ad[ADJ->IJK(i,j,k)]);
 	e_ad[2][0]= e_ad[0][2];
 	e_ad[2][1]= e_ad[1][2];
-	e_ad[2][2]= 2.0 * uz_dz_ad[ADJ->IJK(i,j,k)];
+	e_ad[2][2]= uz_dz_ad[ADJ->IJK(i,j,k)];
+
+	isot = (e_ad[0][0] + e_ad[1][1] + e_ad[2][2]) / 3.0;
+
+
+	e_ad[0][0] -= isot;
+	e_ad[1][1] -= isot;
+	e_ad[2][2] -= isot;
 
 
 	buff = 0.0;
@@ -361,7 +375,7 @@ void KERNEL::MU(){
 	}
 
 
-	KMU[FWD->IJK(i,j,k)] = KMU[FWD->IJK(i,j,k)] + 0.5 * FWD->dt * buff;
+	KMU[FWD->IJK(i,j,k)] = KMU[FWD->IJK(i,j,k)] - 2.0 * FWD->dt * buff;
 	
 
 
@@ -404,30 +418,41 @@ void KERNEL::CALC(){
 
 
 void  KERNEL::KERNELS(){
-   Dfloat vp,vs,rho;
-
+   Dfloat kappa,mu,rho;
+   Dfloat parmu,parkap;
+   /*
+Kernel Parametrization (Tromp,2005)
+k bulk modulus
+rho density
+vp P velocity
+vs S velocity
+    */
  
     
     for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
       for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
 	for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
-	  rho = FWD->rho[FWD->IJK(i,j,k)];
+	  rho = FWD->rho[FWD->IJK(i,j,k)] * KRHO[FWD->IJK(i,j,k)];
+
+	  parkap = (FWD->lamb[FWD->IJK(i,j,k)]		\
+		    + (2.0/3.0) * FWD->mu[FWD->IJK(i,j,k)]);
+
+	  parmu = FWD->mu[FWD->IJK(i,j,k)];
 	  
-	  vp = (FWD->lamb[FWD->IJK(i,j,k)] \
-		+ 2.0 * FWD->mu[FWD->IJK(i,j,k)]) / rho;
+	  
+	  kappa = parkap *  KLAMBDA[FWD->IJK(i,j,k)];
 
-	  vs = FWD->mu[FWD->IJK(i,j,k)]  / rho;
+	  mu = parmu * KMU[FWD->IJK(i,j,k)];
 
 	  
-	  KDEN[FWD->IJK(i,j,k)] = KRHO[FWD->IJK(i,j,k)] +	\
-	    (vp - 2.0 * vs) * KLAMBDA[FWD->IJK(i,j,k)] + \
-	    vs * KMU[FWD->IJK(i,j,k)];
 
-	  KVS[FWD->IJK(i,j,k)] = 2.0 * rho * sqrt(vs) * KMU[FWD->IJK(i,j,k)] - \
-	    4.0 * rho * sqrt(vs) * KLAMBDA[FWD->IJK(i,j,k)];
+	  
+	  KDEN[FWD->IJK(i,j,k)] = rho + kappa + mu;
 
-	  KVP[FWD->IJK(i,j,k)] = 2.0 * rho * sqrt(vp) * KLAMBDA[FWD->IJK(i,j,k)];
+	  KVS[FWD->IJK(i,j,k)] = 2.0 * (mu - (4.0 / 3.0) * (parmu / parkap) * kappa);
+
+	  KVP[FWD->IJK(i,j,k)] = 2.0 * ( 1.0 + (4.0 / 3.0) * (parmu / parkap)) * kappa ;
 	    
 	  
 	}

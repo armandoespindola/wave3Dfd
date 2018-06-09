@@ -86,9 +86,9 @@ public:
 
   // SPATIAL DERIVATIVES (4TH ORDER)
   
-  void DevX(Dfloat *in_var,Dfloat *out_var);
-  void DevY(Dfloat *in_var,Dfloat *out_var);
-  void DevZ(Dfloat *in_var,Dfloat *out_var);
+  void DevX(Dfloat **in_var,int i,Dfloat *out_var);
+  void DevY(Dfloat **in_var,int i,Dfloat *out_var);
+  void DevZ(Dfloat **in_var,int i,Dfloat *out_var);
 
 };
 
