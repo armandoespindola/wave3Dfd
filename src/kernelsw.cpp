@@ -239,8 +239,15 @@ void KERNELW::InitVar(Dfloat f){
   
 }
 void KERNELW::DevX(Dfloat **in_var,int l,Dfloat *out_var){
+int az;
 
-  for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
+  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
+    az = FWD->SNodeZ()-KHALO -1;
+  }else{
+    az = FWD->SNodeZ()-KHALO;
+  }
+  
+  for (int k=KHALO;k<az;k++){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
@@ -289,7 +296,14 @@ void KERNELW::DevX(Dfloat **in_var,int l,Dfloat *out_var){
 
 
 void KERNELW::DevY(Dfloat **in_var,int l,Dfloat *out_var){
-    for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
+  int az;
+
+  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
+    az = FWD->SNodeZ()-KHALO -1;
+  }else{
+    az = FWD->SNodeZ()-KHALO;
+  }
+    for (int k=KHALO;k<az;k++){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
@@ -337,14 +351,21 @@ void KERNELW::DevY(Dfloat **in_var,int l,Dfloat *out_var){
 
 
 void KERNELW::DevZ(Dfloat **in_var,int l,Dfloat *out_var){
+  int az;
 
+  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
+    az = FWD->SNodeZ()-KHALO -1;
+  }else{
+    az = FWD->SNodeZ()-KHALO;
+  }
+    
 
-  for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
+  for (int k=KHALO;k<az;k++){
     for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
 
-	if ((k >= 2*KHALO) && (k < FWD->SNodeZ()-2*KHALO)){
+	if ((k >= 2*KHALO) && (k < FWD->SNodeZ()-2*KHALO-1)){
 	  
 	out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i,j,k-2)] - \
 				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j,k-1)] + \
@@ -366,7 +387,7 @@ void KERNELW::DevZ(Dfloat **in_var,int l,Dfloat *out_var){
 
 	// LEFT SIDE
 	
-	if (k >= FWD->SNodeZ()-2*KHALO){
+	if (k >= FWD->SNodeZ()-2*KHALO-1){
 
 	  out_var[FWD->IJK(i,j,k)] = (  (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] - \
 				 4.0 * in_var[l][FWD->IJK(i,j,k-1)] + \
@@ -746,9 +767,17 @@ rho density
 vp P velocity
 vs S velocity
     */
+
+   int az;
+
+  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
+    az = FWD->SNodeZ()-KHALO -1;
+  }else{
+    az = FWD->SNodeZ()-KHALO;
+  }
  
     
-    for (int k=KHALO;k<FWD->SNodeZ()-KHALO;k++){
+    for (int k=KHALO;k<az;k++){
       for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
 	for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 

@@ -49,7 +49,7 @@ protected:
 	DPML *pml_x,*pml_y,*pml_z;
 	VecI HALO,NodG;
 	VecF thickness_PML;
-        VecI NT,Nsdm;
+        VecI NT;
 	int PROPAGATION;
         Dfloat sgn;
 
@@ -88,7 +88,7 @@ public:
 	Dfloat *ux,*uy,*uz;
 	Dfloat *mu,*lamb,*rho;
 
-        VecI NumSubDom;
+  VecI NumSubDom,Nsdm;
 	VecI NodLoc;
 
 	// GI INITIAL GLOBAL LIMIT
