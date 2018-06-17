@@ -196,7 +196,7 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
 
   Dfloat src,a_fu,amp,time;
 
-  time = itime  * dt; 
+  time = itime  * dt + dt/2.0; 
   a_fu= pow (pi*f0,2.0);
   src = 0.0;
 

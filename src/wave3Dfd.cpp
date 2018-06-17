@@ -125,6 +125,9 @@ int main (int argc, char* argv[]) {
   const int nfreq = std::stoi(par.ParamReturn("-nfq"));
 
   const std::string freqFile = par.ParamReturn("-rfq");
+
+   // SRCFILE
+  const int SrcFile = std::stoi(par.ParamReturn("-srcFile"));
   
   
 
@@ -323,7 +326,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   sdm->ModelRead(SubLamb,"LAMB");
 
   // SOURCE INITIALIZATION
-  sdm->InitSource(Gdomain,sourceFile,nsource);
+  sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
   
   int a=sdm->CFL();

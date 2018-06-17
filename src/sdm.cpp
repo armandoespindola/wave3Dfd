@@ -2185,8 +2185,28 @@ void SDM::FDVZ() {
 }
 
 
-void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource){
+void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource,int SrcFile,int nt){
+
+  FileSrcB = SrcFile;
+  
+  if (FileSrcB == 0) {
   sourceM = new source(GDomain,nFile,nsource);
+  } else if (FileSrcB == 1){
+    FileSrc = "SrcTime.bin";
+    srct = new Dfloat[nt];
+    std::fstream R;
+    R.open("SrcTime.bin",std::ios::binary | std::ios::in);
+    for (int it = 0; it<nt;++it){
+      R.read( (char*)&srct[it], sizeof(Dfloat));
+    }
+
+    R.close();
+    sourceM = new source(GDomain,nFile,nsource);
+
+  } else {
+    printf("This is not a option for the source/n");
+  }
+  
 }
 
 
@@ -2307,8 +2327,13 @@ void SDM::AddSource(int itime, int T_SRC){
 
 
   for (int i = 0; i<sourceM->ns; ++i){
-        
+
+
+    if (FileSrcB == 0){
     st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
+    } else if (FileSrcB == 1){
+      st = srct[itime];
+    }
     st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
 
 

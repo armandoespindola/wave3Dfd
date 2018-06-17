@@ -90,6 +90,9 @@ public:
 
   VecI NumSubDom,Nsdm;
 	VecI NodLoc;
+  std::string FileSrc;
+  int FileSrcB;
+  Dfloat *srct;
 
 	// GI INITIAL GLOBAL LIMIT
 	// GF END GLOBAL LIMIT 
@@ -221,7 +224,7 @@ public:
   // SOURCE MOMENT TENSOR
 
   // INITIALIZE SOURCE
-  void InitSource(geometry3D *GDomain,std::string nFile,int nsource);
+  void InitSource(geometry3D *GDomain,std::string nFile,int nsource,int SrcFile,int nt);
 
   // ADD VALUES SOURCE
   void AddSource(int itime,int T_SRC);
