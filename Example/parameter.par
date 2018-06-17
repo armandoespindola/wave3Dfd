@@ -14,9 +14,11 @@
 // TIME STEP
 -dt 0.005 
 // SOURCE FREQUENCY
--f0 4.5
+-f0 3.0
 // SOURCE TYPE
 -stype 2
+// SOURCE FILE
+-srcFile 0
 // NUMBER OF SUBDOMAINS
 -sx 2
 -sy 2
@@ -24,8 +26,8 @@
 // NUMBER OMP THREADS
 -nomp 2
 // SNAPSHOT
--snap 0
--t_snap 50
+-snap 1
+-t_snap 100
 // NUMBER OF SOURCES
 -ns 1
 -sf sources.par
