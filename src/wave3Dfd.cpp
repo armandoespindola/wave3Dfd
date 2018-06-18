@@ -380,15 +380,14 @@ MPI_Barrier(MPI_COMM_WORLD);
     sdm->FDVY();
     sdm->FDVZ();
 
-
-    // FOURIER TRANSFORMATION
-     uw_sdm->FD(dt,k);
-
      HALO->TRANSFER("VX");
      HALO->TRANSFER("VY");
      HALO->TRANSFER("VZ");
 
     MPI_Barrier(MPI_COMM_WORLD);
+
+    // FOURIER TRANSFORMATION
+     uw_sdm->FD(dt,k);
 
     sdm->FDSII();
     sdm->FDSXY();
@@ -605,10 +604,10 @@ MPI_Barrier(MPI_COMM_WORLD);
      HALO_ADJ->TRANSFER("VY");
      HALO_ADJ->TRANSFER("VZ");
 
-     // FOURIER TRANSFORMATION
-     uw_adj->FD(dt,k);
-
     MPI_Barrier(MPI_COMM_WORLD);
+
+    // FOURIER TRANSFORMATION
+     uw_adj->FD(dt,k);
 
     ADJ->FDSII();
     ADJ->FDSXY();

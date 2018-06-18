@@ -74,16 +74,18 @@ public:
   void InitVar(Dfloat f);
 
   void RHO(int i);
-  void MU();
-  void LAMBDA();
+  void MU(int i);
+  void LAMBDA(int i);
   void KERNELS();
   void CALC(int i);
 
+  /*
   void iRHO(int i);
   void iMU();
   void iLAMBDA();
   void iKERNELS();
-
+  */
+  
   // SPATIAL DERIVATIVES (4TH ORDER)
   
   void DevX(Dfloat **in_var,int i,Dfloat *out_var);

@@ -50,13 +50,6 @@ DFT::DFT(SDM *in_sdm,std::string nFile,int infreq){
 
   R.close();
 
-  Fux = new Dfloat*[nf];
-  Fuy = new Dfloat*[nf];
-  Fuz = new Dfloat*[nf];
-  iFux = new Dfloat*[nf];
-  iFuy = new Dfloat*[nf];
-  iFuz = new Dfloat*[nf];
-
   Fvx = new Dfloat*[nf];
   Fvy = new Dfloat*[nf];
   Fvz = new Dfloat*[nf];
@@ -66,12 +59,7 @@ DFT::DFT(SDM *in_sdm,std::string nFile,int infreq){
 
   
   for (int i=0;i<nf;++i){
-    Fux[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
-    Fuy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
-    Fuz[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
-    iFux[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
-    iFuy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
-    iFuz[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
+
 
     Fvx[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
     Fvy[i] = new Dfloat[sdm->SDMGeom->HALO_Node()];
@@ -91,12 +79,6 @@ DFT::DFT(SDM *in_sdm,std::string nFile,int infreq){
 DFT::~DFT(){
 
   for (int i=0;i<nf;++i){
-    delete [] Fux[i];
-    delete [] Fuy[i];
-    delete [] Fuz[i];
-    delete [] iFux[i];
-    delete [] iFuy[i];
-    delete [] iFuz[i];
 
     delete [] Fvx[i];
     delete [] Fvy[i];
@@ -105,14 +87,6 @@ DFT::~DFT(){
     delete [] iFvy[i];
     delete [] iFvz[i];
   }
-
-
-  delete [] Fux;
-  delete [] Fuy;
-  delete [] Fuz;
-  delete [] iFux;
-  delete [] iFuy;
-  delete [] iFuz;
 
   delete [] Fvx;
   delete [] Fvy;
@@ -129,14 +103,6 @@ void DFT::InitVar(Dfloat f){
   for (int l =0;l<nf;++l){
     for (int i=0; i<sdm->SDMGeom->HALO_Node(); ++i){
 
-      Fux[l][i] = f;
-      Fuy[l][i] = f;
-      Fuz[l][i] = f;
-
-      iFux[l][i] = f;
-      iFuy[l][i] = f;
-      iFuz[l][i] = f;
-
       Fvx[l][i] = f;
       Fvy[l][i] = f;
       Fvz[l][i] = f;
@@ -152,7 +118,7 @@ void DFT::InitVar(Dfloat f){
 
 void DFT::FD(Dfloat dt,int ktime){
 
-  double a1,a2;
+  Dfloat a1,a2;
 
   for (int l =0;l<nf;++l){
 
@@ -163,18 +129,9 @@ void DFT::FD(Dfloat dt,int ktime){
 
 #pragma omp parallel for num_threads(sdm->N_omp) \
   firstprivate(l,a1,a2)
-    for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
-      for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
-	for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
-
-	  Fux[l][sdm->IJK(i,j,k)] += sdm->ux[sdm->IJK(i,j,k)] * a1;
-	  iFux[l][sdm->IJK(i,j,k)] += sdm->ux[sdm->IJK(i,j,k)] * a2;
-
-	  Fuy[l][sdm->IJK(i,j,k)] += sdm->uy[sdm->IJK(i,j,k)] * a1;
-	  iFuy[l][sdm->IJK(i,j,k)] += sdm->uy[sdm->IJK(i,j,k)] * a2;
-
-	  Fuz[l][sdm->IJK(i,j,k)] += sdm->uz[sdm->IJK(i,j,k)] * a1;
-	  iFuz[l][sdm->IJK(i,j,k)] += sdm->uz[sdm->IJK(i,j,k)] * a2;
+    for (int k=0;k<sdm->SNodeZ();k++){
+      for (int j=0;j<sdm->SNodeY();j++){
+	for (int i=0;i<sdm->SNodeX();i++){
 
 	  Fvx[l][sdm->IJK(i,j,k)] += sdm->vx[sdm->IJK(i,j,k)] * a1;
 	  iFvx[l][sdm->IJK(i,j,k)] += sdm->vx[sdm->IJK(i,j,k)] * a2;
