@@ -87,8 +87,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BN0,"North",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BN0,N_SN,MY_MPI_Dfloat,indxD,0,BN1,	\
-       		       N_SN,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BN0,N_SN,MY_MPI_Dfloat,indxD,0,BN1,	\
+       		       N_SN,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
       sdm->ImpBoundary(BN1,"North",VarName);
 
@@ -106,8 +106,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BS0,"South",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BS0,N_SN,MY_MPI_Dfloat,indxD,0,BS1,	\
-			       N_SN,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BS0,N_SN,MY_MPI_Dfloat,indxD,0,BS1,	\
+			       N_SN,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
       sdm->ImpBoundary(BS1,"South",VarName);
   }
@@ -124,8 +124,8 @@ void MPI_DATA::TRANSFER(char *VarName){
      
       sdm->ExpBoundary(BE0,"East",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BE0,N_WE,MY_MPI_Dfloat,indxD,0,BE1,	\
-			       N_WE,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BE0,N_WE,MY_MPI_Dfloat,indxD,0,BE1,	\
+			       N_WE,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
 
       sdm->ImpBoundary(BE1,"East",VarName);
@@ -144,8 +144,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BW0,"West",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BW0,N_WE,MY_MPI_Dfloat,indxD,0,BW1,	\
-			       N_WE,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BW0,N_WE,MY_MPI_Dfloat,indxD,0,BW1,	\
+			       N_WE,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
       sdm->ImpBoundary(BW1,"West",VarName);
 
@@ -163,8 +163,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BUp0,"UP",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BUp0,N_UpDown,MY_MPI_Dfloat,indxD,0,BUp1, \
-			       N_UpDown,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BUp0,N_UpDown,MY_MPI_Dfloat,indxD,0,BUp1, \
+			       N_UpDown,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
       sdm->ImpBoundary(BUp1,"UP",VarName);
 
@@ -182,8 +182,8 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       sdm->ExpBoundary(BDown0,"DOWN",VarName);
 
-      MPI::COMM_WORLD.Sendrecv(BDown0,N_UpDown,MY_MPI_Dfloat,indxD,0,BDown1, \
-			       N_UpDown,MY_MPI_Dfloat,indxD,0);
+      MPI_Sendrecv(BDown0,N_UpDown,MY_MPI_Dfloat,indxD,0,BDown1, \
+			       N_UpDown,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
       sdm->ImpBoundary(BDown1,"DOWN",VarName);
 
@@ -224,7 +224,7 @@ void MPI_DATA::Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank){
     for (int ii = 1; ii<Nsub;++ii) {
 
 
-      MPI::COMM_WORLD.Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0);
+      MPI_Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0,MPI_COMM_WORLD,&status);
       
 
       for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
@@ -253,7 +253,7 @@ void MPI_DATA::Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank){
   } if (rank >0) {
     
 
-    MPI::COMM_WORLD.Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+    MPI_Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD);
 
 
   }
@@ -298,7 +298,7 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
     for (int ii = 1; ii<Nsub;++ii) {
 
 
-      MPI::COMM_WORLD.Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0);
+      MPI_Recv(buff,sdm->SNodeT(),MY_MPI_Dfloat,ii,0,MPI_COMM_WORLD,&status);
       
       // printf("\n proc %d ; %d \n",Nsub,ii);
 
@@ -350,7 +350,7 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
   } if (rank >0) {
     
 
-    MPI::COMM_WORLD.Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+    MPI_Send(LocVar,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD);
 
 
   }

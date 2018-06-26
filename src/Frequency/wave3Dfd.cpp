@@ -206,11 +206,15 @@ VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1),\
 MPI_Status status;
 int rank,total_proc;
 
-MPI::Init(argc, argv);
+//MPI::Init(argc, argv);
+MPI_Init(&argc,&argv);
 
-total_proc = MPI::COMM_WORLD.Get_size();
+//total_proc = MPI::COMM_WORLD.Get_size();
+ MPI_Comm_size(MPI_COMM_WORLD,&total_proc);
 
-rank = MPI::COMM_WORLD.Get_rank();
+//rank = MPI::COMM_WORLD.Get_rank();
+ MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
 
 
 if (total_proc != N_mpi) {
@@ -272,9 +276,14 @@ if (rank == 0) {
 
   if ( i > 0) {
 
-  MPI::COMM_WORLD.Send(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
-  MPI::COMM_WORLD.Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
-  MPI::COMM_WORLD.Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
+//  MPI::COMM_WORLD.Send(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,i,0);	
+//  MPI::COMM_WORLD.Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
+//  MPI::COMM_WORLD.Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
+
+  MPI_Send(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);	
+  MPI_Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);
+  MPI_Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);
+
 
   }
 
@@ -297,9 +306,13 @@ if (rank > 0) {
   SubRho = new Dfloat[sdm->SNodeT()];
   SubLamb = new Dfloat[sdm->SNodeT()];
 
-  MPI::COMM_WORLD.Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
-  MPI::COMM_WORLD.Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
-  MPI::COMM_WORLD.Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+//  MPI::COMM_WORLD.Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+//  MPI::COMM_WORLD.Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+//  MPI::COMM_WORLD.Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+
+  MPI_Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+  MPI_Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+  MPI_Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
 
  }
 
@@ -350,7 +363,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   for (int k = 0; k<nt; ++k){
 
 
-    time1 = MPI::Wtime();
+    time1 = MPI_Wtime();
 
      if (rank == 0){
       printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
@@ -395,7 +408,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     sdm->FDSYZ();
 
     
-    time2 = MPI::Wtime();
+    time2 = MPI_Wtime();
 
     time += (time2-time1)/ (Dfloat) nt;
 
@@ -570,7 +583,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   for (int k = nt-1; k>0; --k){
 
 
-    time1 = MPI::Wtime();
+    time1 = MPI_Wtime();
     if (rank == 0){
       printf("Time step (ADJ) : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
     }
@@ -702,7 +715,7 @@ MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD); 
 
-    time2 = MPI::Wtime();
+    time2 = MPI_Wtime();
 
     time += (time2-time1)/(Dfloat)nt;    
     
@@ -795,7 +808,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   // delete  HALO;
 
    
-MPI::Finalize();
+MPI_Finalize();
 return 0;
 
 }
