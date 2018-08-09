@@ -173,12 +173,12 @@ void source::smoment(){
       Mxy[i] = sin(d)*cos(rake)*cos(2.0*str) + 0.5*sin(2.0*d)*sin(rake)*sin(2.0*str);
       Mxz[i] = cos(d)*cos(rake)*cos(str) + cos(2.0*d)*sin(rake)*sin(str) ;
       Myz[i] = cos(d)*cos(rake)*sin(str) - cos(2.0*d)*sin(rake)*cos(str) ;  
-      Mxx[i] *= -M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Myy[i] *=  M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+      Mxx[i] *= -M0[i] ; 
+      Myy[i] *=  M0[i] ; 
       Mzz[i] = -(Mxx[i] + Myy[i]); 
-      Mxy[i] *= M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Mxz[i] *= - M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
-      Myz[i] *= - M0[i] * 1.0e-5 * (1.0/100.0); //dyn*cm -> N*m;
+      Mxy[i] *= M0[i] ; 
+      Mxz[i] *= - M0[i] ; 
+      Myz[i] *= - M0[i] ; 
 
 //std::cout<<"M11,M22,M33,M12,M13,M23: "<<std::endl;
 //std::cout<<Mxx[i] <<Myy[i] <<Mzz[i] <<Mxy[i] <<Mxz[i] <<Myz[i] <<std::endl;
@@ -221,8 +221,11 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   // HEAVISIDE STEP FUNCTION
   
   if (T_SRC==3){
-	if (itime <4)    
-	src = 1.0; //dyn*cm -> N*m
+    if (itime > t0) {    
+	src = 1.0; 
+    } else {
+      src = 0.0;
+    }
   }
 
   

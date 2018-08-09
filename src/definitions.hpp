@@ -72,7 +72,7 @@ const bool PML_ZMAX = false;
 
 // PML NODES
 
-const VecF PML={16,16,16};
+const VecI PML={16,16,16};
 
 
 // # FINITE DIFFERENCES PARAMETERS 4TH ORDER SPACE
