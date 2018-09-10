@@ -1520,8 +1520,8 @@ void SDM::Free_SYZ(VecI Init,VecI Iend){
 
 	if (PROPAGATION == 0) {
 	  
-	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.x) * df_dJ;
+	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvz_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A(Gindx.y) * df_dJ;
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
@@ -1578,8 +1578,8 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 
 	if (PROPAGATION == 0) {
 	  
-	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.x) * dvz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.x) * df_dJ;
+	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvz_dy[IJK(ix,iy,iz)] \
+	  + pml_y->A(Gindx.y) * df_dJ;
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
 	  + pml_z->A(Gindx.z) * df_dK;
@@ -2343,12 +2343,17 @@ void SDM::AddSource(int itime, int T_SRC){
 
     VecI b = sourceM->pos_src[i]; 
    
-    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Mxx[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Myy[i]*sgn);
+// MOMENT TENSOR ORIENTATION
+// X: EAST
+// Y: NORTH
+// Z: UPWARD
+
+    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Myy[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Mxx[i]*sgn);
     AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
     AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Mxz[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Myz[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
     
     //AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
     //AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
