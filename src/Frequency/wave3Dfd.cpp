@@ -226,7 +226,7 @@ if (total_proc != N_mpi) {
 if (rank == 0) {
 
   std::cout<<"Parameters Subdomain and OpenMP threads"<<std::endl;
-  std::cout<<"Sx : "<<Sx<<" "<<"Sy : "<<Sy<<" "<<"Sz : "<<Sx<<std::endl;
+  std::cout<<"Sx : "<<Sx<<" "<<"Sy : "<<Sy<<" "<<"Sz : "<<Sz<<std::endl;
   std::cout<<"N_omp : "<<N_omp<<std::endl;
   std::cout<<"DX "<<Gdomain->Dx()<<std::endl;
   std::cout<<"DY "<<Gdomain->Dy()<<std::endl;
@@ -377,12 +377,8 @@ MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Barrier(MPI_COMM_WORLD);
     
-    HALO->TRANSFER("SXX");
-    HALO->TRANSFER("SYY");
-    HALO->TRANSFER("SZZ");
-    HALO->TRANSFER("SXY");
-    HALO->TRANSFER("SXZ");
-    HALO->TRANSFER("SYZ");
+    // TRANSFER STRESESS
+    HALO->TRANSFER(2);
 
     MPI_Barrier(MPI_COMM_WORLD); 
 
@@ -393,9 +389,8 @@ MPI_Barrier(MPI_COMM_WORLD);
     sdm->FDVY();
     sdm->FDVZ();
 
-     HALO->TRANSFER("VX");
-     HALO->TRANSFER("VY");
-     HALO->TRANSFER("VZ");
+    // TRANSFER VELOCITIES
+    HALO->TRANSFER(1);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -592,17 +587,14 @@ MPI_Barrier(MPI_COMM_WORLD);
     //####################
     //###################
     // PUT ADJOINT HERE
-    // THAT ENSURES THAT WE ARE DO IN THE CORRELATION AT THE SAME TIME
+    // THAT ENSURES THAT WE ARE DOING THE CORRELATION AT THE SAME TIME
      
      
     MPI_Barrier(MPI_COMM_WORLD);
     
-    HALO_ADJ->TRANSFER("SXX");
-    HALO_ADJ->TRANSFER("SYY");
-    HALO_ADJ->TRANSFER("SZZ");
-    HALO_ADJ->TRANSFER("SXY");
-    HALO_ADJ->TRANSFER("SXZ");
-    HALO_ADJ->TRANSFER("SYZ");
+
+    // TRANSFER STRESESS
+    HALO_ADJ->TRANSFER(2);
 
     MPI_Barrier(MPI_COMM_WORLD); 
 	
@@ -613,9 +605,8 @@ MPI_Barrier(MPI_COMM_WORLD);
      //  ADJOINT SOURCE
      ADJ->AddSourceAdj(k);
     
-     HALO_ADJ->TRANSFER("VX");
-     HALO_ADJ->TRANSFER("VY");
-     HALO_ADJ->TRANSFER("VZ");
+    // TRANSFER VELOCITIES
+    HALO_ADJ->TRANSFER(1);
 
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -648,7 +639,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     
     // ^^^^^^^^^^^^^^^^^^^
     // ADJOINT PROPAGATION 
-    // ###################
+    // ##################
 
 
     //################ KERNELS ###################

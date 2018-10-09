@@ -38,6 +38,7 @@ protected:
   SDM *sdm;
   Dfloat *BS0,*BN0,*BW0,*BE0,*BUp0,*BDown0;     // Boundaries Subdomains OUT
   Dfloat *BS1,*BN1,*BW1,*BE1,*BUp1,*BDown1;     // Boundaries Subdomains IN
+  char *VarName[9] = {"VX","VY","VZ","SXX","SYY","SZZ","SXY","SXZ","SYZ"};
   int N_SN,N_WE,N_UpDown;
   MPI_Status status;
     
@@ -47,7 +48,7 @@ public:
   
   MPI_DATA(SDM *Isdm);
   ~MPI_DATA();
-  void TRANSFER(char *VarName);
+  void TRANSFER(int  Var);
   void Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank);
   void MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name);
 };

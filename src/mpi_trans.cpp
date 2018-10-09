@@ -33,21 +33,20 @@ MPI_DATA::MPI_DATA(SDM *Isdm){
   N_UpDown = KHALO * sdm->L_SNodeX() * sdm->L_SNodeY();  
 
     // HALO COMMUNICATION O OUT 1 IN 
-  BS0 = new Dfloat[N_SN]; 
-  BN0 = new Dfloat[N_SN];
-  BS1 = new Dfloat[N_SN]; 
-  BN1 = new Dfloat[N_SN];
+  BS0 = new Dfloat[N_SN * 6]; 
+  BN0 = new Dfloat[N_SN * 6];
+  BS1 = new Dfloat[N_SN * 6]; 
+  BN1 = new Dfloat[N_SN * 6];
   
-  BW0 = new Dfloat[N_WE];
-  BE0 = new Dfloat[N_WE];
-  BW1 = new Dfloat[N_WE];
-  BE1 = new Dfloat[N_WE];
-  
+  BW0 = new Dfloat[N_WE * 6];
+  BE0 = new Dfloat[N_WE * 6];
+  BW1 = new Dfloat[N_WE * 6];
+  BE1 = new Dfloat[N_WE * 6];
 
-  BUp0 = new Dfloat[N_UpDown]; 
-  BDown0 = new Dfloat[N_UpDown];
-  BUp1 = new Dfloat[N_UpDown]; 
-  BDown1 = new Dfloat[N_UpDown];
+  BUp0 = new Dfloat[N_UpDown * 6]; 
+  BDown0 = new Dfloat[N_UpDown * 6];
+  BUp1 = new Dfloat[N_UpDown * 6]; 
+  BDown1 = new Dfloat[N_UpDown * 6];
 
 }
 
@@ -69,11 +68,26 @@ MPI_DATA::~MPI_DATA(){
 }
 
 
-void MPI_DATA::TRANSFER(char *VarName){
+void MPI_DATA::TRANSFER(int Var){
 
   int indxS,indxD;
   VecI Subindx = sdm->SubIdx();
   VecI SubNum = sdm->SubNum();
+  int nvar;
+  int nchar;
+
+  	if ( Var == 1 ) {
+	// VELOCITIES
+	nchar = 0;
+	nvar = 3;
+
+	} else if (Var == 2){
+	// STRESESS
+	nchar = 3;
+	nvar = 6;
+
+	}
+  
 
   if (sdm->BNorth()){
      
@@ -85,12 +99,17 @@ void MPI_DATA::TRANSFER(char *VarName){
 
      //printf("%d\t%d\n",indxS,indxD);
 
-      sdm->ExpBoundary(BN0,"North",VarName);
 
-      MPI_Sendrecv(BN0,N_SN,MY_MPI_Dfloat,indxD,0,BN1,	\
-       		       N_SN,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+	for (int ivar = 0 ;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BN0 + ivar * N_SN),"North",VarName[ivar + nchar]);
+	}
 
-      sdm->ImpBoundary(BN1,"North",VarName);
+      MPI_Sendrecv(BN0,N_SN * nvar,MY_MPI_Dfloat,indxD,0,BN1,	\
+       		       N_SN * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BN1 + ivar * N_SN),"North",VarName[ivar + nchar]);
+	}
 
   }
       
@@ -104,12 +123,18 @@ void MPI_DATA::TRANSFER(char *VarName){
 
      //printf("%d\t%d\n",indxS,indxD);
 
-      sdm->ExpBoundary(BS0,"South",VarName);
 
-      MPI_Sendrecv(BS0,N_SN,MY_MPI_Dfloat,indxD,0,BS1,	\
-			       N_SN,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BS0 + ivar * N_SN),"South",VarName[ivar + nchar]);
+	}
 
-      sdm->ImpBoundary(BS1,"South",VarName);
+      MPI_Sendrecv(BS0,N_SN * nvar,MY_MPI_Dfloat,indxD,0,BS1,	\
+			       N_SN * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BS1 + ivar * N_SN),"South",VarName[ivar + nchar]);
+	}
+
   }
      
 
@@ -121,14 +146,18 @@ void MPI_DATA::TRANSFER(char *VarName){
        Subindx.z * SubNum.x * SubNum.y;
 
       //if (sdm->BEast() == 0) indxD = MPI::PROC_NULL;
-     
-      sdm->ExpBoundary(BE0,"East",VarName);
-
-      MPI_Sendrecv(BE0,N_WE,MY_MPI_Dfloat,indxD,0,BE1,	\
-			       N_WE,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
 
-      sdm->ImpBoundary(BE1,"East",VarName);
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BE0 + ivar * N_WE),"East",VarName[ivar + nchar]);
+	}
+
+      MPI_Sendrecv(BE0,N_WE * nvar,MY_MPI_Dfloat,indxD,0,BE1,	\
+			       N_WE * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BE1 + ivar * N_WE),"East",VarName[ivar + nchar]);
+	}
 
   }
 
@@ -142,13 +171,17 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       //if (sdm->BWest() == 0) indxD = MPI::PROC_NULL;
 
-      sdm->ExpBoundary(BW0,"West",VarName);
 
-      MPI_Sendrecv(BW0,N_WE,MY_MPI_Dfloat,indxD,0,BW1,	\
-			       N_WE,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BW0 + ivar * N_WE),"West",VarName[ivar + nchar]);
+	}
 
-      sdm->ImpBoundary(BW1,"West",VarName);
+      MPI_Sendrecv(BW0,N_WE * nvar,MY_MPI_Dfloat,indxD,0,BW1,	\
+			       N_WE * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BW1 + ivar * N_WE),"West",VarName[ivar + nchar]);
+	}
 
   }
    
@@ -161,12 +194,19 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       //if (sdm->BUp() == 0) indxD = MPI::PROC_NULL;
 
-      sdm->ExpBoundary(BUp0,"UP",VarName);
 
-      MPI_Sendrecv(BUp0,N_UpDown,MY_MPI_Dfloat,indxD,0,BUp1, \
-			       N_UpDown,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
-      sdm->ImpBoundary(BUp1,"UP",VarName);
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BUp0 + ivar * N_UpDown),"UP",VarName[ivar + nchar]);
+	}
+
+      MPI_Sendrecv(BUp0,N_UpDown * nvar,MY_MPI_Dfloat,indxD,0,BUp1, \
+			       N_UpDown * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BUp1 + ivar * N_UpDown),"UP",VarName[ivar + nchar]);
+	}
+
 
   }
       
@@ -180,13 +220,17 @@ void MPI_DATA::TRANSFER(char *VarName){
 
       //if (sdm->BDown() == 0) indxD = MPI::PROC_NULL;
 
-      sdm->ExpBoundary(BDown0,"DOWN",VarName);
 
-      MPI_Sendrecv(BDown0,N_UpDown,MY_MPI_Dfloat,indxD,0,BDown1, \
-			       N_UpDown,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ExpBoundary((BDown0 + ivar * N_UpDown),"DOWN",VarName[ivar + nchar]);
+	}
 
-      sdm->ImpBoundary(BDown1,"DOWN",VarName);
+      MPI_Sendrecv(BDown0,N_UpDown * nvar,MY_MPI_Dfloat,indxD,0,BDown1, \
+			       N_UpDown * nvar,MY_MPI_Dfloat,indxD,0,MPI_COMM_WORLD,&status);
 
+	for (int ivar = 0;ivar<nvar;++ivar){
+      sdm->ImpBoundary((BDown1 + ivar * N_UpDown),"DOWN",VarName[ivar + nchar]);
+	}
 
   } 
 

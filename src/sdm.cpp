@@ -844,8 +844,8 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 	
 	// Average properties
 	
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)]) / 2.0;
-	lamb_avg = (lamb[IJK(ix,iy,iz)] + lamb[IJK(ix+1,iy,iz)]) / 2.0;
+	mu_avg =   1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
+	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
 	
 	// SXX
 
@@ -1364,7 +1364,7 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
 
 	}
       
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy+1,iz)]) / 2.0;
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy+1,iz)]));
 
 
 	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
@@ -1422,7 +1422,7 @@ void SDM::Free_SXZ(VecI Init,VecI Iend){
 	}
 
 	
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy,iz+1)]));
 
 	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dI + df_dK);
@@ -1471,7 +1471,7 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
 
 	}
 
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix,iy,iz+1)]) / 2.0;
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy,iz+1)]));
 
 	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
 	  (df_dI + df_dK);
@@ -1532,10 +1532,10 @@ void SDM::Free_SYZ(VecI Init,VecI Iend){
 	}
 
 	
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
-		mu[IJK(ix,iy+1,iz)] + mu[IJK(ix+1,iy+1,iz)] + \
-		mu[IJK(ix,iy,iz+1)] + mu[IJK(ix+1,iy,iz+1)] + \
-		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
+	mu_avg = 1.0 / ((0.1250 / mu[IJK(ix,iy,iz)]) + (0.1250 / mu[IJK(ix+1,iy,iz)]) + \
+		(0.1250 / mu[IJK(ix,iy+1,iz)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz)]) + \
+		(0.1250 / mu[IJK(ix,iy,iz+1)]) + (0.1250 / mu[IJK(ix+1,iy,iz+1)]) + \
+		(0.1250 / mu[IJK(ix,iy+1,iz+1)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz+1)]));
 
 
 	
@@ -1590,10 +1590,10 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 	}
 	
 	
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)] + \
-		mu[IJK(ix,iy+1,iz)] + mu[IJK(ix+1,iy+1,iz)] + \
-		mu[IJK(ix,iy,iz+1)] + mu[IJK(ix+1,iy,iz+1)] + \
-		mu[IJK(ix,iy+1,iz+1)] + mu[IJK(ix+1,iy+1,iz+1)]) / 8.0;
+	mu_avg = 1.0 / ((0.1250 / mu[IJK(ix,iy,iz)]) + (0.1250 / mu[IJK(ix+1,iy,iz)]) + \
+                (0.1250 / mu[IJK(ix,iy+1,iz)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz)]) + \
+                (0.1250 / mu[IJK(ix,iy,iz+1)]) + (0.1250 / mu[IJK(ix+1,iy,iz+1)]) + \
+                (0.1250 / mu[IJK(ix,iy+1,iz+1)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz+1)]));
 
 
 	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + sgn *  (dt * mu_avg) * \
@@ -1631,8 +1631,8 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
 	// Average properties
 
-	mu_avg = (mu[IJK(ix,iy,iz)] + mu[IJK(ix+1,iy,iz)]) / 2.0;
-	lamb_avg = (lamb[IJK(ix,iy,iz)] + lamb[IJK(ix+1,iy,iz)]) / 2.0;
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
+	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
 
 	
 
