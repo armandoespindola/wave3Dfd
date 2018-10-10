@@ -137,7 +137,7 @@ int main (int argc, char* argv[]) {
 
 
   SDM *sdm,*RTP,*ADJ;                          // Pointer SubDomains
-  Dfloat *SubMu,*SubRho,*SubLamb;               // Model Subdomains
+  Dfloat *SubMod;               // Model Subdomains
   int N_mpi = SubN.x * SubN.y * SubN.z;         // Number MPI processors
   geometry3D *Gdomain;                          // Domain
   Show show;                                    // Print Class
@@ -265,14 +265,13 @@ if (rank == 0) {
   
 
  // SubDomain Model Parameters 
-  SubMu = new Dfloat[sdm->SNodeT()];
-  SubRho = new Dfloat[sdm->SNodeT()];
-  SubLamb = new Dfloat[sdm->SNodeT()];
-
+  SubMod = new Dfloat[sdm->SNodeT() * 3];
 
   for (int i=total_proc-1; i>=0; --i){
 
-  model->SubModel(subi[i],SubRho,SubMu,SubLamb);
+// SubRho SubMu SubLamb
+
+  model->SubModel(subi[i],SubMod,SubMod + sdm->SNodeT() ,SubMod + 2 * sdm->SNodeT());
 
   if ( i > 0) {
 
@@ -280,9 +279,7 @@ if (rank == 0) {
 //  MPI::COMM_WORLD.Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
 //  MPI::COMM_WORLD.Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
 
-  MPI_Send(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);	
-  MPI_Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);
-  MPI_Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);
+  MPI_Send(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);	
 
 
   }
@@ -302,17 +299,13 @@ if (rank > 0) {
   sdm->set_omp(N_omp);
 
  // SubDomain Model Parameters 
-  SubMu = new Dfloat[sdm->SNodeT()];
-  SubRho = new Dfloat[sdm->SNodeT()];
-  SubLamb = new Dfloat[sdm->SNodeT()];
+  SubMod = new Dfloat[sdm->SNodeT() * 3];
 
 //  MPI::COMM_WORLD.Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
 //  MPI::COMM_WORLD.Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
 //  MPI::COMM_WORLD.Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
 
-  MPI_Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
-  MPI_Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
-  MPI_Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+  MPI_Recv(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
 
  }
 
@@ -334,9 +327,9 @@ MPI_Barrier(MPI_COMM_WORLD);
 
 // MODEL INITIALIZATION
  
-  sdm->ModelRead(SubRho,"RHO");
-  sdm->ModelRead(SubMu,"MU");
-  sdm->ModelRead(SubLamb,"LAMB");
+  sdm->ModelRead(SubMod,"RHO");
+  sdm->ModelRead(SubMod + sdm->SNodeT(),"MU");
+  sdm->ModelRead(SubMod + 2 * sdm->SNodeT(),"LAMB");
 
   // SOURCE INITIALIZATION
   sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
@@ -523,9 +516,9 @@ MPI_Barrier(MPI_COMM_WORLD);
   */
   
   // ADJOINT-PROPAGATION
-  ADJ->ModelRead(SubRho,"RHO");
-  ADJ->ModelRead(SubMu,"MU");
-  ADJ->ModelRead(SubLamb,"LAMB");
+  ADJ->ModelRead(SubMod,"RHO");
+  ADJ->ModelRead(SubMod + ADJ->SNodeT(),"MU");
+  ADJ->ModelRead(SubMod + 2 * ADJ->SNodeT(),"LAMB");
 
   // SOURCE INITIALIZATION
 
@@ -793,9 +786,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   }// Adjoint IF
   
 
-  delete [] SubMu;
-  delete [] SubRho;
-  delete [] SubLamb;
+  delete [] SubMod;
   // delete  HALO;
 
    

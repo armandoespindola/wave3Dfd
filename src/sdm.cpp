@@ -176,11 +176,11 @@ void SDM::ModelRead(Dfloat *model,char param[]){
     for (int i=0; i<SDMGeom->HALO_Node(); ++i){
       rho[i] = model[i];
     }
-    
+
 
   }
 
-  
+
   if (strcmp("MU",param) == 0){
 
     for (int i=0; i<SDMGeom->HALO_Node(); ++i){
@@ -191,7 +191,7 @@ void SDM::ModelRead(Dfloat *model,char param[]){
 
   }
 
-  
+
   if (strcmp("LAMB",param) == 0){
 
     for (int i=0; i<SDMGeom->HALO_Node(); ++i){

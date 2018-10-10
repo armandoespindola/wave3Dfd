@@ -54,28 +54,34 @@ MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, 
   Nsub.z = NDT.z / SubDomNodeN.z;  
 
   Dfloat rho_buff,vp_buff,vs_buff;
-  float buff;
+  float *Rbuff,*Sbuff,*Pbuff;
+
+  Rbuff = new float[GDim.x*GDim.y*GDim.z];
+  Sbuff = new float[GDim.x*GDim.y*GDim.z];
+  Pbuff = new float[GDim.x*GDim.y*GDim.z];
+
+  fread(Rbuff,sizeof(float),GDim.x*GDim.y*GDim.z*sizeof(float),R);
+  fread(Pbuff,sizeof(float),GDim.x*GDim.y*GDim.z*sizeof(float),P);
+  fread(Sbuff,sizeof(float),GDim.x*GDim.y*GDim.z*sizeof(float),S);
 
   for (int k=0;k<GDim.z;k++){
     for (int j=0;j<GDim.y;j++){
       for (int i=0;i<GDim.x;i++){
 
-	int indx =  (i + PML.x) + (j + PML.y) * NDT.x + (k+ PML.z) * NDT.x * NDT.y; 
-  
-	fread(&buff,sizeof(float),1,R);
-  rho[indx] = (Dfloat) buff;
-	fread(&buff,sizeof(float),1,P);
-  vp_buff = (Dfloat) buff;
-	fread(&buff,sizeof(float),1,S);
-  vs_buff = (Dfloat) buff;
+        int indx =  (i + PML.x) + (j + PML.y) * NDT.x + (k+ PML.z) * NDT.x * NDT.y;
+        int idxL = i + j * GDim.x + k * GDim.x * GDim.y;
+        rho[indx] = (Dfloat) Rbuff[idxL];
+        mu[indx] = pow((Dfloat) Sbuff[idxL],2.0) * rho[indx];
+        lamb[indx]= rho[indx]* pow((Dfloat) Pbuff[idxL],2.0) - (2.0 * mu[indx]);
 
-
-	mu[indx] = pow(vs_buff,2.0) * rho[indx];
-	lamb[indx]= rho[indx]* pow(vp_buff,2.0) - (2.0 * mu[indx]);
-	
       }
     }
   }
+
+
+ delete [] Rbuff;
+ delete [] Sbuff;
+ delete [] Pbuff;
 
 
   fclose(R);
@@ -83,8 +89,6 @@ MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, 
   fclose(S);
 
   PML_MODEL();
-  
-  
 
 
 }
@@ -100,6 +104,7 @@ MODEL::~MODEL(){
   delete [] lambL;
 
 }
+
 
 
 
