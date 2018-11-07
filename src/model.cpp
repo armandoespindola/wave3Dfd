@@ -27,6 +27,7 @@ MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, 
   GDim = iGDim;
   SubDomNodeN = iSubDomNodeN;
   FILE *R,*P,*S;
+  int nsort;
 
   R=fopen(FileR.c_str(),"rb");
   P=fopen(FileP.c_str(),"rb");
@@ -202,18 +203,23 @@ void MODEL::PML_MODEL(){
 
 }
 
-void MODEL::SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL){
+void MODEL::SortModel(VecI subi[], Dfloat *SortMod){
 
   int indx1,indx2;
   int ii,jj,kk;
+  // Local Subdomain Nodes
+  int nodl = NDL.x * NDL.y * NDL.z; 
 
+
+ for (int idx=0;idx<Nsub.x * Nsub.y * Nsub.z;idx++){
+	 //std::cout<<subi[idx].x<<subi[idx].y<<subi[idx].z<<std::endl;
   for (int k=0;k<NDL.z;k++){
     for (int j=0;j<NDL.y;j++){
       for (int i=0;i<NDL.x;i++){
 
-	ii = i + (NumSub.x * SubDomNodeN.x) - KHALO;
-	jj = j + (NumSub.y * SubDomNodeN.y) - KHALO;
-	kk = k + (NumSub.z * SubDomNodeN.z) - KHALO;
+	ii = i + (subi[idx].x * SubDomNodeN.x) - KHALO;
+	jj = j + (subi[idx].y * SubDomNodeN.y) - KHALO;
+	kk = k + (subi[idx].z * SubDomNodeN.z) - KHALO;
 
 
 	indx1 = i + j * NDL.x + k * NDL.x * NDL.y;
@@ -222,15 +228,21 @@ void MODEL::SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL){
 	if ( (ii < 0) || (jj < 0) || (kk < 0) || \
 	     (ii >= NDT.x) || (jj >= NDT.y) || (kk >= NDT.z) ) {
 	  
-	SubR[indx1] = 0.0;
-	SubM[indx1] = 0.0;
-	SubL[indx1] = 0.0;
+	//SubR[indx1] = 0.0;
+	SortMod[indx1 + idx * 3 * nodl] = 0.0;
+	//SubM[indx1] = 0.0;
+	SortMod[indx1 + nodl + idx * 3 * nodl] = 0.0;
+	//SubL[indx1] = 0.0;
+	SortMod[indx1 + 2 * nodl + idx * 3 * nodl] = 0.0;
 
 	} else {
 
-	  SubR[indx1] = rho[indx2];
-	  SubM[indx1] = mu[indx2];
-	  SubL[indx1] = lamb[indx2];
+	  //SubR[indx1] = rho[indx2];
+	  SortMod[indx1 + idx * 3 * nodl] = rho[indx2];
+	  //SubM[indx1] = mu[indx2];
+	  SortMod[indx1 + nodl + idx * 3 * nodl] = mu[indx2];
+	  //SubL[indx1] = lamb[indx2];
+	  SortMod[indx1 + 2 * nodl + idx * 3 * nodl] = lamb[indx2];
 	
 	}
 	
@@ -239,6 +251,7 @@ void MODEL::SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL){
     }
   }
 
+ }
   
   
 }

@@ -146,6 +146,7 @@ int main (int argc, char* argv[]) {
   DFT *uw_sdm, *uw_adj;
   char name[100];
   int NXT,NYT, NZT;
+  Dfloat *SortMod;  // Sort Model MPI
 
 
  
@@ -257,43 +258,20 @@ if (rank == 0) {
   model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
         GNod,SubNodes);
 
+  // SubDomains
   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
+
+  SortMod = new Dfloat[sdm->SNodeT() * 3 * N_mpi];
   
+  model->SortModel(subi,SortMod);
+}
 
-// OMP NUMBER OF THREADS
-  sdm->set_omp(N_omp);
-  
+ 
 
- // SubDomain Model Parameters 
-  SubMod = new Dfloat[sdm->SNodeT() * 3];
-
-  for (int i=total_proc-1; i>=0; --i){
-
-// SubRho SubMu SubLamb
-
-  model->SubModel(subi[i],SubMod,SubMod + sdm->SNodeT() ,SubMod + 2 * sdm->SNodeT());
-
-  if ( i > 0) {
-
-//  MPI::COMM_WORLD.Send(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,i,0);	
-//  MPI::COMM_WORLD.Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
-//  MPI::COMM_WORLD.Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
-
-  MPI_Send(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);	
-
-
+// SubDomains
+  if (rank>0){
+     sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
   }
-
-  }
-
-  //model->SubModel(subi[0],SubRho,SubMu,SubLamb);
-
- } 
-
-if (rank > 0) {
-
-  sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
-  
 
   // OMP NUMBER OF THREADS
   sdm->set_omp(N_omp);
@@ -301,15 +279,22 @@ if (rank > 0) {
  // SubDomain Model Parameters 
   SubMod = new Dfloat[sdm->SNodeT() * 3];
 
-//  MPI::COMM_WORLD.Recv(SubRho,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
-//  MPI::COMM_WORLD.Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
-//  MPI::COMM_WORLD.Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
+  MPI_Barrier(MPI_COMM_WORLD);
 
-  MPI_Recv(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+  time1 = MPI_Wtime();
 
- }
+  MPI_Scatter(&SortMod[0], sdm->SNodeT() * 3 , MY_MPI_Dfloat,\
+		  &SubMod[0], sdm->SNodeT() * 3, MY_MPI_Dfloat, 0,\
+		  MPI_COMM_WORLD);
 
-MPI_Barrier(MPI_COMM_WORLD); 
+  time2 = MPI_Wtime();
+ // MPI_Recv(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+
+  MPI_Barrier(MPI_COMM_WORLD); 
+
+  if (rank == 0) {
+      printf("Time broadcasting model to MPI cores : %f\n",time2-time1);
+    }
 
 
  // AUXUILARY VARIABLES
@@ -342,7 +327,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   time = 0.0;
 
   int kk = t_snap;
-
+  int tinf = t_snap;
 
   // FREQUENCY DOMAIN WAVEFIELD
    uw_sdm = new DFT(sdm,freqFile,nfreq);
@@ -353,13 +338,17 @@ MPI_Barrier(MPI_COMM_WORLD);
   // #############################
   // #############################
   
+
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   for (int k = 0; k<nt; ++k){
 
 
     time1 = MPI_Wtime();
 
-     if (rank == 0){
+     if ((rank == 0) && (tinf == k)){
       printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
+      tinf += t_snap;
     }
      // Source #########
      sdm->AddSource(k,s_type);
@@ -535,7 +524,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   time = 0.0;
   
   int Rkk = nt-t_snapR;
-
+  int tinf_adj = nt-t_snapR;
 
   // LOAD LAST BOUNDARY
   /*  
@@ -572,8 +561,10 @@ MPI_Barrier(MPI_COMM_WORLD);
 
 
     time1 = MPI_Wtime();
-    if (rank == 0){
-      printf("Time step (ADJ) : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
+    
+    if ((rank == 0) && (tinf_adj == k)){
+      printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
+      tinf_adj -= t_snap;
     }
 
 
@@ -715,22 +706,19 @@ MPI_Barrier(MPI_COMM_WORLD);
      K.CALC(i);
        }
 
-      HALO_ADJ->MergePrint(K.KDEN,NXT,NYT,NZT,subi,rank,"DATA/KRHO.bin");
-      // name = "DATA/iKRHO.bin";
-      //HALO_ADJ->MergePrint(K.iKDEN,NXT,NYT,NZT,subi,rank,name);
 
-      HALO_ADJ->MergePrint(K.KVS,NXT,NYT,NZT,subi,rank,"DATA/KVS.bin");
-      // name = "DATA/iKVS.bin";
-      // HALO_ADJ->MergePrint(K.iKVS,NXT,NYT,NZT,subi,rank,name);
+   Dfloat *KER_L;	
+   KER_L = new Dfloat[ADJ->SNodeT() * 5];
+   int noffset = ADJ->SNodeT();
 
-      HALO_ADJ->MergePrint(K.KVP,NXT,NYT,NZT,subi,rank,"DATA/KVP.bin");
-      // name = "DATA/iKVP.bin";
-      // HALO_ADJ->MergePrint(K.iKVP,NXT,NYT,NZT,subi,rank,name);
+   K.GET_K(KER_L, KER_L + noffset, KER_L + 2 * noffset, KER_L + 3 * noffset,\
+		   KER_L + 4 * noffset);
 
-      HALO_ADJ->MergePrint(K.PcondA,NXT,NYT,NZT,subi,rank,"DATA/PcondA.bin");
+   HALO_ADJ->KernPrint(KER_L,NXT,NYT,NZT,subi,rank,"DATA/");
 
-      HALO_ADJ->MergePrint(K.PcondB,NXT,NYT,NZT,subi,rank,"DATA/PcondB.bin");
-
+   MPI_Barrier(MPI_COMM_WORLD);
+   
+   delete [] KER_L;
       
       /*
    for (int i=0;i<nfreq;++i){

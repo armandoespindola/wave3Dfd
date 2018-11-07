@@ -811,6 +811,29 @@ vs S velocity
 
 }
 
+
+
+void KERNELW::GET_K(Dfloat *KR,Dfloat *KP,Dfloat *KS,Dfloat *KPA,Dfloat *KPB){
+
+
+  for (int i=0;i<FWD->SDMGeom->HALO_Node();i++){
+
+     KR[i] = KDEN[i];
+     KP[i] = KVP[i];
+     KS[i] = KVS[i];
+     KPA[i] = PcondA[i];
+     KPB[i] = PcondB[i];
+
+  }
+}
+
+
+
+
+
+
+
+
 /*
 void  KERNELW::iKERNELS(){
    Dfloat vp,vs,rho;

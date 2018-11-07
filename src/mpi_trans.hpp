@@ -29,7 +29,7 @@
 #include "show.hpp"
 #include "sdm.hpp"
 #include "kernels.hpp"
-
+#include <stdio.h>
 
 
 class MPI_DATA {
@@ -51,6 +51,7 @@ public:
   void TRANSFER(int  Var);
   void Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank);
   void MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name);
+  void KernPrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name);
 };
 
 

@@ -31,7 +31,8 @@ protected:
   // GDIM GLOBAL DIMENSION NODES WITHOUT PML
   // SubDomNodeN NUMBER OF NODES SUBDOMAINS
   // HALO HALO FINITE DIFFERENCE
-  // FileName NAME OF FILE 
+  // FileName NAME OF FILE
+  // Isubi subdomain indexes 
   VecI GDim;
   VecI SubDomNodeN;
   Dfloat *Model,*ModelPML;
@@ -42,13 +43,16 @@ protected:
 
 public:
 
+  Dfloat *SortMod;
+
   MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN);
 
   ~MODEL();
 
   void PML_MODEL();
 
-  void SubModel(VecI NumSub, Dfloat *SubR, Dfloat *SubM, Dfloat *SubL);
+// SORT MODEL FOR MPI 
+  void SortModel(VecI subi[],Dfloat *SortMod);
 
 // RETURN NUMBER OF TOTAL NODES WITH (HALO OR PML)
   inline int HALO_Node() { return (NDL.x * NDL.y * NDL.z); }

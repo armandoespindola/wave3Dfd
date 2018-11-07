@@ -399,7 +399,122 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
   }
 
-
-  
-
 }
+
+
+ void MPI_DATA::KernPrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name){
+   Dfloat *buff;
+   int Nsub = sdm->NumSubDom.x * sdm->NumSubDom.y * sdm->NumSubDom.z;
+
+   if (rank ==0){
+     buff = new Dfloat[sdm->SNodeT() * 5 * Nsub];
+   }
+
+
+   // GATHER INFORMATION ALL MPI PROCCESORS
+
+   MPI_Gather(LocVar, sdm->SNodeT() * 5 , MY_MPI_Dfloat,\
+		  buff, sdm->SNodeT() * 5, MY_MPI_Dfloat, 0,\
+		  MPI_COMM_WORLD);
+
+   MPI_Barrier(MPI_COMM_WORLD);
+
+   
+   
+
+
+   
+ if (rank == 0) {
+
+    Dfloat *kr,*kp,*ks,*kpa,*kpb;
+    VecI indx;
+    int GlobIdx;
+    int LocIdx;
+      
+    kr = new Dfloat[(NX * NY * NZ)];
+    kp = new Dfloat[(NX * NY * NZ)];
+    ks = new Dfloat[(NX * NY * NZ)];
+    kpa = new Dfloat[(NX * NY * NZ)];
+    kpb = new Dfloat[(NX * NY * NZ)];
+
+    
+
+ for (int ii = 0; ii<Nsub;++ii) {
+   
+      // printf("\n proc %d ; %d \n",Nsub,ii);
+
+      for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+        for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+          for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+
+            indx.x =  i - KHALO + subi[ii].x * sdm->NodLoc.x;
+            indx.y =  j - KHALO + subi[ii].y * sdm->NodLoc.y;
+            indx.z =  k - KHALO + subi[ii].z * sdm->NodLoc.z;
+
+            GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY;
+            
+	    kr[GlobIdx] =  buff[sdm->IJK(i,j,k) + ii * sdm->SNodeT() * 5];
+            kp[GlobIdx] =  buff[sdm->IJK(i,j,k) + sdm->SNodeT() + ii * sdm->SNodeT() * 5 ];
+            ks[GlobIdx] =  buff[sdm->IJK(i,j,k) + 2 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
+            kpa[GlobIdx] = buff[sdm->IJK(i,j,k) + 3 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
+            kpb[GlobIdx] = buff[sdm->IJK(i,j,k) + 4 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
+
+          }
+        }
+      }
+
+
+ }
+
+
+
+
+ FILE *R,*S,*P,*PA,*PB;
+ char rn[100],pn[100],sn[100],pan[100],pbn[100];
+
+ snprintf(rn,90,"%sKRHO.bin",name);
+ snprintf(pn,90,"%sKVP.bin",name);
+ snprintf(sn,90,"%sKVS.bin",name);
+ snprintf(pan,90,"%sPcondA.bin",name);
+ snprintf(pbn,90,"%sPcondB.bin",name);
+
+    R=fopen(rn,"wb");
+    P=fopen(pn,"wb");
+    S=fopen(sn,"wb");
+    PA=fopen(pan,"wb");
+    PB=fopen(pbn,"wb");
+
+    for (int k=PML.z;k<NZ;k++){
+        for (int j=PML.y;j<NY-PML.y;j++){
+          for (int i=PML.x;i<NX-PML.x;i++){
+
+
+             GlobIdx = i + j * NX + k * NX * NY;
+
+            fwrite(&kr[GlobIdx],sizeof(Dfloat),1,R);
+	    fwrite(&kp[GlobIdx],sizeof(Dfloat),1,P);
+	    fwrite(&ks[GlobIdx],sizeof(Dfloat),1,S);
+	    fwrite(&kpa[GlobIdx],sizeof(Dfloat),1,PA);
+	    fwrite(&kpb[GlobIdx],sizeof(Dfloat),1,PB);
+
+          }
+        }
+    }
+
+    fclose(R);
+    fclose(P);
+    fclose(S);
+    fclose(PA);
+    fclose(PB);
+
+    delete [] kr;
+    delete [] kp;
+    delete [] ks;
+    delete [] kpa;
+    delete [] kpb;
+
+ }
+ 
+
+ }

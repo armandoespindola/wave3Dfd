@@ -92,6 +92,8 @@ public:
   void DevY(Dfloat **in_var,int i,Dfloat *out_var);
   void DevZ(Dfloat **in_var,int i,Dfloat *out_var);
 
+  void GET_K(Dfloat *KR,Dfloat *KP,Dfloat *KS,Dfloat *KPA,Dfloat *KPB);
+
 };
 
 #endif
