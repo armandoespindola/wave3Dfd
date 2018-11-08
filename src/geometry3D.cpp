@@ -253,30 +253,48 @@ VecF geometry3D::thickness_HALO(){
 
 VecI geometry3D::FindNode(VecF coord){
 
-  Dfloat dist1 = 1.0e30;
-  Dfloat dist2;
+  Dfloat deltaAvg = (Delta.x +  Delta.z + Delta.y) / 3.0;
+  Dfloat dist2,dist1;
   VecI ind;
-  
-   for (int iz=0;iz<NOD.z;iz++){
-     for (int iy=0;iy<NOD.y;iy++){
-       for (int ix=0;ix<NOD.x;ix++){
-	 
-	 dist2 = sqrt( pow( coord.x - CoorX(ix),2.0) +	\
-		       pow( coord.y - CoorY(iy),2.0) +	\
-		       pow( coord.z - CoorZ(iz),2.0) );
-	 
-	 if (dist2 < dist1){
-	   dist1 = dist2;
-	   ind.x = ix;
-	   ind.y = iy;
-	   ind.z = (NOD.z - 1) - iz;
-	 }
-		       	 
-       }
-     }
-   }
 
-   return ind;
+
+dist1 = deltaAvg;
+for (int iz=0;iz<NOD.z;iz++){
+if ( (CoorZ(iz) >= limI.z) && (CoorZ(iz) <= limF.z)){
+dist2 = abs(coord.z - CoorZ(iz));
+if (dist2<dist1){
+dist1 = dist2;
+ind.z = (NOD.z - 1) - iz;
+}
+}
+}
+
+
+
+dist1 = deltaAvg;
+for (int ix=0;ix<NOD.x;ix++){
+if ( (CoorX(ix) >= limI.x) && (CoorX(ix) <= limF.x)){
+dist2 = abs(coord.x - CoorX(ix));
+if (dist2<dist1){
+dist1 = dist2;
+ind.x = ix;
+}
+}
+}
+
+dist1 = deltaAvg;
+for (int iy=0;iy<NOD.y;iy++){
+if ( (CoorY(iy) >= limI.y) && (CoorY(iy) <= limF.y)){
+dist2 = abs(coord.y - CoorY(iy));
+if (dist2<dist1){
+dist1 = dist2;
+ind.y = iy;
+}
+}
+}
+
+return ind;
+
 }
 
 

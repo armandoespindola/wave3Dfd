@@ -403,34 +403,16 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
 
  void MPI_DATA::KernPrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name){
-   Dfloat *buff;
-   int Nsub = sdm->NumSubDom.x * sdm->NumSubDom.y * sdm->NumSubDom.z;
 
-   if (rank ==0){
-     buff = new Dfloat[sdm->SNodeT() * 5 * Nsub];
-   }
-
-
-   // GATHER INFORMATION ALL MPI PROCCESORS
-
-   MPI_Gather(LocVar, sdm->SNodeT() * 5 , MY_MPI_Dfloat,\
-		  buff, sdm->SNodeT() * 5, MY_MPI_Dfloat, 0,\
-		  MPI_COMM_WORLD);
-
-   MPI_Barrier(MPI_COMM_WORLD);
-
-   
-   
-
-
-   
  if (rank == 0) {
 
-    Dfloat *kr,*kp,*ks,*kpa,*kpb;
+    Dfloat *buff,*kr,*kp,*ks,*kpa,*kpb;
     VecI indx;
     int GlobIdx;
     int LocIdx;
-      
+    int Nsub = sdm->NumSubDom.x * sdm->NumSubDom.y * sdm->NumSubDom.z;
+
+    buff = new Dfloat[sdm->SNodeT() * 5];
     kr = new Dfloat[(NX * NY * NZ)];
     kp = new Dfloat[(NX * NY * NZ)];
     ks = new Dfloat[(NX * NY * NZ)];
@@ -439,8 +421,33 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
     
 
- for (int ii = 0; ii<Nsub;++ii) {
-   
+
+    for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
+      for (int j=KHALO;j<sdm->SNodeY()-KHALO;j++){
+        for (int i=KHALO;i<sdm->SNodeX()-KHALO;i++){
+
+          indx = sdm->Loc2Glo({i,j,k});
+          GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY;
+
+            kr[GlobIdx] = LocVar[sdm->IJK(i,j,k)];
+	    kp[GlobIdx] = LocVar[sdm->IJK(i,j,k) + sdm->SNodeT()];
+	    ks[GlobIdx] = LocVar[sdm->IJK(i,j,k) + 2 * sdm->SNodeT()];
+	    kpa[GlobIdx] = LocVar[sdm->IJK(i,j,k) + 3 * sdm->SNodeT()];
+	    kpb[GlobIdx] = LocVar[sdm->IJK(i,j,k) + 4 * sdm->SNodeT()];
+
+
+        }
+      }
+    }
+
+
+
+
+ for (int ii = 1; ii<Nsub;++ii) {
+
+
+      MPI_Recv(buff,sdm->SNodeT() * 5,MY_MPI_Dfloat,ii,0,MPI_COMM_WORLD,&status);
+
       // printf("\n proc %d ; %d \n",Nsub,ii);
 
       for (int k=KHALO;k<sdm->SNodeZ()-KHALO;k++){
@@ -454,18 +461,18 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
             GlobIdx = indx.x + indx.y * NX + indx.z * NX * NY;
             
-	    kr[GlobIdx] =  buff[sdm->IJK(i,j,k) + ii * sdm->SNodeT() * 5];
-            kp[GlobIdx] =  buff[sdm->IJK(i,j,k) + sdm->SNodeT() + ii * sdm->SNodeT() * 5 ];
-            ks[GlobIdx] =  buff[sdm->IJK(i,j,k) + 2 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
-            kpa[GlobIdx] = buff[sdm->IJK(i,j,k) + 3 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
-            kpb[GlobIdx] = buff[sdm->IJK(i,j,k) + 4 * sdm->SNodeT() + ii * sdm->SNodeT() * 5];
+	    kr[GlobIdx] = buff[sdm->IJK(i,j,k)];
+            kp[GlobIdx] = buff[sdm->IJK(i,j,k) + sdm->SNodeT()];
+            ks[GlobIdx] = buff[sdm->IJK(i,j,k) + 2 * sdm->SNodeT()];
+            kpa[GlobIdx] = buff[sdm->IJK(i,j,k) + 3 * sdm->SNodeT()];
+            kpb[GlobIdx] = buff[sdm->IJK(i,j,k) + 4 * sdm->SNodeT()];
 
           }
         }
       }
 
 
- }
+  }
 
 
 
@@ -513,8 +520,17 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
     delete [] ks;
     delete [] kpa;
     delete [] kpb;
+    delete [] buff;
 
- }
- 
+}
 
- }
+if (rank >0) {
+
+
+    MPI_Send(LocVar,sdm->SNodeT() * 5,MY_MPI_Dfloat,0,0,MPI_COMM_WORLD);
+
+
+  }
+
+
+}

@@ -66,7 +66,7 @@ protected:
   // SOURCE MOMENT TENSOR
 
   source *sourceM;
-
+  VecI *idx_source;
   // RECEPTORS
 
   receptor *station;

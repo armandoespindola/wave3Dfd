@@ -2206,6 +2206,13 @@ void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource,int SrcFi
   } else {
     printf("This is not a option for the source/n");
   }
+
+
+  idx_source = new VecI[nsource];
+	  
+  for (int i = 0; i<sourceM->ns; ++i){
+    idx_source[i] = SFindNode(sourceM->pos_src[i]);
+  }
   
 }
 
@@ -2328,6 +2335,8 @@ void SDM::AddSource(int itime, int T_SRC){
 
   for (int i = 0; i<sourceM->ns; ++i){
 
+if ( (idx_source[i].x > -1) && (idx_source[i].y > -1)  &&\
+           (idx_source[i].z > -1) ){
 
     if (FileSrcB == 0){
     st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
@@ -2335,11 +2344,6 @@ void SDM::AddSource(int itime, int T_SRC){
       st = srct[itime];
     }
     st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
-
-
-    VecI prub = SFindNode(sourceM->pos_src[i]);
-
-  //  std::cout<<prub.x<<prub.y<<prub.z<<"SLOCAL"<<std::endl;
 
     VecI b = sourceM->pos_src[i]; 
    
@@ -2358,7 +2362,9 @@ void SDM::AddSource(int itime, int T_SRC){
     //AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
     //AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
     //AddVal(sourceM->pos_src[i],"SZZ", st * 1e20);
- 
+}
+
+
   }
   
 
