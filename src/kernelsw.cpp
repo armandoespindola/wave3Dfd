@@ -253,6 +253,10 @@ int az;
 
 
 	//	if ((i >= 2*KHALO) && (i < FWD->SNodeX()-2*KHALO)){
+
+
+
+	// CENTRAL DIFFERENCES
 	  
 	  out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i-2,j,k)] - \
 				(2.0 / 3.0) * in_var[l][FWD->IJK(i-1,j,k)] + \
@@ -309,6 +313,9 @@ void KERNELW::DevY(Dfloat **in_var,int l,Dfloat *out_var){
 
 
 	//	if ((j >= 2*KHALO) && (j < FWD->SNodeY()-2*KHALO)){
+
+
+	// CENTRAL DIFFERENCES
 	  
 	out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i,j-2,k)] - \
 				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j-1,k)] + \
@@ -366,6 +373,10 @@ void KERNELW::DevZ(Dfloat **in_var,int l,Dfloat *out_var){
 
 
 	//	if ((k >= 2*KHALO) && (k < FWD->SNodeZ()-2*KHALO-1)){
+
+
+
+	// CENTRAL DIFFERENCES
 	  
 	out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i,j,k-2)] - \
 				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j,k-1)] + \
