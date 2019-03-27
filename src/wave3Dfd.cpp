@@ -405,7 +405,7 @@ MPI_Barrier(MPI_COMM_WORLD);
 
      // Source #########
      sdm->AddSource(k,s_type);
-     sdm->GetRecept();
+     sdm->GetRecept(k);
 
     MPI_Barrier(MPI_COMM_WORLD);
     

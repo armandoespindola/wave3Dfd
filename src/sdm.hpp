@@ -62,6 +62,7 @@ protected:
 	Dfloat *dvx_dx,*dvy_dy,*dvz_dz;
 	Dfloat *dvx_dy,*dvy_dx,*dvx_dz;
 	Dfloat *dvz_dx,*dvy_dz,*dvz_dy;
+        Dfloat *Rvx,*Rvy,*Rvz;
 
   // SOURCE MOMENT TENSOR
 
@@ -241,7 +242,7 @@ public:
 
 
   // ADD VALUES RECEPTORS
-    void GetRecept();
+    void GetRecept(int ktime);
 
   void printfile(Dfloat * Var,char *nfile, int ktime);
 

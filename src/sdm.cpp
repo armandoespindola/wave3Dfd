@@ -619,29 +619,38 @@ VecI SDM::SFindNode(VecI Nodef){
   VecI Global,Local;
   
   for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
-     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
-       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+    Local = {HALO.x,HALO.y,iz+HALO.z};
+    Global = Loc2Glo(Local);
 
-	 Local = {ix+HALO.x,iy+HALO.y,iz+HALO.z};
-	 Global = Loc2Glo(Local);
-   
-	 if ( ((Nodef.x - Global.x) == 0) &&	\
-	      ((Nodef.y - Global.y) == 0) &&	\
-	      ((Nodef.z - Global.z) == 0) ) {
-	  
-	   ind.x = ix; 
-	   ind.y = iy;
-	   ind.z = iz;
+    if ((Nodef.z - Global.z) == 0){
+      ind.z = iz;
+    }
 
-	   goto FIN;
-	 }
-		       	 
-       }
-     }
-   }
+  }
 
- FIN: return ind;
   
+  for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+    Local = {HALO.x,iy+HALO.y,HALO.z};
+    Global = Loc2Glo(Local);
+
+    if ((Nodef.y - Global.y) == 0){
+      ind.y = iy;
+    }
+
+  }
+
+
+  for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+    Local = {ix+HALO.x,HALO.y,HALO.z};
+    Global = Loc2Glo(Local);
+
+    if ((Nodef.x - Global.x) == 0){
+      ind.x = ix;
+    }
+
+  }
+
+ return ind;
 }
 
 void SDM::AddVal(VecI indx, char *NameVar, Dfloat Val){
@@ -2180,18 +2189,14 @@ void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
   
   station  = new receptor(GDomain,nFile,nrecep,nt);
 
+  Rvx = new Dfloat[station->nt * station->nr];
+  Rvy = new Dfloat[station->nt * station->nr];
+  Rvz = new Dfloat[station->nt * station->nr];
+
   idx_station = new VecI[nrecep];
 
   for (int i = 0; i<station->nr; ++i){
     idx_station[i] = SFindNode(station->pos_recep[i]);
-
-      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) && \
-	   (idx_station[i].z > -1) ){
-
-	station->FileOpen(i,PROPAGATION);
-
-      }
-    
   }
   
  
@@ -2250,17 +2255,33 @@ void SDM::EndRecept(){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) &&\
 	   (idx_station[i].z > -1) ){
 
+	station->FileOpen(i,PROPAGATION);
+
+	for (int ktime=0; ktime<station->nt; ++ktime){
+
+	station->WriteFile(i,Rvx[ktime + i * station->nt],\
+			   Rvy[ktime + i * station->nt],\
+			   Rvz[ktime + i * station->nt]);
+	}
+
+	
 	station->FileClose(i);
+	
 
       }
     
   }
+
+  delete [] Rvx;
+  delete [] Rvy;
+  delete [] Rvz;
+  delete [] idx_station;
+  delete station;
   
 }
 
 
-void SDM::GetRecept(){
-  Dfloat Rvx,Rvy,Rvz;
+void SDM::GetRecept(int ktime){
 
    for (int i = 0; i<station->nr; ++i){
     
@@ -2268,15 +2289,11 @@ void SDM::GetRecept(){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
 	   (idx_station[i].z > -1) ){
 
-	Rvx = 0;
-	Rvy = 0;
-	Rvz = 0;
+	Rvx[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VX");
+	Rvy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VY");
+	Rvz[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VZ");
 
-	Rvx = GetVal(station->pos_recep[i],"VX");
-	Rvy = GetVal(station->pos_recep[i],"VY");
-	Rvz = GetVal(station->pos_recep[i],"VZ");
-
-	station->WriteFile(i,Rvx,Rvy,Rvz);
+	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
       }
     
