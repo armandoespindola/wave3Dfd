@@ -16,8 +16,8 @@ ifeq ($(detected_OS),Linux)
     CC = mpic++
 endif
 
-CFLAGS =  -fopenmp -std=c++11 -w -O2   
-LFLAGS = -w -fopenmp -O2 
+CFLAGS = -std=c++11 -w   
+LFLAGS = -w
 TARGET = wave3Dfd.out
 
 all: ${TARGET}

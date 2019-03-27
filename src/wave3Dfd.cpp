@@ -146,6 +146,7 @@ int main (int argc, char* argv[]) {
   DFT *uw_sdm, *uw_adj;
   char name[100];
   int NXT,NYT, NZT;
+  int cfl;
 
 
  
@@ -258,6 +259,34 @@ if (rank == 0) {
   model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
         GNod,SubNodes);
 
+  cfl = model->CFL(dt,Gdomain->Dx(),Gdomain->Dy(),Gdomain->Dz());
+
+ }
+
+MPI_Bcast(&cfl, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+// CFL Condition
+ 
+ if (cfl != 1){
+   if (rank == 0){
+     if (cfl == 0)
+       printf("CFL NOT SATISFIED");
+     if (cfl == -1)
+       printf("ERROR IN MODEL PARAMETERS");
+     delete sdm;
+     delete model;
+     
+   }
+   delete Gdomain;
+   MPI_Finalize();
+   return 0;
+ }
+
+ 
+
+
+ if (rank == 0) { 
+
   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
   
 
@@ -289,7 +318,7 @@ if (rank == 0) {
 
   //model->SubModel(subi[0],SubRho,SubMu,SubLamb);
 
- } 
+ }
 
 if (rank > 0) {
 
@@ -343,7 +372,6 @@ MPI_Barrier(MPI_COMM_WORLD);
   sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
   
-  int a=sdm->CFL();
   sdm->InitVar(ZERO);
   HALO = new MPI_DATA(sdm);
 
@@ -353,7 +381,10 @@ MPI_Barrier(MPI_COMM_WORLD);
   int tinf = t_snap;
 
   // FREQUENCY DOMAIN WAVEFIELD
+   // int nt_freq;
    uw_sdm = new DFT(sdm,freqFile,nfreq);
+   // nt_freq = (int) floor(1.0 / (4.0 * uw_sdm->freq[nfreq-1] * dt));
+   
 
   // #############################
   // #############################
@@ -393,8 +424,11 @@ MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // FOURIER TRANSFORMATION
+    // if ((k%nt_freq==0) && (ADJ_P)){
+    if (ADJ_P){
      uw_sdm->FD(dt,k);
-
+    }
+    
     sdm->FDSII();
     sdm->FDSXY();
     sdm->FDSXZ();
@@ -551,8 +585,10 @@ MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // FOURIER TRANSFORMATION
+    // if (k%nt_freq==0){
      uw_adj->FD(dt,k);
-
+     // }
+    
     ADJ->FDSII();
     ADJ->FDSXY();
     ADJ->FDSXZ();

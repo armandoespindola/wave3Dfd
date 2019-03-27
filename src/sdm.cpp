@@ -203,47 +203,6 @@ void SDM::ModelRead(Dfloat *model,char param[]){
 }
 
 
-int SDM::CFL(){
-
-  int cfl;
-
-  for (int i=0; i<SDMGeom->HALO_Node(); ++i){
-
-     if ((mu[i] < 0.0) || (rho[i] < 0.0) || (lamb[i] < 0.0))
-      {
-	std::cout<<"ERROR IN MODEL PARAMETERS"<<std::endl;
-      } else {
-      if ((mu[i] == 0.0) || (rho[i] == 0.0) || (lamb[i] == 0.0))
-	goto NOMODEL;
-    }
-
-    Dfloat vp;
-    vp = sqrt((lamb[i] + 2.0 * mu[i]) / rho[i]);      
-    VecF K;
-    K.x = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dx() ;
-    K.y = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dy() ;
-    K.z = ( dt * sqrt(3.0) * vp * (C0 + C1)) / SDMGeom->Dz() ;
-
-
-    if ((K.x >= 1.0) || (K.y >= 1.0) || (K.z >= 1.0)) {
-      printf("CFL NOT SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
-      cfl = 0;
-      return cfl;
-     }else{
-      // printf("CFL SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
-      cfl = 1;
-       }
-       
-  NOMODEL: int b = cfl;
-  }
-
-  return cfl;
-
-}
-
-
-
-
 
 void SDM::InitVar(Dfloat f){
 

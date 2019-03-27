@@ -118,10 +118,6 @@ public:
 
   void ModelRead(Dfloat *model, char param[]);
 
-  // STABILITY CONDITION
-  int CFL();
-
-
   // Initialize Veriables Propagation
 
   void InitVar(Dfloat f);

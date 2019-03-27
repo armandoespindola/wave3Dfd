@@ -107,6 +107,55 @@ MODEL::~MODEL(){
 
 
 
+int MODEL::CFL(Dfloat dt,Dfloat dx,Dfloat dy,Dfloat dz){
+  // CFL = 1 : CFL Satisfied
+  // CLF = 0 : CFL Not stisfied
+  // CFL = -1 : Error in model parameters
+
+  int cfl;
+  Dfloat b_rho,b_mu,b_lamb;
+  Dfloat vp;
+  VecF K;
+
+  for (int k=0;k<GDim.z;k++){
+    for (int j=0;j<GDim.y;j++){
+      for (int i=0;i<GDim.x;i++){
+
+        int indx =  (i + PML.x) + (j + PML.y) * NDT.x + (k+ PML.z) * NDT.x * NDT.y;
+        int idxL = i + j * GDim.x + k * GDim.x * GDim.y;
+        b_rho = rho[indx];
+        b_mu = mu[indx]; 
+        b_lamb = lamb[indx];
+
+	if ((b_mu < 0.0) || (b_rho <= 0.0) || (b_lamb <= 0.0)){
+	cfl = -1;
+	return cfl; 
+	}
+
+	vp = sqrt((b_lamb + 2.0 * b_mu) / b_rho);      
+	K.x = ( dt * sqrt(3.0) * vp * (C0 + C1)) / dx ;
+	K.y = ( dt * sqrt(3.0) * vp * (C0 + C1)) / dy ;
+	K.z = ( dt * sqrt(3.0) * vp * (C0 + C1)) / dz ;
+
+	if ((K.x >= 1.0) || (K.y >= 1.0) || (K.z >= 1.0)) {
+	  cfl = 0;
+	  printf("CFL NOT SATISFIED: %f\t%f\t%f\n",K.x,K.y,K.z);
+	  return cfl;
+	} else {
+	  cfl = 1;
+	}
+
+      }
+    }
+  }
+    
+  
+return cfl;
+
+}
+
+
+
 
 void MODEL::PML_MODEL(){
 

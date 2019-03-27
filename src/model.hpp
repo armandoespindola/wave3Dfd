@@ -61,7 +61,9 @@ public:
 
   // NUMBER OF NODES IN Z DIRECTION WITH (HALO OR PML)
   inline int HALO_NodeZ() { return NDL.z; }
-  
+
+  // CFL Condition Test
+  int CFL(Dfloat dt,Dfloat dx,Dfloat dy,Dfloat dz);
   
 
 };

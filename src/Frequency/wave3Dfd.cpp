@@ -136,8 +136,8 @@ int main (int argc, char* argv[]) {
   double time1,time2,time;
 
 
-  SDM *sdm,*RTP,*ADJ;                          // Pointer SubDomains
-  Dfloat *SubMod;               // Model Subdomains
+  SDM *sdm,*RTP,*ADJ;                           // Pointer SubDomains
+  Dfloat *SubMod;                               // Model Subdomains
   int N_mpi = SubN.x * SubN.y * SubN.z;         // Number MPI processors
   geometry3D *Gdomain;                          // Domain
   Show show;                                    // Print Class
@@ -146,6 +146,7 @@ int main (int argc, char* argv[]) {
   DFT *uw_sdm, *uw_adj;
   char name[100];
   int NXT,NYT, NZT;
+  int cfl;
 
 
  
@@ -258,6 +259,34 @@ if (rank == 0) {
   model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
         GNod,SubNodes);
 
+  cfl = model->CFL(dt,Gdomain->Dx(),Gdomain->Dy(),Gdomain->Dz());
+
+ }
+
+MPI_Bcast(&cfl, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+// CFL Condition
+ 
+ if (cfl != 1){
+   if (rank == 0){
+     if (cfl == 0)
+       printf("CFL NOT SATISFIED");
+     if (cfl == -1)
+       printf("ERROR IN MODEL PARAMETERS");
+     delete sdm;
+     delete model;
+     
+   }
+   delete Gdomain;
+   MPI_Finalize();
+   return 0;
+ }
+
+ 
+
+
+ if (rank == 0) { 
+
   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
   
 
@@ -289,7 +318,7 @@ if (rank == 0) {
 
   //model->SubModel(subi[0],SubRho,SubMu,SubLamb);
 
- } 
+ }
 
 if (rank > 0) {
 
@@ -343,7 +372,6 @@ MPI_Barrier(MPI_COMM_WORLD);
   sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
   
-  int a=sdm->CFL();
   sdm->InitVar(ZERO);
   HALO = new MPI_DATA(sdm);
 
@@ -353,7 +381,10 @@ MPI_Barrier(MPI_COMM_WORLD);
   int tinf = t_snap;
 
   // FREQUENCY DOMAIN WAVEFIELD
+   // int nt_freq;
    uw_sdm = new DFT(sdm,freqFile,nfreq);
+   // nt_freq = (int) floor(1.0 / (4.0 * uw_sdm->freq[nfreq-1] * dt));
+   
 
   // #############################
   // #############################
@@ -376,18 +407,12 @@ MPI_Barrier(MPI_COMM_WORLD);
      sdm->AddSource(k,s_type);
      sdm->GetRecept();
 
-     // if (ADJ_P)
-     //sdm->SaveBoundaries_S(k);
-
     MPI_Barrier(MPI_COMM_WORLD);
     
     // TRANSFER STRESESS
     HALO->TRANSFER(2);
 
     MPI_Barrier(MPI_COMM_WORLD); 
-
-    //if (ADJ_P)
-    //sdm->SaveBoundaries_V(k);
 	
     sdm->FDVX();
     sdm->FDVY();
@@ -399,8 +424,11 @@ MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // FOURIER TRANSFORMATION
+    // if ((k%nt_freq==0) && (ADJ_P)){
+    if (ADJ_P){
      uw_sdm->FD(dt,k);
-
+    }
+    
     sdm->FDSII();
     sdm->FDSXY();
     sdm->FDSXZ();
@@ -410,30 +438,6 @@ MPI_Barrier(MPI_COMM_WORLD);
     time2 = MPI_Wtime();
 
     time += (time2-time1)/ (Dfloat) nt;
-
-
-
-
-    // SAVE THE LAST BOUNDARY FOR RETROPROPAGATION
-    /*    if (ADJ_P) {
-      if (k == nt-1){
-
-	sdm->file("VZ",k,0);
-	sdm->file("VY",k,0);
-	sdm->file("VX",k,0);
-	sdm->file("UZ",k,0);
-	sdm->file("UY",k,0);
-	sdm->file("UX",k,0);
-	sdm->file("SXX",k,0);
-	sdm->file("SYY",k,0);
-	sdm->file("SZZ",k,0);
-	sdm->file("SXY",k,0);
-	sdm->file("SXZ",k,0);
-	sdm->file("SYZ",k,0);
-      }
-    }
-    */ 
-
     
     if (snap){ 
 
@@ -485,20 +489,15 @@ MPI_Barrier(MPI_COMM_WORLD);
   if (ADJ_P) {
 
   delete  HALO;
+
+
+  
   // ###########################
   // ###########################
   // RETROPROPAGATION AND ADJOINT
   // ###########################
   // ###########################
 
-
-
-
-
-    // RETRO-PROPAGATION
-    /*  RTP = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,1);
-    RTP->set_omp(N_omp);
-    */
     
     // ADJOINT-PROPAGATION
 
@@ -520,11 +519,6 @@ MPI_Barrier(MPI_COMM_WORLD);
 
 // MODEL INITIALIZATION
 
-  // RETRO-PROPAGATION
-  /*  RTP->ModelRead(SubRho,"RHO");
-  RTP->ModelRead(SubMu,"MU");
-  RTP->ModelRead(SubLamb,"LAMB");
-  */
   
   // ADJOINT-PROPAGATION
   ADJ->ModelRead(SubMod,"RHO");
@@ -532,11 +526,6 @@ MPI_Barrier(MPI_COMM_WORLD);
   ADJ->ModelRead(SubMod + 2 * ADJ->SNodeT(),"LAMB");
 
   // SOURCE INITIALIZATION
-
-  // RETRO-PROPAGATION
-  /* RTP->InitSource(Gdomain,sourceFile,nsource);
-  RTP->InitVar(ZERO);
-  */
   
   // ADJOINT-PROPAGATION
   ADJ->InitAdj(Gdomain,recepFile,nrecep,nt);
@@ -548,27 +537,6 @@ MPI_Barrier(MPI_COMM_WORLD);
   int Rkk = nt-t_snapR;
   int tinf_adj = nt-t_snapR;
 
-  // LOAD LAST BOUNDARY
-  /*  
-  RTP->file("VZ",nt-1,1);
-  RTP->file("VY",nt-1,1);
-  RTP->file("VX",nt-1,1);
-  RTP->file("UZ",nt-1,1);
-  RTP->file("UY",nt-1,1);
-  RTP->file("UX",nt-1,1);
-  RTP->file("SXX",nt-1,1);
-  RTP->file("SYY",nt-1,1);
-  RTP->file("SZZ",nt-1,1);
-  RTP->file("SXY",nt-1,1);
-  RTP->file("SXZ",nt-1,1);
-  RTP->file("SYZ",nt-1,1);
-  char cleanfile[100];
-  sprintf(cleanfile,"rm *%d-*%d.bin",rank,nt-1);
-  system (cleanfile); 
-  */
-  
-  //RETRO-PROPAGATION TRANSFER DATA MPI
-  //HALO = new MPI_DATA(RTP);
 
   //ADJOINT TRANSFER DATA MPI
   HALO_ADJ = new MPI_DATA(ADJ);
@@ -617,8 +585,10 @@ MPI_Barrier(MPI_COMM_WORLD);
     MPI_Barrier(MPI_COMM_WORLD);
 
     // FOURIER TRANSFORMATION
+    // if (k%nt_freq==0){
      uw_adj->FD(dt,k);
-
+     // }
+    
     ADJ->FDSII();
     ADJ->FDSXY();
     ADJ->FDSXZ();
@@ -643,72 +613,6 @@ MPI_Barrier(MPI_COMM_WORLD);
       }
     }
     
-    // ^^^^^^^^^^^^^^^^^^^
-    // ADJOINT PROPAGATION 
-    // ##################
-
-
-    //################ KERNELS ###################
-
-    // KS->CALC();
-
-    /*
-    if (snapR){ 
-      if (Rkk == k){
-
-	char name[100];
-	  
-	  int NXT = Gdomain->HALO_NodeX();
-	  int NYT = Gdomain->HALO_NodeY();
-	  int NZT = Gdomain->HALO_NodeZ();
-	
-	 sprintf(name,"RVX-%d.bin",k);
-	  HALO->MergePrint(RTP->vx,NXT,NYT,NZT,subi,rank,name);
-
-	  sprintf(name,"RVY-%d.bin",k);
-	  HALO->MergePrint(RTP->vy,NXT,NYT,NZT,subi,rank,name);
-
-	  sprintf(name,"RVZ-%d.bin",k);
-	  HALO->MergePrint(RTP->vz,NXT,NYT,NZT,subi,rank,name);
-	  
-      Rkk -= 100;
-      }
-    }
-    */
-    //printf("%f\n",source);
-    /*RTP->FDSII();
-    RTP->FDSXY();
-    RTP->FDSXZ();
-    RTP->FDSYZ();
-    
-    RTP->LoadBoundaries_S(k);
-
-    MPI_Barrier(MPI_COMM_WORLD);
-    
-    HALO->TRANSFER("SXX");
-    HALO->TRANSFER("SYY");
-    HALO->TRANSFER("SZZ");
-    HALO->TRANSFER("SXY");
-    HALO->TRANSFER("SXZ");
-    HALO->TRANSFER("SYZ");
-
-    MPI_Barrier(MPI_COMM_WORLD); 
-    
-    RTP->FDVX();
-    RTP->FDVY();
-    RTP->FDVZ();
-    
-    RTP->LoadBoundaries_V(k);
-
-     HALO->TRANSFER("VX");
-     HALO->TRANSFER("VY");
-     HALO->TRANSFER("VZ");
-
-
-
-     // Source #########
-     RTP->AddSource(k,s_type);
-    */
 
     MPI_Barrier(MPI_COMM_WORLD); 
 
@@ -763,30 +667,12 @@ MPI_Barrier(MPI_COMM_WORLD);
   }
 
       */
-  //KS->KERNELS();
-
-
-  /*int NXT = Gdomain->HALO_NodeX();
-  int NYT = Gdomain->HALO_NodeY();
-  int NZT = Gdomain->HALO_NodeZ();
-
-  HALO->MergePrint(KS->KDEN,NXT,NYT,NZT,subi,rank,"KRHO.bin");
-  HALO->MergePrint(KS->KVS,NXT,NYT,NZT,subi,rank,"KVS.bin");
-  HALO->MergePrint(KS->KVP,NXT,NYT,NZT,subi,rank,"KVP.bin");
-  */
 
   if (rank == 0){
     printf("END\t TIME(STEP) ADJOINT: %f\t HOLE TIME: %f\n",time,time*nt);
   }
 
-  
-
-  /*if (rank == 0){
-    delete model;
-    system("rm temp/*");
-  }
-  */
-  
+    
   //delete RTP;
   delete ADJ;
   delete HALO_ADJ;
