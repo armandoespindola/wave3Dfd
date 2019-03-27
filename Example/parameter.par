@@ -20,13 +20,13 @@
 // SOURCE FILE
 -srcFile 0
 // NUMBER OF SUBDOMAINS
--sx 2
--sy 2
+-sx 4
+-sy 3
 -sz 2
 // NUMBER OMP THREADS
--nomp 2
+-nomp 1
 // SNAPSHOT
--snap 1
+-snap 0
 -t_snap 100
 // NUMBER OF SOURCES
 -ns 1

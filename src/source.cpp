@@ -95,22 +95,32 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
     //std::cout<<" d_t0:"<<d_t0[i];
 
     npos2 = line.find(",",npos1);
-    strike[i] = std::stof(line.substr(npos1,npos2-npos1));
+    Mxx[i] = std::stof(line.substr(npos1,npos2-npos1));
     npos1 = npos2 + 1;
     //std::cout<<" strike:"<<strike[i];
 
     npos2 = line.find(",",npos1);
-    dip[i] = std::stof(line.substr(npos1,npos2-npos1));
+    Mxy[i] = std::stof(line.substr(npos1,npos2-npos1));
+    npos1 = npos2 + 1;
+    //std::cout<<" strike:"<<strike[i];
+
+    npos2 = line.find(",",npos1);
+    Mxz[i] = std::stof(line.substr(npos1,npos2-npos1));
+    npos1 = npos2 + 1;
+    //std::cout<<" strike:"<<strike[i];
+
+    npos2 = line.find(",",npos1);
+    Myy[i] = std::stof(line.substr(npos1,npos2-npos1));
     npos1 = npos2 + 1;
     //std::cout<<" dip:"<<dip[i];
 
     npos2 = line.find(",",npos1);
-    slip[i] = std::stof(line.substr(npos1,npos2-npos1));
+    Myz[i] = std::stof(line.substr(npos1,npos2-npos1));
     npos1 = npos2 + 1;
     //std::cout<<" slip:"<<slip[i];
     
     npos2 = line.find(",",npos1);
-    azimuth[i] = std::stof(line.substr(npos1));
+    Mzz[i] = std::stof(line.substr(npos1));
     //std::cout<<" azimuth:"<<azimuth[i]<<std::endl;
 
     npos1 = 0;
@@ -123,7 +133,7 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
   }
   
   
-  smoment();
+  //  smoment();
 
   
     
@@ -203,6 +213,7 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   // GAUSSIAN 
   
   if (T_SRC==0){ 
+    // src = exp(-a_fu * pow(time - t0,2.0)) * pow( a_fu / pi , 0.5);
     src = exp(-a_fu * pow(time - t0,2.0));
   }
   
