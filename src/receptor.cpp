@@ -175,4 +175,46 @@ receptor::~receptor(){
 }
 
 
+void receptor::PrintInf(){
+
+  Dfloat xm,ym,zm;
+      
+  std::cout<<""<<std::endl;
+  std::cout<<""<<std::endl;
+  std::cout<<"######################"<<std::endl;
+  std::cout<<"RECEPTORS INFORMATION"<<std::endl;
+  std::cout<<"######################"<<std::endl;
+  
+  
+  for (int i=0; i<nr; ++i){
+
+    std::cout<<""<<std::endl;
+    std::cout<<"##########################"<<std::endl;
+    std::cout<<" STATION # "<<i<<" : "<<nameStation[i]<<std::endl;
+    
+    std::cout<<" X: "<<xcoord[i]<<std::endl;
+    std::cout<<" Y: "<<ycoord[i]<<std::endl;
+    std::cout<<" Z: "<<zcoord[i]<<std::endl;
+    std::cout<<" Node_X(Mesh Location) : "<<pos_recep[i].x<<std::endl;
+    std::cout<<" Node_Y(Mesh Location) : "<<pos_recep[i].y<<std::endl;
+    std::cout<<" Node_Z(Mesh Location) : "<<GDomain->HALO_NodeZ()-pos_recep[i].z-1<<std::endl;
+
+    xm = GDomain->CoorX(pos_recep[i].x);
+    ym = GDomain->CoorY(pos_recep[i].y);
+    zm = (GDomain->HALO_NodeZ() - 1) * GDomain->Dz() - GDomain->CoorZ(pos_recep[i].z);
+
+    std::cout<<" X(Mesh Location) : "<<xm<<std::endl;
+    std::cout<<" Y(Mesh Location) : "<<ym<<std::endl;
+    std::cout<<" Z(Mesh Location) : "<<zm<<std::endl;
+
+    std::cout<<" X(Error Location) : "<<abs(xm - xcoord[i]) <<std::endl;
+    std::cout<<" Y(Error Location) : "<<abs(ym - ycoord[i])<<std::endl;
+    std::cout<<" Z(Error Location) : "<<abs(zm - zcoord[i])<<std::endl;
+    
+  }
+  
+  
+}
+
+
 

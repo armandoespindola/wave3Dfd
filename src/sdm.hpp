@@ -289,6 +289,10 @@ public:
 
   inline void set_omp(int num) {N_omp = num;}
 
+  // PRINTS INFO ABOUT RECEPTORS AND SOURCES
+
+  void PrintInf();
+
   // BOUNDARIES FOR RETROPROPAGATION
 
   void boundX(Dfloat *var,int side,int inout,int time,char *VarName);

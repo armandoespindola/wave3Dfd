@@ -3075,6 +3075,13 @@ void SDM::LoadBoundaries_S(int time){
   
 }
 
+void SDM::PrintInf(){
+  // SOURCE INFORMATION
+  sourceM->PrintInf();
+
+  // STATION INFORMATION
+  station->PrintInf();
+}
 
 
 

@@ -61,6 +61,9 @@ public:
   void LoadFile(int i);
 
   ~receptor();
+
+  // PRINT INFORMATION ABOUT RECEPTORS
+  void PrintInf();
   
 };
 

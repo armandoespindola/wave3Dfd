@@ -270,9 +270,9 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, MPI_COMM_WORLD);
  if (cfl != 1){
    if (rank == 0){
      if (cfl == 0)
-       printf("CFL NOT SATISFIED");
+       printf("CFL NOT SATISFIED\n");
      if (cfl == -1)
-       printf("ERROR IN MODEL PARAMETERS");
+       printf("ERROR IN MODEL PARAMETERS\n");
      delete sdm;
      delete model;
      
@@ -371,7 +371,16 @@ MPI_Barrier(MPI_COMM_WORLD);
   // SOURCE INITIALIZATION
   sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
-  
+
+  // PRINT INFORMATION
+  if (rank==0){
+    sdm->PrintInf();
+    printf("\n\n");
+    printf("###############################\n");
+    printf("###############################\n");
+    printf("      SIMULATION STARTS\n\n");
+    
+  }
   sdm->InitVar(ZERO);
   HALO = new MPI_DATA(sdm);
 

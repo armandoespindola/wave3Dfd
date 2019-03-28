@@ -57,6 +57,9 @@ public:
   
   void smoment();
 
+  // PRINT INFORMATION ABOUT SOURCES
+  void PrintInf();
+
   
   
 
