@@ -212,7 +212,7 @@ Dfloat geometry3D::CoorZHalf(int i){
   Dfloat coord;
 
   if (i < NOD.z-1) {
-    coord = limI.z + (Dz() / 2.0) + (Dfloat) i * Dz() - thickness_HALO().z;
+    coord = limI.z - (Dz() / 2.0) + (Dfloat) i * Dz();
     return coord;
     
   }else{
@@ -293,6 +293,106 @@ ind.y = iy;
 }
 }
 
+return ind;
+
+}
+
+
+VecI geometry3D::FindNode(VecF coord, VecI HALF){
+
+  Dfloat deltaAvg = (Delta.x +  Delta.z + Delta.y) / 3.0;
+  Dfloat dist2,dist1;
+  VecI ind;
+
+
+  if (HALF.z){
+dist1 = deltaAvg;
+for (int iz=0;iz<NOD.z-1;iz++){
+if ( (CoorZHalf(iz) >= limI.z) && (CoorZHalf(iz) <= limF.z)){
+dist2 = abs(coord.z - CoorZHalf(iz));
+if (dist2<dist1){
+dist1 = dist2;
+ind.z = (NOD.z - 1) - iz;
+}
+}
+}
+
+  } else {
+
+dist1 = deltaAvg;
+for (int iz=0;iz<NOD.z;iz++){
+if ( (CoorZ(iz) >= limI.z) && (CoorZ(iz) <= limF.z)){
+dist2 = abs(coord.z - CoorZ(iz));
+if (dist2<dist1){
+dist1 = dist2;
+ind.z = (NOD.z - 1) - iz;
+}
+}
+}
+
+  }
+
+  
+  if (HALF.x){
+dist1 = deltaAvg;
+for (int ix=0;ix<NOD.x-1;ix++){
+if ( (CoorXHalf(ix) >= limI.x) && (CoorXHalf(ix) <= limF.x)){
+dist2 = abs(coord.x - CoorXHalf(ix));
+if (dist2<dist1){
+dist1 = dist2;
+ind.x = ix;
+}
+}
+}
+
+  } else {
+
+
+dist1 = deltaAvg;
+for (int ix=0;ix<NOD.x;ix++){
+if ( (CoorX(ix) >= limI.x) && (CoorX(ix) <= limF.x)){
+dist2 = abs(coord.x - CoorX(ix));
+if (dist2<dist1){
+dist1 = dist2;
+ind.x = ix;
+}
+}
+}
+ 
+
+  }
+
+
+  if (HALF.y) {
+dist1 = deltaAvg;
+for (int iy=0;iy<NOD.y-1;iy++){
+if ( (CoorYHalf(iy) >= limI.y) && (CoorYHalf(iy) <= limF.y)){
+dist2 = abs(coord.y - CoorYHalf(iy));
+if (dist2<dist1){
+dist1 = dist2;
+ind.y = iy;
+}
+}
+}
+  } else {
+
+
+
+dist1 = deltaAvg;
+for (int iy=0;iy<NOD.y;iy++){
+if ( (CoorY(iy) >= limI.y) && (CoorY(iy) <= limF.y)){
+dist2 = abs(coord.y - CoorY(iy));
+if (dist2<dist1){
+dist1 = dist2;
+ind.y = iy;
+}
+}
+}
+ 
+
+  }
+
+  
 return ind;
 
 }

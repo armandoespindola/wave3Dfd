@@ -902,16 +902,16 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	}
 
 
-	if (PROPAGATION == 1){
-	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	// }
 	
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
 
-	if (PROPAGATION == 0){
-	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	// }
 
 	
       }
@@ -964,16 +964,16 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 	}
 
 
-	if (PROPAGATION == 1){
-	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	// }
 	
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
 
-	if (PROPAGATION == 0){
-	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 	
@@ -1051,17 +1051,17 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
 
-	if (PROPAGATION == 1){
-	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	// }
 
 	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	if (PROPAGATION == 0){
-	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 
@@ -1122,17 +1122,17 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 
 
 
-	if (PROPAGATION == 1){
-	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	// }
 
 	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	if (PROPAGATION == 0){
-	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 
@@ -1201,18 +1201,18 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
 
-	if (PROPAGATION == 1){
-	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	if (PROPAGATION == 0){
-	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 	
@@ -1271,17 +1271,17 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 
 
 
-	if (PROPAGATION == 1){
-	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 1){
+	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	// }
 
 	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	if (PROPAGATION == 0){
-	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	}
+	// if (PROPAGATION == 0){
+	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	// }
 
 
 	
@@ -2289,9 +2289,9 @@ void SDM::GetRecept(int ktime){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
 	   (idx_station[i].z > -1) ){
 
-	Rvx[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VX");
-	Rvy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VY");
-	Rvz[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VZ");
+	Rvx[ktime + i * station->nt] = GetVal(station->pos_vx[i],"VX");
+	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
+	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
 
 	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
@@ -2307,41 +2307,68 @@ void SDM::GetRecept(int ktime){
 void SDM::AddSource(int itime, int T_SRC){
 
   Dfloat st = 0;
+  Dfloat st_sinc;
 
 
   for (int i = 0; i<sourceM->ns; ++i){
-
-if ( (idx_source[i].x > -1) && (idx_source[i].y > -1)  &&\
-           (idx_source[i].z > -1) ){
 
     if (FileSrcB == 0){
     st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
     } else if (FileSrcB == 1){
       st = srct[itime];
     }
+
+    st_sinc = st * -dt;
+    
     st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
 
-    VecI b = sourceM->pos_src[i]; 
+    VecI b = sourceM->pos_src[i];
+
+    // CLOSE FREE SURFACE SOURCE
+    if (sourceM->nshift[i] < 4) {
+      sourceM->w_sinc(1,i);
+     // BELOW FREE SURFACE
+    } else if (sourceM->nshift[i] >= 4){
+      sourceM->w_sinc(0,i);
+    }
    
 // MOMENT TENSOR ORIENTATION
 // X: EAST
 // Y: NORTH
 // Z: UPWARD
 
-    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Myy[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Mxx[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
-    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Myy[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Mxx[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
+    // AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
+
+
+    
+
+    Dfloat w_sii,w_sxy,w_sxz;
     AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
     
-    //AddVal(sourceM->pos_src[i],"SXX", st * 1e20);
-    //AddVal(sourceM->pos_src[i],"SYY", st * 1e20);
-    //AddVal(sourceM->pos_src[i],"SZZ", st * 1e20);
-}
-
-
+    for (int j = -3;j<=4;j++){
+      for (int k = -3;k<=4;k++){
+	
+    	w_sii = sourceM->sinc_wy[3 + j] * sourceM->sinc_wz[3 + k] * (1.0 / SDMGeom->Dx());
+    	w_sxy = sourceM->sinc_wx[3 + j] * sourceM->sinc_wz[3 + k] * (1.0 / SDMGeom->Dy());
+    	w_sxz = sourceM->sinc_wx[3 + j] * sourceM->sinc_wy[3 + k] * (1.0 / SDMGeom->Dz());
+	
+    	AddVal({b.x,b.y+j,b.z+k},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
+    	AddVal({b.x,b.y+j,b.z+k},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
+    	AddVal({b.x,b.y+j,b.z+k},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
+    	AddVal({b.x+j,b.y,b.z+k},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
+    	AddVal({b.x+j,b.y+k,b.z},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
+      }
+    }
+    
+  
   }
+
+
   
 
 }

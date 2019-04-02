@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "definitions.hpp"
 #include "geometry3D.hpp"
+#include "utilities.hpp"
 #include <math.h>
 
 class source {
@@ -45,8 +46,10 @@ public:
   Dfloat *Mxx,*Myy,*Mzz,*Mxy,*Mxz,*Myz;
   Dfloat *strike,*dip,*slip,*azimuth,*M0,*d_t0;
   Dfloat *xcoord,*ycoord,*zcoord;
+  Dfloat sinc_wx[8],sinc_wy[8],sinc_wz[8];
   VecI *pos_src;
   int ns;
+  int *nshift;
 
   source(geometry3D* domain, std::string nFile,int nsource);
 
@@ -59,6 +62,9 @@ public:
 
   // PRINT INFORMATION ABOUT SOURCES
   void PrintInf();
+
+  // WEIGHT SINC FUNCTION
+  void w_sinc(int freeSurf,int is);
 
   
   

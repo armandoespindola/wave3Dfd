@@ -33,6 +33,9 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
   ycoord = new Dfloat[nr];
   zcoord = new Dfloat[nr];
   pos_recep = new VecI[nr];
+  pos_vx = new VecI[nr];
+  pos_vy = new VecI[nr];
+  pos_vz = new VecI[nr];
 
   vx_ad = new Dfloat[nt * nr];
   vy_ad = new Dfloat[nt * nr];
@@ -85,7 +88,10 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
    npos1 = 0;
    npos2 = 0;
 
-    pos_recep[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]});
+   pos_recep[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,1});
+   pos_vx[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,0,0});
+   pos_vy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,0});
+   pos_vz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,1});
   
    //std::cout<<pos_recep[i].x<<pos_recep[i].y<<pos_recep[i].z<<"Receptor"<<std::endl;  
   }
@@ -166,6 +172,10 @@ receptor::~receptor(){
   delete [] vx_ad;
   delete [] vy_ad;
   delete [] vz_ad;
+  delete [] pos_recep;
+  delete [] pos_vx;
+  delete [] pos_vy;
+  delete [] pos_vz;
   
 
   GDomain = NULL;
@@ -199,9 +209,9 @@ void receptor::PrintInf(){
     std::cout<<" Node_Y(Mesh Location) : "<<pos_recep[i].y<<std::endl;
     std::cout<<" Node_Z(Mesh Location) : "<<GDomain->HALO_NodeZ()-pos_recep[i].z-1<<std::endl;
 
-    xm = GDomain->CoorX(pos_recep[i].x);
-    ym = GDomain->CoorY(pos_recep[i].y);
-    zm = (GDomain->HALO_NodeZ() - 1) * GDomain->Dz() - GDomain->CoorZ(pos_recep[i].z);
+    xm = GDomain->CoorXHalf(pos_recep[i].x);
+    ym = GDomain->CoorYHalf(pos_recep[i].y);
+    zm = GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 -pos_recep[i].z);
 
     std::cout<<" X(Mesh Location) : "<<xm<<std::endl;
     std::cout<<" Y(Mesh Location) : "<<ym<<std::endl;

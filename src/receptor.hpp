@@ -45,6 +45,9 @@ public:
   Dfloat *xcoord,*ycoord,*zcoord;
   std::string *nameStation;
   VecI *pos_recep;
+  VecI *pos_vx;
+  VecI *pos_vy;
+  VecI *pos_vz;
   int nr;
   Dfloat *vx_ad,*vy_ad,*vz_ad;
   int nt;

@@ -148,6 +148,8 @@ public:
   // FIND NODE
   VecI FindNode(VecF coord);
 
+  // FIND NODE GENERAL LOCATION
+  VecI FindNode(VecF coord, VecI HALF);
   
 
   
