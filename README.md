@@ -9,4 +9,6 @@ How to run the example:
 
 3) copy bin/*.out to Example/
 
-4) mpirun -np 8 ./wave3Dfd.out -nFile parameter.par
+4) cd Example/
+
+5) mpirun -np 24 ./wave3Dfd.out -nFile parameter.par
