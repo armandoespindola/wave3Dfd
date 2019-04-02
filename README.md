@@ -12,3 +12,4 @@ How to run the example:
 4 cd Example/
 
 4) mpirun -np 24 ./wave3Dfd.out -nFile parameter.par
+
