@@ -209,7 +209,11 @@ MPI_Init(&argc,&argv);
 
 
 if (total_proc != N_mpi) {
-    printf("Number of MPI_PROC: %d is not equal to Number Subdomains: %d\n\n",total_proc,N_mpi);
+    if (rank==0){
+    printf("Number of MPI_PROC: %d is not equal to Number Subdomains: %d\n",total_proc,N_mpi);
+     printf("EDIT  parameter.par File\n");
+  }
+    MPI_Finalize();
     return 0;
 }
 
