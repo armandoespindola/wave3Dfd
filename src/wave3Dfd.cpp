@@ -20,17 +20,7 @@
 
 */
 
-#include "definitions.hpp"
-#include "geometry3D.hpp"
-#include "model.hpp"
-#include "show.hpp"
-#include "sdm.hpp"
-#include "mpi_trans.hpp"
-#include "parameters.hpp"
-#include "kernelsw.hpp"
-#include "kernels.hpp"
-#include "fdt.hpp"
-
+#include "wave3Dfd.hpp"
 
 int main (int argc, char* argv[]) {
 
