@@ -1,18 +1,18 @@
 // MODEL DIMENSIONS
 -xi 0.0
--xf 9900.0
+-xf 11100.0
 -yi 0.0
--yf 9900.0
+-yf 11100.0
 -zi 0.0
--zf 9900.0
+-zf 11100.0
 // NUMBER OF NODES IN EVERY DIRECTION
--nx 100
--ny 100
--nz 100
+-nx 112
+-ny 112
+-nz 112
 // SIMULATION TIME [s]
--t 8.0
+-t 10.0
 // TIME STEP
--dt 0.005 
+-dt 0.01000
 // SOURCE FREQUENCY
 -f0 3.0
 // SOURCE TYPE
@@ -20,8 +20,8 @@
 // SOURCE FILE
 -srcFile 0
 // NUMBER OF SUBDOMAINS
--sx 4
--sy 3
+-sx 2
+-sy 2
 -sz 2
 // NUMBER OMP THREADS
 -nomp 1
@@ -43,5 +43,5 @@
 -t_snapR 50
 -adj 0
 // FREQUENCIES
--nfq 5
+-nfq 0
 -rfq frequency.par
