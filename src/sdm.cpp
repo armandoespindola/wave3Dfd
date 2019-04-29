@@ -2289,9 +2289,9 @@ void SDM::GetRecept(int ktime){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
 	   (idx_station[i].z > -1) ){
 
-	Rvx[ktime + i * station->nt] = GetVal(station->pos_vx[i],"VX");
-	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
-	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
+	Rvx[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VX");
+	Rvy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VY");
+	Rvz[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VZ");
 
 	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
