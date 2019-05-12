@@ -154,6 +154,7 @@ SDM::~SDM(){
 	delete [] dvy_dz;
 	delete [] dvz_dy;
 
+
 }
 
 
@@ -2156,12 +2157,13 @@ void SDM::FDVZ() {
 void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource,int SrcFile,int nt){
 
   FileSrcB = SrcFile;
+  ntimesrc = nt; // Variable Write File Source
+  srct = new Dfloat[nt];
   
   if (FileSrcB == 0) {
   sourceM = new source(GDomain,nFile,nsource);
   } else if (FileSrcB == 1){
     FileSrc = "SrcTime.bin";
-    srct = new Dfloat[nt];
     std::fstream R;
     R.open("SrcTime.bin",std::ios::binary | std::ios::in);
     for (int it = 0; it<nt;++it){
@@ -2318,6 +2320,9 @@ void SDM::AddSource(int itime, int T_SRC){
       st = srct[itime];
     }
 
+    // SAVE SOURCE TIME FUNCTION FILE 
+    srct[itime] = st;
+
     st_sinc = st * -dt;
     
     st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
@@ -2371,6 +2376,22 @@ void SDM::AddSource(int itime, int T_SRC){
 
   
 
+}
+
+
+void SDM::EndSource(){
+  std::fstream R;
+
+  R.open("SOURCE.bin",std::ios::binary | std::ios::out);
+
+  for (int it = 0; it<ntimesrc;++it){
+    R.write( (char*)&srct[it], sizeof(Dfloat));
+    }
+
+  R.close();
+
+  delete [] srct;
+  
 }
 
 

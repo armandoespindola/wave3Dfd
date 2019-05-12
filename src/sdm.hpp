@@ -68,6 +68,7 @@ protected:
 
   source *sourceM;
   VecI *idx_source;
+  int ntimesrc;
   // RECEPTORS
 
   receptor *station;
@@ -225,6 +226,10 @@ public:
 
   // ADD VALUES SOURCE
   void AddSource(int itime,int T_SRC);
+
+  // FINALIZE SOURCES
+
+  void EndSource();
 
   // ADD AJOINT SOURCE
 

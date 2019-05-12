@@ -487,6 +487,7 @@ MPI_Barrier(MPI_COMM_WORLD);
   }
 
   sdm->EndRecept();
+  sdm->EndSource();
   delete sdm;  
 
   if (ADJ_P) {
