@@ -408,7 +408,6 @@ MPI_Barrier(MPI_COMM_WORLD);
 
      // Source #########
      sdm->AddSource(k,s_type);
-     sdm->GetRecept(k);
 
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -423,6 +422,8 @@ MPI_Barrier(MPI_COMM_WORLD);
 
     // TRANSFER VELOCITIES
     HALO->TRANSFER(1);
+
+    sdm->GetRecept(k);
 
     MPI_Barrier(MPI_COMM_WORLD);
 

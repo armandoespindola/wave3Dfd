@@ -238,10 +238,15 @@ void KERNELW::InitVar(Dfloat f){
   }
   
 }
-void KERNELW::DevX(Dfloat **in_var,int l,Dfloat *out_var){
-int az;
 
-  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
+
+
+void KERNELW::Dev(int l,Dfloat **in_vx,Dfloat **in_vy,Dfloat **in_vz,Dfloat *outx_dx,Dfloat *outx_dy,Dfloat *outx_dz, \
+		  Dfloat *outy_dx,Dfloat *outy_dy,Dfloat *outy_dz,\
+		  Dfloat *outz_dx,Dfloat *outz_dy,Dfloat *outz_dz){
+  int az;
+
+    if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
     az = FWD->SNodeZ()-KHALO -1;
   }else{
     az = FWD->SNodeZ()-KHALO;
@@ -252,169 +257,43 @@ int az;
       for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
 
 
-	//	if ((i >= 2*KHALO) && (i < FWD->SNodeX()-2*KHALO)){
+	outx_dx[FWD->IJK(i,j,k)] = ( C1 * (in_vx[l][FWD->IJK(i+1,j,k)] - in_vx[l][FWD->IJK(i,j,k)]) - \
+				   C0 * (in_vx[l][FWD->IJK(i+2,j,k)] - in_vx[l][FWD->IJK(i-1,j,k)])) / FWD->SDMGeom->Dx();
 
-
-
-	// CENTRAL DIFFERENCES
-	  
-	  out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i-2,j,k)] - \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i-1,j,k)] + \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i+1,j,k)] - \
-				(1.0 / 12.0) * in_var[l][FWD->IJK(i+2,j,k)] ) / FWD->SDMGeom->Dx();
-	  //	}
-
-
-	//RIGHT SIDE
-
-	/*	if (i < 2*KHALO) {
-
-	  out_var[FWD->IJK(i,j,k)] = ( - (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] + \
-				 4.0 * in_var[l][FWD->IJK(i+1,j,k)] - \
-				 3.0 * in_var[l][FWD->IJK(i+2,j,k)] + \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i+3,j,k)] -
-				  (1.0 / 4.0) * in_var[l][FWD->IJK(i+4,j,k)] ) / FWD->SDMGeom->Dx();
-	}
-	*/
-	// LEFT SIDE
-	/*	
-	if (i >= FWD->SNodeX()-2*KHALO){
-
-	  out_var[FWD->IJK(i,j,k)] = (  (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] - \
-				 4.0 * in_var[l][FWD->IJK(i-1,j,k)] + \
-				 3.0 * in_var[l][FWD->IJK(i-2,j,k)] - \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i-3,j,k)] +
-				   (1.0 / 4.0) * in_var[l][FWD->IJK(i-4,j,k)] ) / FWD->SDMGeom->Dx();
-
-	}
+	outx_dy[FWD->IJK(i,j,k)] = ( C1 * (in_vx[l][FWD->IJK(i,j+1,k)] - in_vx[l][FWD->IJK(i,j,k)]) - \
+				   C0 * (in_vx[l][FWD->IJK(i,j+2,k)] - in_vx[l][FWD->IJK(i,j-1,k)])) / FWD->SDMGeom->Dy();
 	
-	*/
-	}
+	outx_dz[FWD->IJK(i,j,k)] = ( C1 * (in_vx[l][FWD->IJK(i,j,k+1)] - in_vx[l][FWD->IJK(i,j,k)]) - \
+				   C0 * (in_vx[l][FWD->IJK(i,j,k+2)] - in_vx[l][FWD->IJK(i,j,k-1)])) / FWD->SDMGeom->Dz();
+	
+	
+	outy_dx[FWD->IJK(i,j,k)] = ( C1 * (in_vy[l][FWD->IJK(i,j,k)] - in_vy[l][FWD->IJK(i-1,j,k)]) - \
+				   C0 * (in_vy[l][FWD->IJK(i+1,j,k)] - in_vy[l][FWD->IJK(i-2,j,k)])) / FWD->SDMGeom->Dx();
+
+	outy_dy[FWD->IJK(i,j,k)] = ( C1 * (in_vy[l][FWD->IJK(i,j,k)] - in_vy[l][FWD->IJK(i,j-1,k)]) - \
+				   C0 * (in_vy[l][FWD->IJK(i,j+1,k)] - in_vy[l][FWD->IJK(i,j-2,k)])) / FWD->SDMGeom->Dy();
+
+	outy_dz[FWD->IJK(i,j,k)] = ( C1 * (in_vy[l][FWD->IJK(i,j,k+1)] - in_vy[l][FWD->IJK(i,j,k)]) - \
+				   C0 * (in_vy[l][FWD->IJK(i,j,k+2)] - in_vy[l][FWD->IJK(i,j,k-1)])) / FWD->SDMGeom->Dz();
+
+
+	outz_dx[FWD->IJK(i,j,k)] = ( C1 * (in_vz[l][FWD->IJK(i,j,k)] - in_vz[l][FWD->IJK(i-1,j,k)]) - \
+				   C0 * (in_vz[l][FWD->IJK(i+1,j,k)] - in_vz[l][FWD->IJK(i-2,j,k)])) / FWD->SDMGeom->Dx();
+
+	outz_dy[FWD->IJK(i,j,k)] = ( C1 * (in_vz[l][FWD->IJK(i,j+1,k)] - in_vz[l][FWD->IJK(i,j,k)]) - \
+				   C0 * (in_vz[l][FWD->IJK(i,j+2,k)] - in_vz[l][FWD->IJK(i,j-1,k)])) / FWD->SDMGeom->Dy();
+
+	outz_dz[FWD->IJK(i,j,k)] = ( C1 * (in_vz[l][FWD->IJK(i,j,k)] - in_vz[l][FWD->IJK(i,j,k-1)]) - \
+				   C0 * (in_vz[l][FWD->IJK(i,j,k+1)] - in_vz[l][FWD->IJK(i,j,k-2)])) / FWD->SDMGeom->Dz();
+ 
+
       }
+    }
   }
 
   
-
   
 }
-
-
-void KERNELW::DevY(Dfloat **in_var,int l,Dfloat *out_var){
-  int az;
-
-  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
-    az = FWD->SNodeZ()-KHALO -1;
-  }else{
-    az = FWD->SNodeZ()-KHALO;
-  }
-    for (int k=KHALO;k<az;k++){
-    for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
-      for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
-
-
-	//	if ((j >= 2*KHALO) && (j < FWD->SNodeY()-2*KHALO)){
-
-
-	// CENTRAL DIFFERENCES
-	  
-	out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i,j-2,k)] - \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j-1,k)] + \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j+1,k)] - \
-				(1.0 / 12.0) * in_var[l][FWD->IJK(i,j+2,k)] ) / FWD->SDMGeom->Dy();
-	//	}
-
-
-	//RIGHT SIDE
-
-	/*if (j < 2*KHALO) {
-
-	  out_var[FWD->IJK(i,j,k)] = ( - (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] + \
-				 4.0 * in_var[l][FWD->IJK(i,j+1,k)] - \
-				 3.0 * in_var[l][FWD->IJK(i,j+2,k)] + \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i,j+3,k)] -
-				  (1.0 / 4.0) * in_var[l][FWD->IJK(i,j+4,k)] ) / FWD->SDMGeom->Dy();
-	}
-	*/
-	// LEFT SIDE
-	/*
-	if (j >= FWD->SNodeY()-2*KHALO){
-
-	  out_var[FWD->IJK(i,j,k)] = (  (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] - \
-				 4.0 * in_var[l][FWD->IJK(i,j-1,k)] + \
-				 3.0 * in_var[l][FWD->IJK(i,j-2,k)] - \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i,j-3,k)] +
-				  (1.0 / 4.0) * in_var[l][FWD->IJK(i,j-4,k)] ) / FWD->SDMGeom->Dy();
-
-	}
-	*/
-
-	}
-      }
-    }
-
-    
-}
-
-
-
-void KERNELW::DevZ(Dfloat **in_var,int l,Dfloat *out_var){
-  int az;
-
-  if (FWD->Nsdm.z == FWD->NumSubDom.z -1){
-    az = FWD->SNodeZ()-KHALO -1;
-  }else{
-    az = FWD->SNodeZ()-KHALO;
-  }
-    
-
-  for (int k=KHALO;k<az;k++){
-    for (int j=KHALO;j<FWD->SNodeY()-KHALO;j++){
-      for (int i=KHALO;i<FWD->SNodeX()-KHALO;i++){
-
-
-	//	if ((k >= 2*KHALO) && (k < FWD->SNodeZ()-2*KHALO-1)){
-
-
-
-	// CENTRAL DIFFERENCES
-	  
-	out_var[FWD->IJK(i,j,k)] = ( (1.0 / 12.0) * in_var[l][FWD->IJK(i,j,k-2)] - \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j,k-1)] + \
-				(2.0 / 3.0) * in_var[l][FWD->IJK(i,j,k+1)] - \
-				(1.0 / 12.0) * in_var[l][FWD->IJK(i,j,k+2)] ) / FWD->SDMGeom->Dz();
-	//}
-
-
-	//RIGHT SIDE
-
-	/*if (k < 2*KHALO) {
-
-	  out_var[FWD->IJK(i,j,k)] = ( - (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] + \
-				 4.0 * in_var[l][FWD->IJK(i,j,k+1)] - \
-				 3.0 * in_var[l][FWD->IJK(i,j,k+2)] + \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i,j,k+3)] -
-				  (1.0 / 4.0) * in_var[l][FWD->IJK(i,j,k+4)] ) / FWD->SDMGeom->Dz();
-	}
-	*/
-	// LEFT SIDE
-	/*
-	if (k >= FWD->SNodeZ()-2*KHALO-1){
-
-	  out_var[FWD->IJK(i,j,k)] = (  (25.0 / 12.0) * in_var[l][FWD->IJK(i,j,k)] - \
-				 4.0 * in_var[l][FWD->IJK(i,j,k-1)] + \
-				 3.0 * in_var[l][FWD->IJK(i,j,k-2)] - \
-				(4.0 / 3.0) * in_var[l][FWD->IJK(i,j,k-3)] +
-				  (1.0 / 4.0) * in_var[l][FWD->IJK(i,j,k-4)] ) / FWD->SDMGeom->Dz();
-
-	}
-	*/
-
-	}
-      }
-    }
-
-}
-
 
 
 void KERNELW::RHO(int l){
@@ -431,7 +310,7 @@ void KERNELW::RHO(int l){
 	   fwdDF->iFvy[l][FWD->IJK(i,j,k)] * adjDF->iFvy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->iFvz[l][FWD->IJK(i,j,k)] * adjDF->iFvz[l][FWD->IJK(i,j,k)]));
 
-	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi  ;
+	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l] * -4.0 * pi * pi  ;
 
   PcondA[FWD->IJK(i,j,k)] +=  -4.0 * pi * pi * fwdDF->freq[l] * fwdDF->freq[l] * \
     ((fwdDF->Fvx[l][FWD->IJK(i,j,k)] * fwdDF->Fvx[l][FWD->IJK(i,j,k)]   + \
@@ -484,7 +363,7 @@ void KERNELW::LAMBDA(int l){
 	    ((iux_dx[FWD->IJK(i,j,k)] + iuy_dy[FWD->IJK(i,j,k)] + \
 	  iuz_dz[FWD->IJK(i,j,k)] ) * (iux_dx_ad[FWD->IJK(i,j,k)] + \
 				       iuy_dy_ad[FWD->IJK(i,j,k)] + iuz_dz_ad[FWD->IJK(i,j,k)]))) \
-	  * - (1.0 / (fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi)) ;
+	  *  (1.0 / (fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi)) ;
 					    
 	  
       }
@@ -611,7 +490,7 @@ void KERNELW::MU(int l){
 	}
 
 
-	KMU[FWD->IJK(i,j,k)] = (-2.0) * (buff + ibuff) *		\
+	KMU[FWD->IJK(i,j,k)] = (2.0) * (buff + ibuff) *		\
 	   (1.0 / (fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi)) ;
 	
 
@@ -708,55 +587,21 @@ void KERNELW::CALC(int i){
 
   //InitVar(ZERO);
  
-  DevX(fwdDF->Fvx,i,ux_dx);
-  DevY(fwdDF->Fvx,i,ux_dy);
-  DevZ(fwdDF->Fvx,i,ux_dz);
-  
-  DevX(fwdDF->Fvy,i,uy_dx);
-  DevY(fwdDF->Fvy,i,uy_dy);
-  DevZ(fwdDF->Fvy,i,uy_dz);
-  
-  DevX(fwdDF->Fvz,i,uz_dx);
-  DevY(fwdDF->Fvz,i,uz_dy);
-  DevZ(fwdDF->Fvz,i,uz_dz);
+  Dev(i,fwdDF->Fvx,fwdDF->Fvy,fwdDF->Fvz,ux_dx,ux_dy,ux_dz,	\
+      uy_dx,uy_dy,uy_dz,\
+      uz_dx,uz_dy,uz_dz);
 
-  DevX(adjDF->Fvx,i,ux_dx_ad);
-  DevY(adjDF->Fvx,i,ux_dy_ad);
-  DevZ(adjDF->Fvx,i,ux_dz_ad);
-  
-  DevX(adjDF->Fvy,i,uy_dx_ad);
-  DevY(adjDF->Fvy,i,uy_dy_ad);
-  DevZ(adjDF->Fvy,i,uy_dz_ad);
-  
-  DevX(adjDF->Fvz,i,uz_dx_ad);
-  DevY(adjDF->Fvz,i,uz_dy_ad);
-  DevZ(adjDF->Fvz,i,uz_dz_ad);
+  Dev(i,adjDF->Fvx,adjDF->Fvy,adjDF->Fvz,ux_dx_ad,ux_dy_ad,ux_dz_ad,	\
+      uy_dx_ad,uy_dy_ad,uy_dz_ad,\
+      uz_dx_ad,uz_dy_ad,uz_dz_ad);
 
+  Dev(i,fwdDF->iFvx,fwdDF->iFvy,fwdDF->iFvz,iux_dx,iux_dy,iux_dz, \
+      iuy_dx,iuy_dy,iuy_dz,\
+      iuz_dx,iuz_dy,iuz_dz);
 
-  DevX(fwdDF->iFvx,i,iux_dx);
-  DevY(fwdDF->iFvx,i,iux_dy);
-  DevZ(fwdDF->iFvx,i,iux_dz);
-  
-  DevX(fwdDF->iFvy,i,iuy_dx);
-  DevY(fwdDF->iFvy,i,iuy_dy);
-  DevZ(fwdDF->iFvy,i,iuy_dz);
-  
-  DevX(fwdDF->iFvz,i,iuz_dx);
-  DevY(fwdDF->iFvz,i,iuz_dy);
-  DevZ(fwdDF->iFvz,i,iuz_dz);
-
-  DevX(adjDF->iFvx,i,iux_dx_ad);
-  DevY(adjDF->iFvx,i,iux_dy_ad);
-  DevZ(adjDF->iFvx,i,iux_dz_ad);
-  
-  DevX(adjDF->iFvy,i,iuy_dx_ad);
-  DevY(adjDF->iFvy,i,iuy_dy_ad);
-  DevZ(adjDF->iFvy,i,iuy_dz_ad);
-  
-  DevX(adjDF->iFvz,i,iuz_dx_ad);
-  DevY(adjDF->iFvz,i,iuz_dy_ad);
-  DevZ(adjDF->iFvz,i,iuz_dz_ad);
-  
+  Dev(i,adjDF->iFvx,adjDF->iFvy,adjDF->iFvz,iux_dx_ad,iux_dy_ad,iux_dz_ad,	\
+      iuy_dx_ad,iuy_dy_ad,iuy_dz_ad,\
+      iuz_dx_ad,iuz_dy_ad,iuz_dz_ad);
   
   RHO(i);
   MU(i);

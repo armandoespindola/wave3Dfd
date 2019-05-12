@@ -2237,9 +2237,9 @@ void SDM::AddSourceAdj(int itime){
 	   (idx_station[i].z > -1) ){
 
 
-	AddVal(station->pos_recep[i],"VX", station->vx_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VY", station->vy_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VZ", station->vz_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VX", dt * station->vx_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VY", dt * station->vy_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VZ", dt * station->vz_ad[itime + station->nt * i]);
         
       }
    }
