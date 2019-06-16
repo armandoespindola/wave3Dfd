@@ -2229,6 +2229,7 @@ void SDM::InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
 
 void SDM::AddSourceAdj(int itime){
   Dfloat Rvx,Rvy,Rvz;
+  Dfloat rho_cte;
 
    for (int i = 0; i<station->nr; ++i){
     
@@ -2237,9 +2238,11 @@ void SDM::AddSourceAdj(int itime){
 	   (idx_station[i].z > -1) ){
 
 
-	AddVal(station->pos_recep[i],"VX", dt * station->vx_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VY", dt * station->vy_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VZ", dt * station->vz_ad[itime + station->nt * i]);
+	rho_cte = 2700.0;
+
+	AddVal(station->pos_recep[i],"VX", (dt / rho_cte) * station->vx_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VY", (dt / rho_cte) * station->vy_ad[itime + station->nt * i]);
+	AddVal(station->pos_recep[i],"VZ", (dt / rho_cte) * station->vz_ad[itime + station->nt * i]);
         
       }
    }

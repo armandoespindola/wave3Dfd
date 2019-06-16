@@ -310,7 +310,7 @@ void KERNELW::RHO(int l){
 	   fwdDF->iFvy[l][FWD->IJK(i,j,k)] * adjDF->iFvy[l][FWD->IJK(i,j,k)]   + \
 	    fwdDF->iFvz[l][FWD->IJK(i,j,k)] * adjDF->iFvz[l][FWD->IJK(i,j,k)]));
 
-	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l] * -4.0 * pi * pi  ;
+	PcondB[FWD->IJK(i,j,k)] += KRHO[FWD->IJK(i,j,k)] * fwdDF->freq[l] * fwdDF->freq[l] * 4.0 * pi * pi  ;
 
   PcondA[FWD->IJK(i,j,k)] +=  -4.0 * pi * pi * fwdDF->freq[l] * fwdDF->freq[l] * \
     ((fwdDF->Fvx[l][FWD->IJK(i,j,k)] * fwdDF->Fvx[l][FWD->IJK(i,j,k)]   + \
