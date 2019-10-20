@@ -79,11 +79,11 @@ void MPI_DATA::TRANSFER(int Var){
   	if ( Var == 1 ) {
 	// VELOCITIES
 	nchar = 0;
-	nvar = 3;
+	nvar = 6;
 
 	} else if (Var == 2){
 	// STRESESS
-	nchar = 3;
+	nchar = 6;
 	nvar = 6;
 
 	}
@@ -479,6 +479,15 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
  FILE *R,*S,*P,*PA,*PB;
  char rn[100],pn[100],sn[100],pan[100],pbn[100];
+ Dfloat *kr_buff,*kp_buff,*ks_buff,*kpa_buff,*kpb_buff;
+ int size_buff = (NZ - PML.z) * (NX - 2 * PML.x) * (NY - 2 * PML.y);
+ int idx;
+
+ kr_buff = new Dfloat[size_buff];
+ kp_buff = new Dfloat[size_buff];
+ ks_buff = new Dfloat[size_buff];
+ kpa_buff = new Dfloat[size_buff];
+ kpb_buff = new Dfloat[size_buff];
 
  snprintf(rn,90,"%sKRHO.bin",name);
  snprintf(pn,90,"%sKVP.bin",name);
@@ -498,16 +507,31 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
 
              GlobIdx = i + j * NX + k * NX * NY;
+    	     idx =  (i - PML.x) + (j - PML.y) * (NX - 2 * PML.x) + \
+	       (k - PML.z) * (NX - 2 * PML.x) * (NY - 2 * PML.y);
+	     
+             kr_buff[idx] = kr[GlobIdx];
+    	     kp_buff[idx] = kp[GlobIdx];
+    	     ks_buff[idx] = ks[GlobIdx];
+    	     kpa_buff[idx] = kpa[GlobIdx];
+    	     kpb_buff[idx] = kpb[GlobIdx];
 
-            fwrite(&kr[GlobIdx],sizeof(Dfloat),1,R);
-	    fwrite(&kp[GlobIdx],sizeof(Dfloat),1,P);
-	    fwrite(&ks[GlobIdx],sizeof(Dfloat),1,S);
-	    fwrite(&kpa[GlobIdx],sizeof(Dfloat),1,PA);
-	    fwrite(&kpb[GlobIdx],sizeof(Dfloat),1,PB);
+	    //  fwrite(&kr[GlobIdx],sizeof(Dfloat),1,R);
+	    // fwrite(&kp[GlobIdx],sizeof(Dfloat),1,P);
+	    // fwrite(&ks[GlobIdx],sizeof(Dfloat),1,S);
+	    // fwrite(&kpa[GlobIdx],sizeof(Dfloat),1,PA);
+	    // fwrite(&kpb[GlobIdx],sizeof(Dfloat),1,PB);
 
           }
         }
     }
+
+     fwrite(kr_buff,sizeof(Dfloat),size_buff,R);
+     fwrite(kp_buff,sizeof(Dfloat),size_buff,P);
+     fwrite(ks_buff,sizeof(Dfloat),size_buff,S);
+     fwrite(kpa_buff,sizeof(Dfloat),size_buff,PA);
+     fwrite(kpb_buff,sizeof(Dfloat),size_buff,PB);
+  
 
     fclose(R);
     fclose(P);
@@ -521,6 +545,12 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
     delete [] kpa;
     delete [] kpb;
     delete [] buff;
+
+    delete [] kr_buff;
+    delete [] kp_buff;
+    delete [] ks_buff;
+    delete [] kpa_buff;
+    delete [] kpb_buff;
 
 }
 

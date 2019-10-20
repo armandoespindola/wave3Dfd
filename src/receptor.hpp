@@ -59,7 +59,7 @@ public:
   
   void FileClose(int i);
 
-  void WriteFile(int i, Dfloat vx, Dfloat vy,Dfloat vz);
+  void WriteFile(int i, Dfloat *vx, Dfloat *vy,Dfloat *vz);
 
   void LoadFile(int i);
 

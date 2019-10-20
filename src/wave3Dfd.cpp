@@ -100,7 +100,7 @@ int main (int argc, char* argv[]) {
 
   const Dfloat t = std::stof(par.ParamReturn("-t"));
 
-  // SNAPSOTH
+  // SNAPSHOT
 
   const int t_snap = std::stoi(par.ParamReturn("-t_snap"));
   const int snap = std::stoi(par.ParamReturn("-snap"));
@@ -178,7 +178,7 @@ VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1),\
 
 
 
- // LIMITS OF SUBDOAMINS
+ // LIMITS OF SUBDMAINS
  
  VecF SGI[N_mpi],SGF[N_mpi];
 

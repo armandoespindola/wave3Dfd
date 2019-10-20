@@ -33,12 +33,11 @@ protected:
   // KRHO Kernel density
   // KMU Kernel Mu
   // KLAMBDA Kernel Lambda
-  // Fitchner (2010)
+  // Kernel Parametrization (Tromp,2005)
   // FWD Forward Propagation
   // ADJ Adjoint Propagation
   
   SDM *FWD,*ADJ;
-  int nfq;
 
 public:
 
@@ -66,10 +65,13 @@ public:
   void CALC();
 
   // SPATIAL DERIVATIVES (4TH ORDER)
-  
-  void DevX(Dfloat *in_var,Dfloat *out_var);
-  void DevY(Dfloat *in_var,Dfloat *out_var);
-  void DevZ(Dfloat *in_var,Dfloat *out_var);
+
+   void Dev(Dfloat *in_vx,Dfloat *in_vy,Dfloat *in_vz,Dfloat *outx_dx,Dfloat *outx_dy,Dfloat *outx_dz, \
+	   Dfloat *outy_dx,Dfloat *outy_dy,Dfloat *outy_dz,\
+	   Dfloat *outz_dx,Dfloat *outz_dy,Dfloat *outz_dz);
+
+
+  void GET_K(Dfloat *KR,Dfloat *KP,Dfloat *KS);
 
 };
 

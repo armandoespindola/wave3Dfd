@@ -538,6 +538,12 @@ void SDM::ExpBoundary(Dfloat *BN, char *TBound,char *NameVar) {
     EB(BN,vy,TBound);
   }else if (strcmp("VZ",NameVar) == 0){
     EB(BN,vz,TBound);
+  }else if (strcmp("UX",NameVar) == 0){
+    EB(BN,ux,TBound);
+  }else if (strcmp("UY",NameVar) == 0){
+    EB(BN,uy,TBound);
+  }else if (strcmp("UZ",NameVar) == 0){
+    EB(BN,uz,TBound);
   } else {
     std::cout<<"SDM::ExpBoundary:: IT IS NOT A BOUNDARY OPTION:"<<NameVar<<std::endl;
   }
@@ -565,6 +571,12 @@ void SDM::ImpBoundary(Dfloat *BN, char *TBound,char *NameVar) {
     IB(BN,vy,TBound);
   }else if (strcmp("VZ",NameVar) == 0){
     IB(BN,vz,TBound);
+  } else if (strcmp("UX",NameVar) == 0){
+    IB(BN,ux,TBound);
+  } else if (strcmp("UY",NameVar) == 0){
+    IB(BN,uy,TBound);
+  }else if (strcmp("UZ",NameVar) == 0){
+    IB(BN,uz,TBound);
   } else {
     std::cout<<"SDM::ImpBoundary:: IT IS NOT A BOUNDARY OPTION:"<<NameVar<<std::endl;
   }
@@ -903,16 +915,17 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	}
 
 
-	// if (PROPAGATION == 1){
-	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
 	
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
 
-	// if (PROPAGATION == 0){
-	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	  
+	}
 
 	
       }
@@ -965,16 +978,17 @@ void SDM::FD_VX(VecI Init,VecI Iend){
 	}
 
 
-	// if (PROPAGATION == 1){
-	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	}
 	
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
 	  (df_dI + df_dJ + df_dK);
 
-	// if (PROPAGATION == 0){
-	//   ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+
+	}
 
 
 	
@@ -1052,17 +1066,18 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
 
-	// if (PROPAGATION == 1){
-	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
 
 	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	// if (PROPAGATION == 0){
-	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+
+	}
 
 
 
@@ -1123,17 +1138,18 @@ void SDM::FD_VY(VecI Init,VecI Iend){
 
 
 
-	// if (PROPAGATION == 1){
-	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	}
 
 	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	// if (PROPAGATION == 0){
-	//   uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+
+	}
 
 
 
@@ -1202,18 +1218,19 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
 
-	// if (PROPAGATION == 1){
-	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
 
 
 	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	// if (PROPAGATION == 0){
-	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+
+	}
 
 
 	
@@ -1272,17 +1289,17 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 
 
 
-	// if (PROPAGATION == 1){
-	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 1){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
 
 	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
 	  (df_dI + df_dJ + df_dK);
 
 
-	// if (PROPAGATION == 0){
-	//   uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
-	// }
+	if (PROPAGATION == 0){
+	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	}
 
 
 	
@@ -1699,7 +1716,7 @@ void SDM::FDSII() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
   
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)) {
 
   if (Nsdm.x == NumSubDom.x-1) { 
     end.x = NodLoc.x - 1;
@@ -1720,7 +1737,7 @@ void SDM::FDSII() {
 
   FD_SII(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
 
     if (Nsdm.x == 0) {
@@ -1769,7 +1786,7 @@ void SDM::FDSXY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
     
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
@@ -1777,7 +1794,7 @@ void SDM::FDSXY() {
   
   FD_SXY(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
 
    if (Nsdm.x == 0) {
@@ -1813,7 +1830,7 @@ void SDM::FDSXZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
     
   if (Nsdm.z == NumSubDom.z - 1) {
     // FREE SURFACE
@@ -1824,7 +1841,7 @@ void SDM::FDSXZ() {
     
   FD_SXZ(init,end);
 
-  } else if (PROPAGATION == 1){
+  } else if (PROPAGATION == -1){
 
 
     if (Nsdm.x == 0) {
@@ -1868,7 +1885,7 @@ void SDM::FDSYZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)) {
     
    if (Nsdm.x == NumSubDom.x - 1) { 
     end.x = NodLoc.x - 1;
@@ -1890,7 +1907,7 @@ void SDM::FDSYZ() {
     
   FD_SYZ(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
     if (Nsdm.x == 0) {
       init.x = PML.x;
@@ -1936,7 +1953,7 @@ void SDM::FDVX() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
     
   if (Nsdm.z == 0) { 
     init.z = 1;
@@ -1970,7 +1987,7 @@ void SDM::FDVX() {
 
   FD_VX(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
     if (Nsdm.x == 0) {
       init.x = PML.x;
@@ -2014,7 +2031,7 @@ void SDM::FDVY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
     
   if (Nsdm.z == 0) { 
     init.z = 1;
@@ -2040,7 +2057,7 @@ void SDM::FDVY() {
   
   FD_VY(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
 
     if (Nsdm.x == 0) {
@@ -2086,7 +2103,7 @@ void SDM::FDVZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if (PROPAGATION == 0) {
+  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
     
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
@@ -2117,7 +2134,7 @@ void SDM::FDVZ() {
 
     FD_VZ(init,end);
 
-  } else if (PROPAGATION == 1) {
+  } else if (PROPAGATION == -1) {
 
 
     if (Nsdm.x == 0) {
@@ -2262,12 +2279,12 @@ void SDM::EndRecept(){
 
 	station->FileOpen(i,PROPAGATION);
 
-	for (int ktime=0; ktime<station->nt; ++ktime){
+	//for (int ktime=0; ktime<station->nt; ++ktime){
 
-	station->WriteFile(i,Rvx[ktime + i * station->nt],\
-			   Rvy[ktime + i * station->nt],\
-			   Rvz[ktime + i * station->nt]);
-	}
+	station->WriteFile(i,Rvx + i * station->nt,\
+			   Rvy + i * station->nt,\
+			   Rvz + i * station->nt);
+	//}
 
 	
 	station->FileClose(i);
@@ -2406,24 +2423,25 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
 
   
-  sprintf(times,"%s_%d-%d.bin",nfile,subindx,ktime);
+  sprintf(times,"temp/%s_%d-%d.bin",nfile,subindx,ktime);
 
   
   
    R=fopen(times,"wb");
+   fwrite(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
    
-    for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
-     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
-       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
-	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
-	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
+   // for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+   //  for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+   //    for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+   // int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() +	\
+   //  	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
 
-	 fwrite(&Var[indx],sizeof(Dfloat),1,R);
+   // 	 fwrite(&Var[indx],sizeof(Dfloat),1,R);
 
 
-       }
-     }
-    }
+   //  }
+   // }
+   // }
 
     fclose(R);
 
@@ -2437,24 +2455,26 @@ void SDM::loadfile(Dfloat *Var,char *nfile,int ktime){
   char times[200];
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
-  sprintf(times,"%s_%d-%d.bin",nfile,subindx,ktime);
+  sprintf(times,"temp/%s_%d-%d.bin",nfile,subindx,ktime);
 
   
   
    R=fopen(times,"rb");
+
+   fread(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
    
-    for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
-     for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
-       for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
-	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
-	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
+   // for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+   // for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+   //     for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+   // 	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
+   //  	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
 
-	 fread(&Var[indx],sizeof(Dfloat),1,R);
+   // 	 fread(&Var[indx],sizeof(Dfloat),1,R);
 
 
-       }
-     }
-    }
+   // 	 }
+   //     }
+   //   }
 
     fclose(R);
 
@@ -2715,7 +2735,7 @@ void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
     fclose(R);
     char cleanfile[100];
     sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    system (cleanfile);
+    //system (cleanfile);
 
 // Right Side
 } else if (side == 1) {
@@ -2739,7 +2759,7 @@ void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
     fclose(R);
     char cleanfile[100];
     sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    system (cleanfile);
+    //system (cleanfile);
     
       }
 
@@ -2831,7 +2851,7 @@ void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
     fclose(R);
     char cleanfile[100];
     sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    system (cleanfile);
+    //system (cleanfile);
 
 // Right Side
 } else if (side == 1) {
@@ -2855,7 +2875,7 @@ void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
     fclose(R);
     char cleanfile[100];
     sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    system (cleanfile);
+    //system (cleanfile);
     
       }
 
@@ -2929,7 +2949,7 @@ void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
     fclose(R);
     char cleanfile[100];
     sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    system (cleanfile);
+    //system (cleanfile);
 
       } 
 

@@ -40,6 +40,13 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
   vx_ad = new Dfloat[nt * nr];
   vy_ad = new Dfloat[nt * nr];
   vz_ad = new Dfloat[nt * nr];
+
+
+  for (int i=0; i<nr*nt; ++i){
+    vx_ad[i] = 0.0;
+    vy_ad[i] = 0.0;
+    vz_ad[i] = 0.0;
+  }
   
   nameStation = new std::string[nr];
   RX = new std::fstream[nr];
@@ -111,6 +118,10 @@ void receptor::FileOpen(int i, int PROPAGATION){
 
   if (PROPAGATION){
     
+  // RX[i].open("DATA/"+nameStation[i] + "-VX.bin",std::ios::binary | std::ios::in);
+  // RY[i].open("DATA/"+nameStation[i] + "-VY.bin",std::ios::binary | std::ios::in);
+  // RZ[i].open("DATA/"+nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::in);
+
   RX[i].open("DATA/"+nameStation[i] + "-ADJX.bin",std::ios::binary | std::ios::in);
   RY[i].open("DATA/"+nameStation[i] + "-ADJY.bin",std::ios::binary | std::ios::in);
   RZ[i].open("DATA/"+nameStation[i] + "-ADJZ.bin",std::ios::binary | std::ios::in);
@@ -130,11 +141,11 @@ void receptor::FileClose(int i){
 
 }
 
-void receptor::WriteFile(int i, Dfloat vx, Dfloat vy,Dfloat vz){
+void receptor::WriteFile(int i, Dfloat *vx, Dfloat *vy,Dfloat *vz){
 
-  RX[i].write( (char*)&vx, sizeof(Dfloat));
-  RY[i].write( (char*)&vy, sizeof(Dfloat));
-  RZ[i].write( (char*)&vz, sizeof(Dfloat));
+  RX[i].write( (char*)&vx[0], sizeof(Dfloat) * nt);
+  RY[i].write( (char*)&vy[0], sizeof(Dfloat) * nt );
+  RZ[i].write( (char*)&vz[0], sizeof(Dfloat) * nt);
 
 }
 
@@ -142,11 +153,11 @@ void receptor::WriteFile(int i, Dfloat vx, Dfloat vy,Dfloat vz){
 void receptor::LoadFile(int i){
 
 
-  for (int it = 0; it<nt;++it){
-    RX[i].read( (char*)&vx_ad[it + nt * i], sizeof(Dfloat));
-    RY[i].read( (char*)&vy_ad[it + nt * i], sizeof(Dfloat));
-    RZ[i].read( (char*)&vz_ad[it + nt * i], sizeof(Dfloat));
-  }
+  //for (int it = 0; it<nt;++it){
+    RX[i].read( (char*)&vx_ad[nt * i], sizeof(Dfloat) * nt);
+    RY[i].read( (char*)&vy_ad[nt * i], sizeof(Dfloat) * nt);
+    RZ[i].read( (char*)&vz_ad[nt * i], sizeof(Dfloat) * nt);
+    //  }
 
 
   RX[i].close();
