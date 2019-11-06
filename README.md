@@ -1,15 +1,15 @@
 # Wave3Dfd
 
-Wave3Dfd simulates seismic wave propagation in 3D using Velocity-Stress Staggered-Grid formulation (VS SG).The algorithm approximation is 4th order in space and 2nd order in time. This is code is also capable to compute the Fréchet derivatives with the adjoint formulation. To compute the Fréchet derivatives the user has to provide the adjoint source for every receiver.
+Wave3Dfd simulates seismic wave propagation in 3D using Velocity-Stress Staggered-Grid formulation (VS SG). The algorithm approximation is 4th order in space and 2nd order in time. The code is also capable of computing the Fréchet derivatives with the adjoint formulation. To calculate the Fréchet derivatives, the user has to provide the adjoint source for every receiver.
 
 ## Parallel implementation details
 
-Simple domain descomposition using MPI for the communication between subdomains and OpenMP for multithreading.
+Simple domain decomposition using MPI for the communication between subdomains and OpenMP for multithreading.
 
 ![Scaling](images/scaling.png)
 
-## Getting started
-   $ git clone https://github.com/armandoespindola/wave3Dfd.git
+### Getting started
+    $ git clone https://github.com/armandoespindola/wave3Dfd.git
 
 ### Prerequisites
     * MPI - OpenMP
@@ -23,3 +23,6 @@ Simple domain descomposition using MPI for the communication between subdomains 
     $ mpirun -np 8 ./wave3Dfd.out -nFile parameter.par
 
 ![Snapshots](images/snapshots.png)
+
+
+armando.espindolacarmona@kaust.edu.sa
