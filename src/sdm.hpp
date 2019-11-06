@@ -74,6 +74,18 @@ protected:
   receptor *station;
   VecI *idx_station;
 
+  // BOUNDARIES RETRO-PROPAGATION
+  Dfloat *bn_lx,*bn_rx;
+  Dfloat *bn_ly,*bn_ry;
+  Dfloat *bn_lz;
+  // SAVE BOUNDARIES N-TIME STEPS
+  int nsteps = stepb;
+
+  // MPI FILES
+
+  MPI_Status status;
+  MPI_File BLX,BRX,BLY,BRY,BLZ;
+
   
 
 public:
@@ -300,11 +312,11 @@ public:
 
   // BOUNDARIES FOR RETROPROPAGATION
 
-  void boundX(Dfloat *var,int side,int inout,int time,char *VarName);
+  void boundX(Dfloat *var,int side,int inout,int time,int indx);
 
-  void boundY(Dfloat *var,int side,int inout,int time,char *VarName);
+  void boundY(Dfloat *var,int side,int inout,int time,int indx);
 
-  void boundZ(Dfloat *var,int side,int inout,int time,char *VarName);
+  void boundZ(Dfloat *var,int side,int inout,int time,int indx);
 
   void SaveBoundaries_V(int time);
 
@@ -313,6 +325,10 @@ public:
   void LoadBoundaries_V(int time);
 
   void LoadBoundaries_S(int time);
+
+
+  void WriteBoundaries(int time,int nt);
+  void ReadBoundaries(int time,int nt);
 
   
 

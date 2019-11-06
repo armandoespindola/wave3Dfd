@@ -89,5 +89,10 @@ const Dfloat C1 = 9.0 / 8.0;
 const Dfloat pi = 3.141592653589793;
 
 
+// SAVE BOUNDARIES INTERVAL
+
+const int stepb = 100;
+
+
 
 #endif

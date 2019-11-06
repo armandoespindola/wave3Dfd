@@ -111,6 +111,30 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	dvz_dy = new Dfloat [SDMGeom->HALO_Node()];
 
 
+
+
+
+
+
+	if (Nsdm.x == 0){
+	  // LEFT X
+	  bn_lx = new Dfloat[SDMGeom->L_NodeZ() * SDMGeom->L_NodeY() * KHALO * 9 * nsteps];
+	}else if (Nsdm.x == NumSubDom.x-1) {
+	  // RUGHT X
+	  bn_rx = new Dfloat[SDMGeom->L_NodeZ() * SDMGeom->L_NodeY() * KHALO * 9 * nsteps];
+	}
+	if (Nsdm.y == 0){
+	  // LEFT Y
+	  bn_ly = new Dfloat[SDMGeom->L_NodeZ() * SDMGeom->L_NodeX() * KHALO * 9 * nsteps];
+	}else if (Nsdm.y == NumSubDom.y-1) {
+	  // RIGHT Y
+	  bn_ry = new Dfloat[SDMGeom->L_NodeZ() * SDMGeom->L_NodeX() * KHALO * 9 * nsteps];
+	}
+	if (Nsdm.z == 0){
+	  // LEFT Z
+	  bn_lz = new Dfloat[SDMGeom->L_NodeY() * SDMGeom->L_NodeX() * KHALO * 9 * nsteps];
+	}
+
 }
 
 
@@ -154,6 +178,25 @@ SDM::~SDM(){
 	delete [] dvy_dz;
 	delete [] dvz_dy;
 
+
+	if (Nsdm.x == 0){
+	  // LEFT X
+	  delete [] bn_lx;
+	}else if (Nsdm.x == NumSubDom.x-1) {
+	  // RUGHT X
+	  delete [] bn_rx;
+	}
+	if (Nsdm.y == 0){
+	  // LEFT Y
+	  delete [] bn_ly;
+	}else if (Nsdm.y == NumSubDom.y-1) {
+	  // RIGHT Y
+	  delete [] bn_ry;
+	}
+	if (Nsdm.z == 0){
+	  // LEFT Z
+	  delete [] bn_lz;
+	}
 
 }
 
@@ -1716,7 +1759,7 @@ void SDM::FDSII() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
   
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)) {
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)) {
 
   if (Nsdm.x == NumSubDom.x-1) { 
     end.x = NodLoc.x - 1;
@@ -1737,15 +1780,15 @@ void SDM::FDSII() {
 
   FD_SII(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
 
     if (Nsdm.x == 0) {
-      init.x = PML.x;
+      init.x = PML.x-1;
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
-      end.x = SNodeX() - PML.x - 2 * HALO.x;
+      end.x = SNodeX() - PML.x - 2 * HALO.x + 1;
     }
 
     if (Nsdm.y == 0) {
@@ -1753,7 +1796,7 @@ void SDM::FDSII() {
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
-      end.y = SNodeY() - PML.y - 2 * HALO.y;
+      end.y = SNodeY() - PML.y - 2 * HALO.y + 1;
     }
 
     if (Nsdm.z == 0) {
@@ -1786,7 +1829,7 @@ void SDM::FDSXY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)){
     
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
@@ -1794,7 +1837,7 @@ void SDM::FDSXY() {
   
   FD_SXY(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
 
    if (Nsdm.x == 0) {
@@ -1802,11 +1845,11 @@ void SDM::FDSXY() {
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
-      end.x = SNodeX() - PML.x - 2 * HALO.x;
+      end.x = SNodeX() - PML.x - 2 * HALO.x + 1;
     }
 
     if (Nsdm.y == 0) {
-      init.y = PML.y;
+      init.y = PML.y - 1;
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
@@ -1830,7 +1873,7 @@ void SDM::FDSXZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)){
     
   if (Nsdm.z == NumSubDom.z - 1) {
     // FREE SURFACE
@@ -1841,7 +1884,7 @@ void SDM::FDSXZ() {
     
   FD_SXZ(init,end);
 
-  } else if (PROPAGATION == -1){
+  } else if (PROPAGATION == 1){
 
 
     if (Nsdm.x == 0) {
@@ -1849,7 +1892,7 @@ void SDM::FDSXZ() {
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
-      end.x = SNodeX() - PML.x - 2 * HALO.x;
+      end.x = SNodeX() - PML.x - 2 * HALO.x + 1;
     }
 
     if (Nsdm.y == 0) {
@@ -1861,7 +1904,7 @@ void SDM::FDSXZ() {
     }
 
     if (Nsdm.z == 0) {
-      init.z = PML.z;
+      init.z = PML.z - 1;
     }
     
 
@@ -1885,7 +1928,7 @@ void SDM::FDSYZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)) {
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)) {
     
    if (Nsdm.x == NumSubDom.x - 1) { 
     end.x = NodLoc.x - 1;
@@ -1907,7 +1950,7 @@ void SDM::FDSYZ() {
     
   FD_SYZ(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
     if (Nsdm.x == 0) {
       init.x = PML.x;
@@ -1918,7 +1961,7 @@ void SDM::FDSYZ() {
     }
 
     if (Nsdm.y == 0) {
-      init.y = PML.y;
+      init.y = PML.y - 1;
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
@@ -1926,7 +1969,7 @@ void SDM::FDSYZ() {
     }
 
     if (Nsdm.z == 0) {
-      init.z = PML.z;
+      init.z = PML.z - 1;
     }
 
 
@@ -1953,7 +1996,7 @@ void SDM::FDVX() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)){
     
   if (Nsdm.z == 0) { 
     init.z = 1;
@@ -1987,14 +2030,14 @@ void SDM::FDVX() {
 
   FD_VX(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
     if (Nsdm.x == 0) {
       init.x = PML.x;
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
-      end.x = SNodeX() - PML.x - 2 * HALO.x;
+      end.x = SNodeX() - PML.x - 2 * HALO.x + 1;
     }
 
     if (Nsdm.y == 0) {
@@ -2002,7 +2045,7 @@ void SDM::FDVX() {
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
-      end.y = SNodeY() - PML.y - 2 * HALO.y;
+      end.y = SNodeY() - PML.y - 2 * HALO.y + 1;
     }
 
     if (Nsdm.z == 0) {
@@ -2031,7 +2074,7 @@ void SDM::FDVY() {
   init = {0,0,0};
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)){
     
   if (Nsdm.z == 0) { 
     init.z = 1;
@@ -2057,11 +2100,11 @@ void SDM::FDVY() {
   
   FD_VY(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
 
     if (Nsdm.x == 0) {
-      init.x = PML.x;
+      init.x = PML.x - 1;
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
@@ -2069,7 +2112,7 @@ void SDM::FDVY() {
     }
 
     if (Nsdm.y == 0) {
-      init.y = PML.y;
+      init.y = PML.y - 1;
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
@@ -2103,7 +2146,7 @@ void SDM::FDVZ() {
   end = {NodLoc.x,NodLoc.y,NodLoc.z};
 
 
-  if ((PROPAGATION == 0)||(PROPAGATION == 1)){
+  if ((PROPAGATION == 0)||(PROPAGATION == -1)){
     
   if (Nsdm.y == NumSubDom.y - 1) { 
     end.y = NodLoc.y - 1;
@@ -2123,22 +2166,22 @@ void SDM::FDVZ() {
     end.z = NodLoc.z - 2;
     Free_VZ(init,end);
 
-    for (int iy= HALO.y; iy<SNodeY(); ++iy){
-      for (int ix=HALO.x; ix<SNodeX(); ++ix){
-    vz[IJK(ix,iy,SNodeZ()-KHALO-1)] = vz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
-    uz[IJK(ix,iy,SNodeZ()-KHALO-1)] = uz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
-      }
-    }
+    //for (int iy= HALO.y; iy<SNodeY(); ++iy){
+    //for (int ix=HALO.x; ix<SNodeX(); ++ix){
+    //vz[IJK(ix,iy,SNodeZ()-KHALO-1)] = vz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+    //uz[IJK(ix,iy,SNodeZ()-KHALO-1)] = uz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+    // }
+    //}
     
     }
 
     FD_VZ(init,end);
 
-  } else if (PROPAGATION == -1) {
+  } else if (PROPAGATION == 1) {
 
 
     if (Nsdm.x == 0) {
-      init.x = PML.x;
+      init.x = PML.x - 1;
     }
 
     if (Nsdm.x == NumSubDom.x-1) {
@@ -2150,11 +2193,11 @@ void SDM::FDVZ() {
     }
 
     if (Nsdm.y == NumSubDom.y-1) {
-      end.y = SNodeY() - PML.y - 2 * HALO.y;
+      end.y = SNodeY() - PML.y - 2 * HALO.y + 1;
     }
 
     if (Nsdm.z == 0) {
-      init.z = PML.z;
+      init.z = PML.z - 1;
     }
 
 
@@ -2164,6 +2207,13 @@ void SDM::FDVZ() {
     Free_VZ(init,end);
     }
 
+    //for (int iy= HALO.y; iy<SNodeY(); ++iy){
+    //for (int ix=HALO.x; ix<SNodeX(); ++ix){
+    //vz[IJK(ix,iy,SNodeZ()-KHALO-1)] = vz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+    //uz[IJK(ix,iy,SNodeZ()-KHALO-1)] = uz[IJK(ix,iy,SNodeZ()-KHALO-2)] ;
+    // }
+    // }
+    
     FD_VZ(init,end);
 
   }
@@ -2419,16 +2469,27 @@ void SDM::EndSource(){
 void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
   FILE *R;
   char times[200];
+  MPI_File fhw;
+  MPI_Status status;
+  int offset;
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
 
   
-  sprintf(times,"temp/%s_%d-%d.bin",nfile,subindx,ktime);
+  sprintf(times,"temp/%s-%d.bin",nfile,ktime);
+
+  MPI_File_open(MPI_COMM_WORLD,times,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&fhw);
+
+  offset = subindx * SDMGeom->HALO_Node() * sizeof(Dfloat);
+
+  MPI_File_write_at(fhw,offset,Var,SDMGeom->HALO_Node(),MY_MPI_Dfloat,&status);
+  
+  MPI_File_close(&fhw);
 
   
   
-   R=fopen(times,"wb");
-   fwrite(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
+   // R=fopen(times,"wb");
+   // fwrite(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
    
    // for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
    //  for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
@@ -2443,7 +2504,8 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
    // }
    // }
 
-    fclose(R);
+    // fclose(R);	
+    
 
   
 }
@@ -2451,32 +2513,52 @@ void SDM::printfile(Dfloat *Var,char *nfile,int ktime){
 
 
 void SDM::loadfile(Dfloat *Var,char *nfile,int ktime){
+  // FILE *R;
+  // char times[200];
+
+  // int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
+  // sprintf(times,"temp/%s_%d-%d.bin",nfile,subindx,ktime);
+  
+  
+  //  R=fopen(times,"rb");
+
+  //  fread(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
+   
+  //  // for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
+  //  // for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
+  //  //     for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
+  //  // 	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
+  //  //  	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
+
+  //  // 	 fread(&Var[indx],sizeof(Dfloat),1,R);
+
+
+  //  // 	 }
+  //  //     }
+  //  //   }
+
+  //   fclose(R);
+
+
+
   FILE *R;
   char times[200];
+  MPI_File fhw;
+  MPI_Status status;
+  int offset;
 
   int subindx = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z * NumSubDom.x * NumSubDom.y;
-  sprintf(times,"temp/%s_%d-%d.bin",nfile,subindx,ktime);
 
   
+  sprintf(times,"temp/%s-%d.bin",nfile,ktime);
+
+  MPI_File_open(MPI_COMM_WORLD,times,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&fhw);
+
+  offset = subindx * SDMGeom->HALO_Node() * sizeof(Dfloat);
+
+  MPI_File_read_at(fhw,offset,Var,SDMGeom->HALO_Node(),MY_MPI_Dfloat,&status);
   
-   R=fopen(times,"rb");
-
-   fread(Var,sizeof(Dfloat),SDMGeom->HALO_Node(),R);
-   
-   // for (int iz=0;iz<SDMGeom->L_NodeZ();iz++){
-   // for (int iy=0;iy<SDMGeom->L_NodeY();iy++){
-   //     for (int ix=0;ix<SDMGeom->L_NodeX();ix++){
-   // 	 int indx = (ix + HALO.x) + (iy + HALO.y) * SDMGeom->HALO_NodeX() + \
-   //  	   (iz + HALO.z) * SDMGeom->HALO_NodeX() * SDMGeom->HALO_NodeY();
-
-   // 	 fread(&Var[indx],sizeof(Dfloat),1,R);
-
-
-   // 	 }
-   //     }
-   //   }
-
-    fclose(R);
+  MPI_File_close(&fhw);
 
   
 }
@@ -2651,45 +2733,31 @@ return 0;
 } 
 }
 
-void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
+void SDM::boundX(Dfloat *var,int side,int inout,int time,int indx_var){
 
-    int indx;
+  int indx,indx1,size;
+  size = KHALO * SDMGeom->L_NodeY() * SDMGeom->L_NodeZ();
   // Left Side
-
-   FILE *R;
-   char times[200];
-
 
    // SAVE BOUNDARY
    if (inout == 0) {
 
   if (side == 0){
-
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"wb");
     
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<KHALO;i++){
-
-	  
-
 	  indx = IJK(PML.x + i,HALO.y + j,HALO.z + k);
-	  fwrite(&var[indx],sizeof(Dfloat),1,R);
-
-	  
+	  indx1 = i + j * KHALO + k * KHALO * SDMGeom->L_NodeY();
+	  bn_lx[(indx_var - 1) * size + indx1 + time * size * 9] = var[indx];
 	}
       }
     }
 
-    fclose(R);
+  
 
 // Right Side
 } else if (side == 1) {
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"wb");
 
 
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
@@ -2698,13 +2766,12 @@ void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
 
 	  
 	  indx = IJK(SNodeX() - KHALO - PML.x + i,HALO.y + j,HALO.z + k);
-	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+	  indx1 = i + j * KHALO + k * KHALO * SDMGeom->L_NodeY();
+	  bn_rx[(indx_var - 1) * size + indx1 + time * size * 9] = var[indx];
 	  
 	}
       }
     }
-
-    fclose(R);
     
       }
 
@@ -2715,51 +2782,35 @@ void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
 
       if (side == 0){
 
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"rb");
-    
      for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<KHALO;i++){
-
 	  
-
 	  indx = IJK(PML.x + i,HALO.y + j,HALO.z + k);
-	  fread(&var[indx],sizeof(Dfloat),1,R);
-
-	  
+	  indx1 = i + j * KHALO + k * KHALO * SDMGeom->L_NodeY();
+	  var[indx] = bn_lx[(indx_var - 1) * size + indx1 + time * size * 9];
 	}
       }
     }
-    fclose(R);
-    char cleanfile[100];
-    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    //system (cleanfile);
+  
 
 // Right Side
 } else if (side == 1) {
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"rb");
 
 
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<KHALO;i++){
 
-	  
 	  indx = IJK(SNodeX() - KHALO - PML.x + i,HALO.y + j,HALO.z + k);
-	  fread(&var[indx],sizeof(Dfloat),1,R);
+	  indx1 = i + j * KHALO + k * KHALO * SDMGeom->L_NodeY();
+	  var[indx] = bn_rx[(indx_var - 1) * size + indx1 + time * size * 9];
 	  
 	}
       }
     }
 
-    fclose(R);
-    char cleanfile[100];
-    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    //system (cleanfile);
+
     
       }
 
@@ -2767,59 +2818,47 @@ void SDM::boundX(Dfloat *var,int side,int inout,int time,char *VarName){
 
 }
 
-void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
-  int indx;
-  // Left Side
-
-   FILE *R;
-   char times[200];
-
+void SDM::boundY(Dfloat *var,int side,int inout,int time,int indx_var){
+  int indx,indx1,size;
+  size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeZ();
 
    // SAVE BOUNDARY
    if (inout == 0) {
 
   if (side == 0){
 
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"wb");
-    
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<KHALO;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
-
-	  
-
 	  indx = IJK(HALO.x + i,PML.y + j,HALO.z + k);
-	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+	  indx1 = i + j * SDMGeom->L_NodeX() + k * KHALO * SDMGeom->L_NodeX();
+	  bn_ly[(indx_var - 1) * size + indx1 + time * size * 9] = var[indx];
 
 	  
 	}
       }
     }
-
-    fclose(R);
+    
 
 // Right Side
 } else if (side == 1) {
 
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"wb");
+  
 
 
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<KHALO;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
-
 	  
 	  indx = IJK(HALO.x + i,SNodeY() - KHALO - PML.y + j,HALO.z + k);
-	  fwrite(&var[indx],sizeof(Dfloat),1,R);
+	  indx1 = i + j * SDMGeom->L_NodeX() + k * KHALO * SDMGeom->L_NodeX();
+	  bn_ry[(indx_var - 1) * size + indx1 + time * size * 9] = var[indx];
 	  
 	}
       }
     }
 
-    fclose(R);
+  
     
       }
 
@@ -2829,53 +2868,38 @@ void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
 
 
       if (side == 0){
-
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"rb");
+	
     
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<KHALO;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
-
 	  
-
 	  indx = IJK(HALO.x + i,PML.y + j,HALO.z + k);
-	  fread(&var[indx],sizeof(Dfloat),1,R);
-
+	  indx1 = i + j * SDMGeom->L_NodeX() + k * KHALO * SDMGeom->L_NodeX();
+	  var[indx] = bn_ly[(indx_var - 1) * size + indx1 + time * size * 9];
 	  
 	}
       }
     }
 
-    fclose(R);
-    char cleanfile[100];
-    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    //system (cleanfile);
 
 // Right Side
 } else if (side == 1) {
 
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"rb");
+
 
 
     for (int k=0;k<SDMGeom->L_NodeZ();k++){
       for (int j=0;j<KHALO;j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
-
 	  
 	  indx = IJK(HALO.x + i,SNodeY() - KHALO - PML.y + j,HALO.z + k);
-	  fread(&var[indx],sizeof(Dfloat),1,R);
+	  indx1 = i + j * SDMGeom->L_NodeX() + k * KHALO * SDMGeom->L_NodeX();
+	  var[indx] = bn_ry[(indx_var - 1) * size + indx1 + time * size * 9];
 	  
 	}
       }
     }
-
-    fclose(R);
-    char cleanfile[100];
-    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    //system (cleanfile);
     
       }
 
@@ -2883,9 +2907,11 @@ void SDM::boundY(Dfloat *var,int side,int inout,int time,char *VarName){
 
 }
 
-void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
 
-    int indx;
+void SDM::boundZ(Dfloat *var,int side,int inout,int time,int indx_var){
+
+  int indx,indx1,size;
+  size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeY();
   // Left Side
 
    FILE *R;
@@ -2897,25 +2923,19 @@ void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
 
   if (side == 0){
 
-
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"wb");
     
     for (int k=0;k<KHALO;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
-
 	  
-
 	  indx = IJK(HALO.x + i,HALO.y + j,PML.z + k);
-	  fwrite(&var[indx],sizeof(Dfloat),1,R);
-
+	  indx1 = i + j * SDMGeom->L_NodeX() + k *  SDMGeom->L_NodeY() * SDMGeom->L_NodeX();
+	  bn_lz[(indx_var - 1) * size + indx1 + time * size * 9] = var[indx];
 	  
 	}
       }
     }
 
-    fclose(R);
 
   }
 
@@ -2927,29 +2947,18 @@ void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
       if (side == 0){
 
 
-    sprintf(times,"temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    R=fopen(times,"rb");
 
 
     for (int k=0;k<KHALO;k++){
       for (int j=0;j<SDMGeom->L_NodeY();j++){
 	for (int i=0;i<SDMGeom->L_NodeX();i++){
 
-	  
-
 	  indx = IJK(HALO.x + i,HALO.y + j,PML.z + k);
-	  fread(&var[indx],sizeof(Dfloat),1,R);
-
-	  
+	  indx1 = i + j * SDMGeom->L_NodeX() + k *  SDMGeom->L_NodeY() * SDMGeom->L_NodeX();
+	  var[indx] = bn_lz[(indx_var - 1) * size + indx1 + time * size * 9];
 	}
       }
     }
-
-	
-    fclose(R);
-    char cleanfile[100];
-    sprintf(cleanfile,"rm temp/%s_%d_%d%d%d-%d.temp",VarName,side,Nsdm.x,Nsdm.y,Nsdm.z,time);
-    //system (cleanfile);
 
       } 
 
@@ -2959,190 +2968,513 @@ void SDM::boundZ(Dfloat *var,int side,int inout,int time,char *VarName){
 }
 
 
-void SDM::SaveBoundaries_V(int time){
+void SDM::SaveBoundaries_V(int itime){
+
+  int time;
+  
+      time = itime - nsteps * int(itime/nsteps);
+
+      //printf("%d\n",time);
 
 
   if (Nsdm.x == 0){
 
-    boundX(vx,0,0,time,"VX_Lx");
-    boundX(vy,0,0,time,"VY_Lx");
-    boundX(vz,0,0,time,"VZ_Lx");
+    boundX(vx,0,0,time,1);
+    boundX(vy,0,0,time,2);
+    boundX(vz,0,0,time,3);
 
   }else if (Nsdm.x == NumSubDom.x-1) {
 
-    boundX(vx,1,0,time,"VX_Rx");
-    boundX(vy,1,0,time,"VY_Rx");
-    boundX(vz,1,0,time,"VZ_Rx");
+    boundX(vx,1,0,time,1);
+    boundX(vy,1,0,time,2);
+    boundX(vz,1,0,time,3);
   }
 
     if (Nsdm.y == 0){
 
-    boundY(vx,0,0,time,"VX_Ly");
-    boundY(vy,0,0,time,"VY_Ly");
-    boundY(vz,0,0,time,"VZ_Ly");
+    boundY(vx,0,0,time,1);
+    boundY(vy,0,0,time,2);
+    boundY(vz,0,0,time,3);
 
   }else if (Nsdm.y == NumSubDom.y-1) {
 
-    boundY(vx,1,0,time,"VX_Ry");
-    boundY(vy,1,0,time,"VY_Ry");
-    boundY(vz,1,0,time,"VZ_Ry");
+    boundY(vx,1,0,time,1);
+    boundY(vy,1,0,time,2);
+    boundY(vz,1,0,time,3);
   }
 
     if (Nsdm.z == 0){
 
-    boundZ(vx,0,0,time,"VX_Lz");
-    boundZ(vy,0,0,time,"VY_Lz");
-    boundZ(vz,0,0,time,"VZ_Lz");
+    boundZ(vx,0,0,time,1);
+    boundZ(vy,0,0,time,2);
+    boundZ(vz,0,0,time,3);
 
   }
   
 }
 
-void SDM::SaveBoundaries_S(int time){
+void SDM::SaveBoundaries_S(int itime){
 
+  int time;
+  
+      time = itime - nsteps * int(itime/nsteps);
 
   if (Nsdm.x == 0){
 
-    boundX(sxx,0,0,time,"SXX_Lx");
-    boundX(syy,0,0,time,"SYY_Lx");
-    boundX(szz,0,0,time,"SZZ_Lx");
-    boundX(sxy,0,0,time,"SXY_Lx");
-    boundX(sxz,0,0,time,"SXZ_Lx");
-    boundX(syz,0,0,time,"SYZ_Lx");
+    boundX(sxx,0,0,time,4);
+    boundX(syy,0,0,time,5);
+    boundX(szz,0,0,time,6);
+    boundX(sxy,0,0,time,7);
+    boundX(sxz,0,0,time,8);
+    boundX(syz,0,0,time,9);
 
   }else if (Nsdm.x == NumSubDom.x-1) {
 
-    boundX(sxx,1,0,time,"SXX_Rx");
-    boundX(syy,1,0,time,"SYY_Rx");
-    boundX(szz,1,0,time,"SZZ_Rx");
-    boundX(sxy,1,0,time,"SXY_Rx");
-    boundX(sxz,1,0,time,"SXZ_Rx");
-    boundX(syz,1,0,time,"SYZ_Rx");
+    boundX(sxx,1,0,time,4);
+    boundX(syy,1,0,time,5);
+    boundX(szz,1,0,time,6);
+    boundX(sxy,1,0,time,7);
+    boundX(sxz,1,0,time,8);
+    boundX(syz,1,0,time,9);
   }
 
     if (Nsdm.y == 0){
 
-    boundY(sxx,0,0,time,"SXX_Ly");
-    boundY(syy,0,0,time,"SYY_Ly");
-    boundY(szz,0,0,time,"SZZ_Ly");
-    boundY(sxy,0,0,time,"SXY_Ly");
-    boundY(sxz,0,0,time,"SXZ_Ly");
-    boundY(syz,0,0,time,"SYZ_Ly");
+    boundY(sxx,0,0,time,4);
+    boundY(syy,0,0,time,5);
+    boundY(szz,0,0,time,6);
+    boundY(sxy,0,0,time,7);
+    boundY(sxz,0,0,time,8);
+    boundY(syz,0,0,time,9);
 
   }else if (Nsdm.y == NumSubDom.y-1) {
 
-    boundY(sxx,1,0,time,"SXX_Ry");
-    boundY(syy,1,0,time,"SYY_Ry");
-    boundY(szz,1,0,time,"SZZ_Ry");
-    boundY(sxy,1,0,time,"SXY_Ry");
-    boundY(sxz,1,0,time,"SXZ_Ry");
-    boundY(syz,1,0,time,"SYZ_Ry");
+    boundY(sxx,1,0,time,4);
+    boundY(syy,1,0,time,5);
+    boundY(szz,1,0,time,6);
+    boundY(sxy,1,0,time,7);
+    boundY(sxz,1,0,time,8);
+    boundY(syz,1,0,time,9);
   }
 
     if (Nsdm.z == 0){
 
-    boundZ(sxx,0,0,time,"SXX_Lz");
-    boundZ(syy,0,0,time,"SYY_Lz");
-    boundZ(szz,0,0,time,"SZZ_Lz");
-    boundZ(sxy,0,0,time,"SXY_Lz");
-    boundZ(sxz,0,0,time,"SXZ_Lz");
-    boundZ(syz,0,0,time,"SYZ_Lz");
+    boundZ(sxx,0,0,time,4);
+    boundZ(syy,0,0,time,5);
+    boundZ(szz,0,0,time,6);
+    boundZ(sxy,0,0,time,7);
+    boundZ(sxz,0,0,time,8);
+    boundZ(syz,0,0,time,9);
   }
   
 }
 
 
-void SDM::LoadBoundaries_V(int time){
+void SDM::LoadBoundaries_V(int itime){
 
+   int time;
+ 
+   time = itime - nsteps * int(itime/nsteps);
+    
   
   if (Nsdm.x == 0){
 
-    boundX(vx,0,1,time,"VX_Lx");
-    boundX(vy,0,1,time,"VY_Lx");
-    boundX(vz,0,1,time,"VZ_Lx");
+    boundX(vx,0,1,time,1);
+    boundX(vy,0,1,time,2);
+    boundX(vz,0,1,time,3);
 
   }else if (Nsdm.x == NumSubDom.x-1) {
 
-    boundX(vx,1,1,time,"VX_Rx");
-    boundX(vy,1,1,time,"VY_Rx");
-    boundX(vz,1,1,time,"VZ_Rx");
+    boundX(vx,1,1,time,1);
+    boundX(vy,1,1,time,2);
+    boundX(vz,1,1,time,3);
   }
 
    if (Nsdm.y == 0){
 
-    boundY(vx,0,1,time,"VX_Ly");
-    boundY(vy,0,1,time,"VY_Ly");
-    boundY(vz,0,1,time,"VZ_Ly");
+    boundY(vx,0,1,time,1);
+    boundY(vy,0,1,time,2);
+    boundY(vz,0,1,time,3);
 
   }else if (Nsdm.y == NumSubDom.y-1) {
 
-    boundY(vx,1,1,time,"VX_Ry");
-    boundY(vy,1,1,time,"VY_Ry");
-    boundY(vz,1,1,time,"VZ_Ry");
+    boundY(vx,1,1,time,1);
+    boundY(vy,1,1,time,2);
+    boundY(vz,1,1,time,3);
   }
    
     if (Nsdm.z == 0){
 
-    boundZ(vx,0,1,time,"VX_Lz");
-    boundZ(vy,0,1,time,"VY_Lz");
-    boundZ(vz,0,1,time,"VZ_Lz");
+    boundZ(vx,0,1,time,1);
+    boundZ(vy,0,1,time,2);
+    boundZ(vz,0,1,time,3);
 
   }
   
   
 }
 
-void SDM::LoadBoundaries_S(int time){
+void SDM::LoadBoundaries_S(int itime){
 
+  int time;
+  
+      time = itime - nsteps * int(itime/nsteps);
+
+      //printf("%d\n",time);
 
   if (Nsdm.x == 0){
 
-    boundX(sxx,0,1,time,"SXX_Lx");
-    boundX(syy,0,1,time,"SYY_Lx");
-    boundX(szz,0,1,time,"SZZ_Lx");
-    boundX(sxy,0,1,time,"SXY_Lx");
-    boundX(sxz,0,1,time,"SXZ_Lx");
-    boundX(syz,0,1,time,"SYZ_Lx");
+    boundX(sxx,0,1,time,4);
+    boundX(syy,0,1,time,5);
+    boundX(szz,0,1,time,6);
+    boundX(sxy,0,1,time,7);
+    boundX(sxz,0,1,time,8);
+    boundX(syz,0,1,time,9);
 
   }else if (Nsdm.x == NumSubDom.x-1) {
 
-    boundX(sxx,1,1,time,"SXX_Rx");
-    boundX(syy,1,1,time,"SYY_Rx");
-    boundX(szz,1,1,time,"SZZ_Rx");
-    boundX(sxy,1,1,time,"SXY_Rx");
-    boundX(sxz,1,1,time,"SXZ_Rx");
-    boundX(syz,1,1,time,"SYZ_Rx");
+    boundX(sxx,1,1,time,4);
+    boundX(syy,1,1,time,5);
+    boundX(szz,1,1,time,6);
+    boundX(sxy,1,1,time,7);
+    boundX(sxz,1,1,time,8);
+    boundX(syz,1,1,time,9);
   }
 
     if (Nsdm.y == 0){
 
-    boundY(sxx,0,1,time,"SXX_Ly");
-    boundY(syy,0,1,time,"SYY_Ly");
-    boundY(szz,0,1,time,"SZZ_Ly");
-    boundY(sxy,0,1,time,"SXY_Ly");
-    boundY(sxz,0,1,time,"SXZ_Ly");
-    boundY(syz,0,1,time,"SYZ_Ly");
+    boundY(sxx,0,1,time,4);
+    boundY(syy,0,1,time,5);
+    boundY(szz,0,1,time,6);
+    boundY(sxy,0,1,time,7);
+    boundY(sxz,0,1,time,8);
+    boundY(syz,0,1,time,9);
 
   }else if (Nsdm.y == NumSubDom.y-1) {
 
-    boundY(sxx,1,1,time,"SXX_Ry");
-    boundY(syy,1,1,time,"SYY_Ry");
-    boundY(szz,1,1,time,"SZZ_Ry");
-    boundY(sxy,1,1,time,"SXY_Ry");
-    boundY(sxz,1,1,time,"SXZ_Ry");
-    boundY(syz,1,1,time,"SYZ_Ry");
+    boundY(sxx,1,1,time,4);
+    boundY(syy,1,1,time,5);
+    boundY(szz,1,1,time,6);
+    boundY(sxy,1,1,time,7);
+    boundY(sxz,1,1,time,8);
+    boundY(syz,1,1,time,9);
   }
 
     if (Nsdm.z == 0){
 
-    boundZ(sxx,0,1,time,"SXX_Lz");
-    boundZ(syy,0,1,time,"SYY_Lz");
-    boundZ(szz,0,1,time,"SZZ_Lz");
-    boundZ(sxy,0,1,time,"SXY_Lz");
-    boundZ(sxz,0,1,time,"SXZ_Lz");
-    boundZ(syz,0,1,time,"SYZ_Lz");
+    boundZ(sxx,0,1,time,4);
+    boundZ(syy,0,1,time,5);
+    boundZ(szz,0,1,time,6);
+    boundZ(sxy,0,1,time,7);
+    boundZ(sxz,0,1,time,8);
+    boundZ(syz,0,1,time,9);
     
   }
+  
+}
+
+
+
+void SDM::WriteBoundaries(int itime,int nt){
+
+   int nt_idx;
+   int Nsubs;
+   int size;
+   int idx_sub;
+   int offset;
+   char filename[200];
+  
+   if (((itime % nsteps) == 0) or (itime == nt )) {
+
+     if (itime == nt) {
+       nt_idx = int(floor((itime - 1)/nsteps)) + 1 ;
+     } else {
+       nt_idx = (itime/nsteps);
+     }
+
+     //printf("%d\n",nt_idx);
+
+     // LEFT
+      if (Nsdm.x == 0){
+    
+
+	Nsubs = NumSubDom.y * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeY() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.y + Nsdm.z * NumSubDom.y;
+	offset = nt_idx * Nsubs * size + idx_sub * size ;
+
+
+	if (nt_idx == 1){
+	  sprintf(filename,"temp/BLX-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&BLX);
+	}
+
+
+	MPI_File_write(BLX,bn_lx,size,MY_MPI_Dfloat,&status);
+
+
+	if (itime == nt){
+	  MPI_File_close(&BLX);
+	}
+
+
+
+
+	// RIGHT
+      }else if (Nsdm.x == NumSubDom.x-1) {
+
+	Nsubs = NumSubDom.y * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeY() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.y + Nsdm.z * NumSubDom.y;
+	offset = nt_idx * Nsubs * size + idx_sub * size;
+
+
+	if (nt_idx == 1){
+	  sprintf(filename,"temp/BRX-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&BRX);
+	}
+
+
+	MPI_File_write(BRX,bn_rx,size,MY_MPI_Dfloat,&status);
+
+
+	if (itime == nt){
+	  MPI_File_close(&BRX);
+	}
+	
+
+      }
+
+
+      // LEFT Y
+      if (Nsdm.y == 0){
+
+	Nsubs = NumSubDom.x * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.z * NumSubDom.x;
+	offset = nt_idx * Nsubs * size + idx_sub * size;
+
+	if (nt_idx == 1){
+	  sprintf(filename,"temp/BLY-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&BLY);
+	}
+
+
+	MPI_File_write(BLY,bn_ly,size,MY_MPI_Dfloat,&status);
+
+
+	if (itime == nt){
+	  MPI_File_close(&BLY);
+	}
+
+    
+	// RIGHT Y
+      }else if (Nsdm.y == NumSubDom.y-1) {
+
+	Nsubs = NumSubDom.x * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.z * NumSubDom.x;
+	offset = nt_idx * Nsubs * size + idx_sub * size ;
+
+
+
+	if (nt_idx == 1){
+	  sprintf(filename,"temp/BRY-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&BRY);
+	}
+
+
+	MPI_File_write(BRY,bn_ry,size,MY_MPI_Dfloat,&status);
+
+
+	if (itime == nt){
+	  MPI_File_close(&BRY);
+	}
+    
+      }
+   
+
+
+      // LEFT Z
+      if (Nsdm.z == 0){
+
+	Nsubs = NumSubDom.x * NumSubDom.y; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeY() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.y * NumSubDom.x;
+	offset = nt_idx * Nsubs * size + idx_sub * size ;
+
+
+	if (nt_idx == 1){
+	  sprintf(filename,"temp/BLZ-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY,MPI_INFO_NULL,&BLZ);
+	}
+
+
+	MPI_File_write(BLZ,bn_lz,size,MY_MPI_Dfloat,&status);
+
+
+	if (itime == nt){
+	  MPI_File_close(&BLZ);
+	}
+
+      }
+
+
+   }
+  
+}
+
+
+
+void SDM::ReadBoundaries(int itime,int nt){
+
+   int nt_idx;
+   int Nsubs;
+   int size;
+   int idx_sub;
+   MPI_Offset offset;
+   char filename[200];
+  
+   if (((itime % nsteps) == 0) or (itime == nt)) {
+
+     if (itime == nt) {
+       nt_idx = (int(floor((itime - 1)/nsteps)) + 1) - 1;
+     } else {
+       nt_idx = (itime/nsteps) - 1;
+     }
+
+     //printf("%d\n",nt_idx);
+
+
+     // LEFT
+      if (Nsdm.x == 0){
+    
+
+	Nsubs = NumSubDom.y * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeY() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.y + Nsdm.z * NumSubDom.y;
+	offset = nt_idx * size * sizeof(Dfloat);
+
+	//printf("%d\n",offset);
+
+
+	if (itime == nt){
+	  sprintf(filename,"temp/BLX-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&BLX);
+	}
+
+
+	MPI_File_read_at(BLX,offset,bn_lx,size,MY_MPI_Dfloat,&status);
+
+
+	if (nt_idx == 0){
+	  MPI_File_close(&BLX);
+	}
+
+
+
+
+	// RIGHT
+      }else if (Nsdm.x == NumSubDom.x-1) {
+
+	Nsubs = NumSubDom.y * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeY() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.y + Nsdm.z * NumSubDom.y;
+	offset = nt_idx * size* sizeof(Dfloat);
+
+
+	if (itime == nt ){
+	  sprintf(filename,"temp/BRX-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&BRX);
+	}
+
+
+	MPI_File_read_at(BRX,offset,bn_rx,size,MY_MPI_Dfloat,&status);
+
+
+	if (nt_idx == 0){
+	  MPI_File_close(&BRX);
+	}
+	
+
+      }
+
+
+      // LEFT Y
+      if (Nsdm.y == 0){
+
+	Nsubs = NumSubDom.x * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.z * NumSubDom.x;
+	offset = nt_idx * size * sizeof(Dfloat);
+
+	if (itime == nt){
+	  sprintf(filename,"temp/BLY-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&BLY);
+	}
+
+
+	MPI_File_read_at(BLY,offset,bn_ly,size,MY_MPI_Dfloat,&status);
+
+
+	if (nt_idx == 0){
+	  MPI_File_close(&BLY);
+	}
+
+    
+	// RIGHT Y
+      }else if (Nsdm.y == NumSubDom.y-1) {
+
+	Nsubs = NumSubDom.x * NumSubDom.z; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeZ() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.z * NumSubDom.x;
+	offset = nt_idx * size * sizeof(Dfloat);
+
+
+
+	if (itime == nt ){
+	  sprintf(filename,"temp/BRY-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&BRY);
+	}
+
+
+	MPI_File_read_at(BRY,offset,bn_ry,size,MY_MPI_Dfloat,&status);
+
+
+	if (nt_idx == 0){
+	  MPI_File_close(&BRY);
+	}
+    
+      }
+   
+
+
+      // LEFT Z
+      if (Nsdm.z == 0){
+
+	Nsubs = NumSubDom.x * NumSubDom.y; 
+	size = KHALO * SDMGeom->L_NodeX() * SDMGeom->L_NodeY() * 9 * nsteps;
+	idx_sub = Nsdm.x + Nsdm.y * NumSubDom.x;
+	offset = nt_idx * size * sizeof(Dfloat);
+
+
+	if (itime == nt){
+	  sprintf(filename,"temp/BLZ-%d.temp",idx_sub);
+	  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&BLZ);
+	}
+
+
+	MPI_File_read_at(BLZ,offset,bn_lz,size,MY_MPI_Dfloat,&status);
+
+
+	if (nt_idx == 0){
+	  MPI_File_close(&BLZ);
+	}
+
+      }
+
+
+   }
   
 }
 
