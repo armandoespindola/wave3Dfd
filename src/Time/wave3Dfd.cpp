@@ -1,5 +1,5 @@
 /*
-                  ###  Wave3Dfd (Frequency-Kernels) 1.0 ####
+                  ###  Wave3Dfd (Time-Kernels) 1.0 ####
 
     Copyright (C) April 2018  Armando Espindola Carmona,
     Universidad Nacional Autonoma de Mexico (UNAM)
