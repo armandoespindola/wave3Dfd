@@ -19,7 +19,7 @@ Simple domain decomposition using MPI for the communication between subdomains a
     $ make clean
     $ make all
     $ cd Example/
-    Running conde in 8 cores (8 subdomains) 
+    Running code in 8 cores (8 subdomains) 
     $ mpirun -np 8 ./wave3Dfd.out -nFile parameter.par
 
 ![Snapshots](images/snapshots.png)
