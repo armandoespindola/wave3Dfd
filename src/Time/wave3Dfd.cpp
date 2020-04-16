@@ -153,28 +153,76 @@ int main (int argc, char* argv[]) {
 		   Gdomain->HALO_NodeY() / SubN.y, \
 		   Gdomain->HALO_NodeZ() / SubN.z};
 
+  MPI_Status status;
+  int rank,total_proc;
+  int ndims = 3;
+  int dim[3],coords[3];
+  int isperiodic[3];
+  int reorder = 1;
+  MPI_Comm COM3D;
+  
+  isperiodic[0] = 0;
+  isperiodic[1] = 0;
+  isperiodic[2] = 0;
+  
+  dim[0] = SubN.x;
+  dim[1] = SubN.y;
+  dim[2] = SubN.z;
+
+  //MPI::Init(argc, argv);
+  MPI_Init(&argc,&argv);
+
+  //total_proc = MPI::COMM_WORLD.Get_size();
+  MPI_Comm_size(MPI_COMM_WORLD,&total_proc);
+
+  // Define 3D MPI DOMAIN
+  MPI_Cart_create(MPI_COMM_WORLD, ndims, dim
+		 ,isperiodic, reorder, &COM3D);
+
+
+  //rank = MPI::COMM_WORLD.Get_rank();
+  MPI_Comm_rank(COM3D,&rank);
+
+  MPI_Cart_coords(COM3D, rank, ndims,coords);
+
+  
+  //std::cout<<rank<<" "<<coords[0]<<" "<<coords[1]<<" "<<coords[2]<<std::endl;
+				
 
 // Creation of SubDomain Index
-VecI subi[N_mpi];
+ VecI subi[N_mpi];
 
-for(int k=0; k<SubN.z; ++k){
-  for(int j=0; j<SubN.y; ++j){
-    for(int i=0; i<SubN.x; ++i){
-      int indx = i + j * SubN.x + k * SubN.y * SubN.x; 
-      subi[indx] = {i,j,k};
-    }
-  }
-}
+ subi[rank] = {coords[0],coords[1],coords[2]};
+
+ MPI_Allgather(&subi[rank],3,MPI_INT,&subi,3,MPI_INT,COM3D);
+
+
+ // if (rank==5) {
+ //   for(int k=0;k<N_mpi;k++){
+ //     std::cout<<k<<" "<<subi[k].x<<"-"<<subi[k].y<<"-"<<subi[k].z<<std::endl;
+ //   }
+ // }
+ 
+// // Creation of SubDomain Index
+// VecI subi[N_mpi];
+
+// for(int k=0; k<SubN.z; ++k){
+//   for(int j=0; j<SubN.y; ++j){
+//     for(int i=0; i<SubN.x; ++i){
+//       int indx = i + j * SubN.x + k * SubN.y * SubN.x; 
+//       subi[indx] = {i,j,k};
+//     }
+//   }
+// }
 
 
 // LIMITS OF DOMAIN WITH PML
 
 VecF GI = {Gdomain->CoorX(0),Gdomain->CoorY(0),Gdomain->CoorZ(0)};
-VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1),\
-    Gdomain->CoorY(Gdomain->HALO_NodeY()-1),\
-    Gdomain->CoorZ(Gdomain->HALO_NodeZ()-1)};
-
-    //printf("%f\t%f\t%f\n",GF.x,GF.y,GF.z);
+VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1), \
+	   Gdomain->CoorY(Gdomain->HALO_NodeY()-1), \
+	   Gdomain->CoorZ(Gdomain->HALO_NodeZ()-1)};
+//printf("%f\t%f\t%f\n",GF.x,GF.y,GF.z);
 
 
 
@@ -182,29 +230,18 @@ VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1),\
  
  VecF SGI[N_mpi],SGF[N_mpi];
 
- for (int nsub=0; nsub<N_mpi; ++nsub){
-  SGI[nsub] = {Gdomain->CoorX(subi[nsub].x * SubNodes.x), \
-    Gdomain->CoorY(subi[nsub].y * SubNodes.y), \
-    Gdomain->CoorZ(subi[nsub].z * SubNodes.z)};
 
-  SGF[nsub] = {Gdomain->Dx() * (SubNodes.x - 1) + SGI[nsub].x, \
-    Gdomain->Dy() * (SubNodes.y - 1) + SGI[nsub].y, \
-    Gdomain->Dz() * (SubNodes.z - 1) + SGI[nsub].z};  
-    //printf("%f\t%f\t%f\t",SGI[nsub].x,SGI[nsub].y,SGI[nsub].z);
-    //printf("%f\t%f\t%f\n",SGF[nsub].x,SGF[nsub].y,SGF[nsub].z);
- }     
+ SGI[rank] = {Gdomain->CoorX(subi[rank].x * SubNodes.x), \
+	      Gdomain->CoorY(subi[rank].y * SubNodes.y), \
+	      Gdomain->CoorZ(subi[rank].z * SubNodes.z)};
 
-MPI_Status status;
-int rank,total_proc;
 
-//MPI::Init(argc, argv);
-MPI_Init(&argc,&argv);
+ SGF[rank] = {Gdomain->Dx() * (SubNodes.x - 1) + SGI[rank].x, \
+	      Gdomain->Dy() * (SubNodes.y - 1) + SGI[rank].y, \
+	      Gdomain->Dz() * (SubNodes.z - 1) + SGI[rank].z};  
 
-//total_proc = MPI::COMM_WORLD.Get_size();
- MPI_Comm_size(MPI_COMM_WORLD,&total_proc);
-
-//rank = MPI::COMM_WORLD.Get_rank();
- MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+   //printf("%f\t%f\t%f\t",SGI[nsub].x,SGI[nsub].y,SGI[nsub].z);
+   //printf("%f\t%f\t%f\n",SGF[nsub].x,SGF[nsub].y,SGF[nsub].z); 
 
 
 
@@ -245,19 +282,19 @@ if (rank == 0) {
   std::string FileVP = par.ParamReturn("-VP_F"); // "../src/example/VP.bin";
   std::string FileVS = par.ParamReturn("-VS_F"); // "../src/example/VS.bin";
   std::string FileR =  par.ParamReturn("-RHO_F"); //"../src/example/RHO.bin";
-
-   std::cout<<"File VP: "<<FileVP<<std::endl;
-   std::cout<<"File VS: "<<FileVS<<std::endl;
-   std::cout<<"File RHO: "<<FileR<<std::endl;
+  
+  std::cout<<"File VP: "<<FileVP<<std::endl;
+  std::cout<<"File VS: "<<FileVS<<std::endl;
+  std::cout<<"File RHO: "<<FileR<<std::endl;
 
   model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
-        GNod,SubNodes);
+		    GNod,SubNodes);
 
   cfl = model->CFL(dt,Gdomain->Dx(),Gdomain->Dy(),Gdomain->Dz());
 
  }
 
-MPI_Bcast(&cfl, 1, MPI_INT, 0, MPI_COMM_WORLD);
+MPI_Bcast(&cfl, 1, MPI_INT, 0, COM3D);
 
 // CFL Condition
  
@@ -303,7 +340,7 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, MPI_COMM_WORLD);
 //  MPI::COMM_WORLD.Send(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
 //  MPI::COMM_WORLD.Send(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,i,0);
 
-  MPI_Send(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,i,0,MPI_COMM_WORLD);	
+  MPI_Send(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,i,0,COM3D);	
 
 
   }
@@ -329,7 +366,7 @@ if (rank > 0) {
 //  MPI::COMM_WORLD.Recv(SubMu,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
 //  MPI::COMM_WORLD.Recv(SubLamb,sdm->SNodeT(),MY_MPI_Dfloat,0,0);
 
-  MPI_Recv(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,0,0,MPI_COMM_WORLD,&status);
+  MPI_Recv(SubMod,sdm->SNodeT() * 3,MY_MPI_Dfloat,0,0,COM3D,&status);
 
  }
 
@@ -340,7 +377,7 @@ if (rank == 0) {
       printf("Time broadcasting model to MPI cores : %f\n",time2-time1);
     }
 
-MPI_Barrier(MPI_COMM_WORLD); 
+MPI_Barrier(COM3D); 
 
 
  // AUXUILARY VARIABLES
@@ -369,15 +406,16 @@ MPI_Barrier(MPI_COMM_WORLD);
   // PRINT INFORMATION
   if (rank==0){
     sdm->PrintInf();
-    printf("\n\n");
-    printf("###############################\n");
-    printf("###############################\n");
-    printf("      SIMULATION STARTS\n\n");
+    std::cout<<"\n"<<std::endl;
+    std::cout<<"###############################"<<std::endl;
+    std::cout<<"###############################"<<std::endl;
+    std::cout<<"      SIMULATION STARTS\n"<<std::endl;
     
   }
   sdm->InitVar(ZERO);
   HALO = new MPI_DATA(sdm);
 
+  //std::cout<<"HOLA\n"<<std::endl;
   time = 0.0;
 
   int kk = t_snap;
@@ -395,20 +433,15 @@ MPI_Barrier(MPI_COMM_WORLD);
 
     time1 = MPI_Wtime();
 
-
-    if ((rank == 0) && (tinf == k)){
-      printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
-      tinf += t_snap;
-    }
-
      // Source #########
      sdm->AddSource(k,s_type);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Barrier(COM3D);
     
     // TRANSFER STRESESS
-    HALO->TRANSFER(2);
-
+    HALO->TRANSFER(2,COM3D);
+  
 
     // SAVE BOUNDARIES TO RECONSTRUCT WAVEFIELD
 
@@ -417,14 +450,14 @@ MPI_Barrier(MPI_COMM_WORLD);
      sdm->SaveBoundaries_V(k);
      sdm->WriteBoundaries(k+1,nt);
     }
-    MPI_Barrier(MPI_COMM_WORLD); 
+    MPI_Barrier(COM3D); 
 	
     sdm->FDVX();
     sdm->FDVY();
     sdm->FDVZ();
 
     // TRANSFER VELOCITIES
-    HALO->TRANSFER(1);
+    HALO->TRANSFER(1,COM3D);
 
     sdm->GetRecept(k);
 
@@ -433,7 +466,7 @@ MPI_Barrier(MPI_COMM_WORLD);
     // sdm->WriteBoundaries(k+1,nt);
     // }
     
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(COM3D);
 
     
     sdm->FDSII();
@@ -444,6 +477,14 @@ MPI_Barrier(MPI_COMM_WORLD);
     
     time2 = MPI_Wtime();
 
+    if ((rank == 0) && (tinf == k)){
+      //printf("Forward Propagation ->  Time step : %d of %d - MPI_Time %f - Nproc %d\n",k,nt,(time2-time1)*t_snap,total_proc);
+      std::cout<<"Forward Propagation ->  Time step: "<< \
+	k<<" of "<<nt<<" - MPI_Time "<<(time2-time1)*t_snap<< \
+	" - Nproc "<<total_proc<<std::endl;
+      tinf += t_snap;
+    }
+
     time += (time2-time1)/ (Dfloat) nt;
     
     if (snap){ 
@@ -451,13 +492,13 @@ MPI_Barrier(MPI_COMM_WORLD);
       if (kk == k){
 
 	  sprintf(name,"DATA/VX-%d.bin",k);
-	  HALO->MergePrint(sdm->vx,NXT,NYT,NZT,subi,rank,name);
+	  HALO->MergePrint(sdm->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/VY-%d.bin",k);
-	  HALO->MergePrint(sdm->vy,NXT,NYT,NZT,subi,rank,name);
+	  HALO->MergePrint(sdm->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/VZ-%d.bin",k);
-	  HALO->MergePrint(sdm->vz,NXT,NYT,NZT,subi,rank,name);
+	  HALO->MergePrint(sdm->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
       
 	  kk += t_snap;
       }
@@ -528,9 +569,6 @@ MPI_Barrier(MPI_COMM_WORLD);
   //#########################
 
 
-
-
-
   // KERNELS
 
   KERNEL *KS;
@@ -588,8 +626,8 @@ MPI_Barrier(MPI_COMM_WORLD);
   // RETRO-PROPAGATION TRANSFER DATA MPI
   HALO = new MPI_DATA(RTP);
 
-  HALO->TRANSFER(2);
-  HALO->TRANSFER(1);
+  HALO->TRANSFER(2,COM3D);
+  HALO->TRANSFER(1,COM3D);
 
 
   // ADJOINT TRANSFER DATA MPI
@@ -607,24 +645,19 @@ MPI_Barrier(MPI_COMM_WORLD);
     time1 = MPI_Wtime();
 
 
-    if ((rank == 0) && (tinf_adj == k)){
-      printf("Time step : %d of %d rank %d tproc %d\n",k,nt,rank,total_proc);
-      tinf_adj -= t_snap;
-    }
-
     //####################
     //###################
     // PUT ADJOINT HERE
     // THAT ENSURES THAT WE ARE DOING THE CORRELATION AT THE SAME TIME
      
      
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(COM3D);
     
 
     // TRANSFER STRESESS
-    HALO_ADJ->TRANSFER(2);
+    HALO_ADJ->TRANSFER(2,COM3D);
 
-    MPI_Barrier(MPI_COMM_WORLD); 
+    MPI_Barrier(COM3D); 
 	
     ADJ->FDVX();
     ADJ->FDVY();
@@ -634,9 +667,9 @@ MPI_Barrier(MPI_COMM_WORLD);
      ADJ->AddSourceAdj(k);
     
     // TRANSFER VELOCITIES
-    HALO_ADJ->TRANSFER(1);
+     HALO_ADJ->TRANSFER(1,COM3D);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(COM3D);
     
     ADJ->FDSII();
     ADJ->FDSXY();
@@ -649,13 +682,13 @@ MPI_Barrier(MPI_COMM_WORLD);
       if (Rkk == k){
 
 	  sprintf(name,"DATA/AVX-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vx,NXT,NYT,NZT,subi,rank,name);
+	  HALO_ADJ->MergePrint(ADJ->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/AVY-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vy,NXT,NYT,NZT,subi,rank,name);
+	  HALO_ADJ->MergePrint(ADJ->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/AVZ-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vz,NXT,NYT,NZT,subi,rank,name);
+	  HALO_ADJ->MergePrint(ADJ->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  //Rkk -= t_snapR;
 
@@ -679,13 +712,13 @@ MPI_Barrier(MPI_COMM_WORLD);
 	  int NZT = Gdomain->HALO_NodeZ();
 	
 	 sprintf(name,"DATA/RVX-%d.bin",k);
-	  HALO->MergePrint(RTP->vx,NXT,NYT,NZT,subi,rank,name);
+	 HALO->MergePrint(RTP->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/RVY-%d.bin",k);
-	  HALO->MergePrint(RTP->vy,NXT,NYT,NZT,subi,rank,name);
+	  HALO->MergePrint(RTP->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  sprintf(name,"DATA/RVZ-%d.bin",k);
-	  HALO->MergePrint(RTP->vz,NXT,NYT,NZT,subi,rank,name);
+	  HALO->MergePrint(RTP->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
 
 	  
       Rkk -= t_snapR;
@@ -701,12 +734,12 @@ MPI_Barrier(MPI_COMM_WORLD);
     RTP->ReadBoundaries(k+1,nt);
     RTP->LoadBoundaries_S(k);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(COM3D);
     
     // TRANSFER STRESESS
-    HALO->TRANSFER(2);
+    HALO->TRANSFER(2,COM3D);
 
-    MPI_Barrier(MPI_COMM_WORLD); 
+    MPI_Barrier(COM3D); 
     
     RTP->FDVX();
     RTP->FDVY();
@@ -714,18 +747,26 @@ MPI_Barrier(MPI_COMM_WORLD);
     
     RTP->LoadBoundaries_V(k);
 
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(COM3D);
 
 
     // Source #########
     RTP->AddSource(k,s_type);
      
     // TRANSFER VELOCITIES
-    HALO->TRANSFER(1);    
+    HALO->TRANSFER(1,COM3D);    
 
-    MPI_Barrier(MPI_COMM_WORLD); 
+    MPI_Barrier(COM3D); 
 
     time2 = MPI_Wtime();
+
+    if ((rank == 0) && (tinf_adj == k)){
+      //printf("Adjoint Simulation -> Time step : %d of %d - MPI_Time %f - Nproc %d\n",k,nt,(time2-time1)*t_snap,total_proc);
+      std::cout<<"Adjoint Propagation ->  Time step: "<< \
+	k<<" of "<<nt<<" - MPI_Time "<<(time2-time1)*t_snap<< \
+	" - Nproc "<<total_proc<<std::endl;
+      tinf_adj -= t_snap;
+    }
 
     time += (time2-time1)/(Dfloat)nt;    
     
@@ -747,9 +788,9 @@ MPI_Barrier(MPI_COMM_WORLD);
 
    KS->GET_K(KER_L, KER_L + noffset, KER_L + 2 * noffset);
 
-   HALO_ADJ->KernPrint(KER_L,NXT,NYT,NZT,subi,rank,"DATA/");
+   HALO_ADJ->KernPrint(KER_L,NXT,NYT,NZT,subi,rank,"DATA/",COM3D);
 
-   MPI_Barrier(MPI_COMM_WORLD);
+   MPI_Barrier(COM3D);
    
    delete [] KER_L;
 
