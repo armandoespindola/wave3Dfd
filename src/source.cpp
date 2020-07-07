@@ -218,14 +218,15 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   // GAUSSIAN 
   
   if (T_SRC==0){ 
-    // src = exp(-a_fu * pow(time - t0,2.0)) * pow( a_fu / pi , 0.5);
-    src = exp(-a_fu * pow(time - t0,2.0));
+    src = exp(-a_fu * pow(time - t0,2.0)) * pow( a_fu / pi , 0.5);
+    //src = exp(-a_fu * pow(time - t0,2.0));
   }
   
   // FIRST DERIVATIVE OF A GAUSSIAN
   
   if (T_SRC==1){
-    src = 4.0 * a_fu *(time - t0) * exp(-2.0 * a_fu * pow( (time  - t0),2.0) );
+    src = exp(-a_fu * pow(time - t0,2.0)) * pow( a_fu / pi , 0.5);
+    src *= -2.0 * a_fu * (time - t0) 
   }
 
   // SECOND DERIVATIVE OF A GAUSSIAN (RICKER PULSE)
