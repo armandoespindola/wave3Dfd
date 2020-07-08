@@ -226,7 +226,7 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   
   if (T_SRC==1){
     src = exp(-a_fu * pow(time - t0,2.0)) * pow( a_fu / pi , 0.5);
-    src *= -2.0 * a_fu * (time - t0) 
+    src *= -2.0 * a_fu * (time - t0); 
   }
 
   // SECOND DERIVATIVE OF A GAUSSIAN (RICKER PULSE)

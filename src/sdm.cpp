@@ -2392,12 +2392,25 @@ void SDM::AddSource(int itime, int T_SRC){
 
     // SAVE SOURCE TIME FUNCTION FILE 
     srct[itime] = st;
-
-    st_sinc = st * -dt;
     
-    st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
-
     VecI b = sourceM->pos_src[i];
+
+
+    // Vertical Source
+    if (sourceM->M0[i] < 0) {
+
+      Dfloat rho_cte = 2700.0;
+      st *= (dt / rho_cte);
+      AddVal({b.x,b.y,b.z},"VX", st * sourceM->Myy[i]*sgn);
+      AddVal({b.x,b.y,b.z},"VY", st * sourceM->Mxx[i]*sgn);
+      AddVal({b.x,b.y,b.z},"VZ", st * sourceM->Mzz[i]*sgn);
+	
+      // Moment Tensor Source
+    } else if (sourceM->M0[i] > 0) {
+
+      st_sinc = st * -dt;
+   
+      st *= (-dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()) );
 
     // CLOSE FREE SURFACE SOURCE
     if (sourceM->nshift[i] < 4) {
@@ -2441,9 +2454,9 @@ void SDM::AddSource(int itime, int T_SRC){
     }
     
   
+    }
+
   }
-
-
   
 
 }
