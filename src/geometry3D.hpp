@@ -50,7 +50,7 @@ protected:
 public:
 
 // CONSTRUCTOR WITHOUT PML
-  geometry3D(VecF IlimI,VecF IlimF,VecI InElem);
+  geometry3D(VecI CPML,VecF IlimI,VecF IlimF,VecI InElem);
 
   geometry3D(VecF IlimI,VecF IlimF,VecI InElem,VecI HALO);
 

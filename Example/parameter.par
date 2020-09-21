@@ -9,6 +9,10 @@
 -nx 112
 -ny 112
 -nz 112
+// PML NODES
+-pmlx 16
+-pmly 16
+-pmlz 16
 // SIMULATION TIME [s]
 -t 10.0
 // TIME STEP
@@ -42,6 +46,3 @@
 -snapR 0
 -t_snapR 50
 -adj 0
-// FREQUENCIES
--nfq 0
--rfq frequency.par

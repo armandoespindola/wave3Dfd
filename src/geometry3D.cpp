@@ -26,7 +26,7 @@
 
 
 
-geometry3D::geometry3D(VecF IlimI,VecF IlimF,VecI InElem){
+geometry3D::geometry3D(VecI PML,VecF IlimI,VecF IlimF,VecI InElem){
   
   // PML OR HALO NODES
   HALO.x = PML.x;
@@ -228,9 +228,9 @@ VecF geometry3D::thickness_PML(){
 
   VecF thickness;
 
-  thickness.x =  (Dfloat) PML.x * Delta.x;
-  thickness.y =  (Dfloat) PML.y * Delta.y;
-  thickness.z =  (Dfloat) PML.z * Delta.z;
+  thickness.x =  (Dfloat) HALO.x * Delta.x;
+  thickness.y =  (Dfloat) HALO.y * Delta.y;
+  thickness.z =  (Dfloat) HALO.z * Delta.z;
 
   return thickness;
   

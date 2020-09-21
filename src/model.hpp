@@ -39,10 +39,11 @@ protected:
   Dfloat *mu,*rho,*lamb;
   Dfloat *muL,*rhoL,*lambL;
   VecI Nsub;
+  VecI PML;
 
 public:
 
-  MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN);
+  MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN,VecI CPML);
 
   ~MODEL();
 

@@ -94,6 +94,7 @@ public:
   geometry3D *SDMGeom;
   Dfloat f0,dt;
   int N_omp;
+  VecI PML;
   
   // WAVE PROPAGATION VARIABLES  
 	Dfloat *sxx,*syy,*szz;
@@ -118,7 +119,7 @@ public:
 	// dt DELTA T 
 
 
-  SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
+  SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, VecI CMPL, \
       Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom,int iPROPAGATION);
 
 

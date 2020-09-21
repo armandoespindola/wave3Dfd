@@ -40,6 +40,11 @@ int main (int argc, char* argv[]) {
   const int Sy = std::stoi(par.ParamReturn("-sy"));
   const int Sz = std::stoi(par.ParamReturn("-sz"));
 
+  // Damping Profiles CPML 
+  const VecI CPML = {std::stoi(par.ParamReturn("-pmlx")), \
+                    std::stoi(par.ParamReturn("-pmly")), \
+                    std::stoi(par.ParamReturn("-pmlz"))};
+  
 
   // NUMBER OMP THREADS
 
@@ -112,9 +117,9 @@ int main (int argc, char* argv[]) {
   const int ADJ_P = std::stoi(par.ParamReturn("-adj"));
 
   // FREQUENCY KERNELS
-  const int nfreq = std::stoi(par.ParamReturn("-nfq"));
+  // const int nfreq = std::stoi(par.ParamReturn("-nfq"));
 
-  const std::string freqFile = par.ParamReturn("-rfq");
+  // const std::string freqFile = par.ParamReturn("-rfq");
 
    // SRCFILE
   const int SrcFile = std::stoi(par.ParamReturn("-srcFile"));
@@ -143,7 +148,7 @@ int main (int argc, char* argv[]) {
 
 
 // General Domain
-  Gdomain = new geometry3D(Ilim,Flim,Nelem); 
+  Gdomain = new geometry3D(CPML,Ilim,Flim,Nelem); 
 
 // Local nodes domain
   VecI GNod = {Gdomain->L_NodeX(),Gdomain->L_NodeY(),Gdomain->L_NodeZ()}; 
@@ -258,22 +263,27 @@ time1 = MPI_Wtime();
 
 if (rank == 0) {
 
-  std::cout<<"Parameters Subdomain and OpenMP threads"<<std::endl;
+  std::cout<<"### Parameters ###"<<std::endl;
   std::cout<<"Sx : "<<Sx<<" "<<"Sy : "<<Sy<<" "<<"Sz : "<<Sz<<std::endl;
   std::cout<<"N_omp : "<<N_omp<<std::endl;
   std::cout<<"DX "<<Gdomain->Dx()<<std::endl;
   std::cout<<"DY "<<Gdomain->Dy()<<std::endl;
   std::cout<<"DZ "<<Gdomain->Dz()<<std::endl;
   
-  std::cout<<"HALO_NodX "<<Gdomain->HALO_NodeX()<<std::endl;
-  std::cout<<"HALO_NodY "<<Gdomain->HALO_NodeY()<<std::endl;
-  std::cout<<"HALO_NodZ "<<Gdomain->HALO_NodeZ()<<std::endl;
+  std::cout<<"NodX "<<Gdomain->L_NodeX()<<std::endl;
+  std::cout<<"NodY "<<Gdomain->L_NodeY()<<std::endl;
+  std::cout<<"NodZ "<<Gdomain->L_NodeZ()<<std::endl;
+    
+  std::cout<<"NodX (with PML) "<<Gdomain->HALO_NodeX()<<std::endl;
+  std::cout<<"NodY (with PML) "<<Gdomain->HALO_NodeY()<<std::endl;
+  std::cout<<"NodZ (with PML) "<<Gdomain->HALO_NodeZ()<<std::endl;
 
   std::cout<<"Nodes_Subdomain X "<<SubNodes.x<<std::endl;
   std::cout<<"Nodes_Subdomain Y "<<SubNodes.y<<std::endl;
   std::cout<<"Nodes_Subdomain Z "<<SubNodes.z<<std::endl;
   std::cout<<"Time steps: "<<nt<<std::endl;
   std::cout<<"Source File: "<<sourceFile<<std::endl;
+  std::cout<<"Receivers File: "<<recepFile<<std::endl;
  
 
   
@@ -288,7 +298,7 @@ if (rank == 0) {
   std::cout<<"File RHO: "<<FileR<<std::endl;
 
   model = new MODEL(FileVP.c_str(),FileVS.c_str(),FileR.c_str(), \
-		    GNod,SubNodes);
+		    GNod,SubNodes,CPML);
 
   cfl = model->CFL(dt,Gdomain->Dx(),Gdomain->Dy(),Gdomain->Dz());
 
@@ -318,7 +328,7 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, COM3D);
 
  if (rank == 0) { 
 
-  sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
+   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
   
 
 // OMP NUMBER OF THREADS
@@ -353,7 +363,7 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, COM3D);
 
 if (rank > 0) {
 
-  sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
+  sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
   
 
   // OMP NUMBER OF THREADS
@@ -555,11 +565,11 @@ MPI_Barrier(COM3D);
     
     // ADJOINT-PROPAGATION
 
-    ADJ = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,0);
+    ADJ = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
     ADJ->set_omp(N_omp);
 
     // RETRO-PROPAGATION
-    RTP = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,f0,dt,subi[rank],SubN,1);
+    RTP = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,1);
     RTP->set_omp(N_omp);
 
   

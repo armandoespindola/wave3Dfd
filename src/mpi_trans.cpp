@@ -26,6 +26,7 @@
 MPI_DATA::MPI_DATA(SDM *Isdm){
   sdm = Isdm;
 
+  PML = sdm->PML;
   N_SN = KHALO * sdm->L_SNodeX() * sdm->L_SNodeZ();
 
   N_WE = KHALO * sdm->L_SNodeY() * sdm->L_SNodeZ();

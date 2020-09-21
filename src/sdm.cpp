@@ -23,7 +23,7 @@
 #include "sdm.hpp"
 
 SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-	 Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom,int iPROPAGATION) {
+	 VecI ICPML,Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom,int iPROPAGATION) {
 
 	// GI INITIAL GLOBAL LIMIT WITH PML 
 	// GF END GLOBAL LIMIT WITH PML
@@ -31,6 +31,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	// IlimI INITIAL LIMIT SUB DOMAIN 
 	// IlimF END LIMIT SUB DOMAIN
 	// INOD   NUMBER OF LOCAL NODES WITHOUT HALO SUBDOMAIN
+        // ICPML PML NODES
 	// f0 FREQUENCY
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
@@ -40,6 +41,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	GF = IGF;
 	f0 = If0;
 	dt = Idt;
+	PML = ICPML;
 	NodG = I_NodG;
 	HALO.x = KHALO;
 	HALO.y = KHALO;
@@ -59,7 +61,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 
 	SDMGeom = new geometry3D(IlimI,IlimF,ELE,HALO);
 
-	thickness_PML = SDMGeom->thickness_PML();
+	thickness_PML = {SDMGeom->Dx() * PML.x,SDMGeom->Dy() * PML.y,SDMGeom->Dz() * PML.z};
 
 	NT.x = NodG.x + 2 * PML.x;
 	NT.y = NodG.y + 2 * PML.y;

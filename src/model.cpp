@@ -22,10 +22,12 @@
 
 #include "model.hpp"
 
-MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN) {
+MODEL::MODEL(std::string FileP,std::string FileS,std::string FileR, VecI iGDim, VecI iSubDomNodeN,\
+	     VecI CPML) {
 
   GDim = iGDim;
   SubDomNodeN = iSubDomNodeN;
+  PML = CPML;
   FILE *R,*P,*S;
 
   R=fopen(FileR.c_str(),"rb");
