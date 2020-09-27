@@ -94,5 +94,15 @@ const Dfloat pi = 3.141592653589793;
 const int stepb = 100;
 
 
+// MACROS LOOPS
 
+#define FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend) for(int iz=((int)zinit);iz<((int)zend);++iz){ \
+  for(int iy=((int)yinit);iy<((int)yend);++iy){ for(int ix=((int)xinit);ix<((int)xend);++ix){;
+
+#define END_FOR_IJK } } }
+
+#define FOR_IJ(iy,yinit,yend,ix,xinit,xend) for(int iy=((int)yinit);iy<((int)yend);++iy){ \
+  for(int ix=((int)xinit);ix<((int)xend);++ix){
+
+#define END_FOR_IJ } }
 #endif

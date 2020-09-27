@@ -50,6 +50,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	Nsdm = INsdm;
 	NumSubDom = INumSubDom;
 	PROPAGATION = iPROPAGATION;
+	//SIMULATION_TYPE = iSIMULATION_TYPE;
 
 	if (PROPAGATION == 0){
 	  sgn = 1.0;
@@ -111,6 +112,23 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	dvz_dx = new Dfloat [SDMGeom->HALO_Node()];
 	dvy_dz = new Dfloat [SDMGeom->HALO_Node()];
 	dvz_dy = new Dfloat [SDMGeom->HALO_Node()];
+	df_dI = new Dfloat [SDMGeom->HALO_Node()];
+	df_dJ = new Dfloat [SDMGeom->HALO_Node()];
+	df_dK = new Dfloat [SDMGeom->HALO_Node()];
+
+
+	// CREATE VARIABLES FOR ADJOINT SIMULATION OR STRAIN GREEN'S TENSOR (STG)
+	// if ((SUMALATION_TYPE == 1) || (SIMULATION_TYPE==2)){
+	//   ux_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   ux_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   ux_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uy_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uy_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uy_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uz_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uz_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	//   uz_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
+	// }
 
 
 
@@ -179,7 +197,26 @@ SDM::~SDM(){
 	delete [] dvz_dx;
 	delete [] dvy_dz;
 	delete [] dvz_dy;
+	delete [] df_dI;
+	delete [] df_dJ;
+	delete [] df_dK;
+	
 
+
+
+	// DELETE VARIABLES FOR ADJOINT SIMULATION OR STRAIN GREEN'S TENSOR (STG)
+	// if ((SUMALATION_TYPE == 1) || (SIMULATION_TYPE==2)){
+	//   delete [] ux_dx;
+	//   delete [] ux_dy;
+	//   delete [] ux_dz;
+	//   delete [] uy_dx;
+	//   delete [] uy_dy;
+	//   delete [] uy_dz;
+	//   delete [] uz_dx;
+	//   delete [] uz_dy;
+	//   delete [] uz_dz;
+	// }
+	
 
 	if (Nsdm.x == 0){
 	  // LEFT X
@@ -286,6 +323,10 @@ void SDM::InitVar(Dfloat f){
     dvz_dx[i] = f;
     dvy_dz[i] = f;
     dvz_dy[i] = f;
+    df_dI[i] = f;
+    df_dJ[i] = f;
+    df_dK[i] = f;
+
 
   }
 
@@ -826,48 +867,54 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
 
 void SDM:: FD_SII(VecI Init,VecI Iend){
   VecI Lindx, Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg,lamb_avg;
   
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,lamb_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
-
-
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
+  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+  
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
 		  C0 * (vx[IJK(ix+2,iy,iz)] - vx[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
 		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix,iy,iz-1)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix,iy,iz-1)]) - \
 		  C0 * (vz[IJK(ix,iy,iz+1)] - vz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
 
+  END_FOR_IJK
+      
+    if (PROPAGATION == 0) {
 
-	if (PROPAGATION == 0) {
-	  
+  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+
+
+    	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+    
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dvy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dvy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dvz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dvz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dvx_dx[IJK(ix,iy,iz)];
-	df_dJ += dvy_dy[IJK(ix,iy,iz)];
-	df_dK += dvz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dvx_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dvy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dvz_dz[IJK(ix,iy,iz)];
 
-	
-	}
-	
+  END_FOR_IJK
+    
+    }
+
+
+
+  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	// Average properties
 	
 	mu_avg =   1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
@@ -876,27 +923,23 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 	// SXX
 
 	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] + sgn * \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + sgn * \
-	  dt * lamb_avg *  (df_dJ + df_dK);
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI[IJK(ix,iy,iz)]) + sgn * \
+	  dt * lamb_avg *  (df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
 	// SYY
 	
 	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + sgn *\
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + sgn *\
-	  dt * lamb_avg *  (df_dI + df_dK);
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ[IJK(ix,iy,iz)]) + sgn *\
+	  dt * lamb_avg *  (df_dI[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
 	// SZZ
 	
 	szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + sgn * \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) +  sgn *\
-	  dt * lamb_avg *  (df_dJ + df_dI);
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK[IJK(ix,iy,iz)]) +  sgn *\
+	  dt * lamb_avg *  (df_dJ[IJK(ix,iy,iz)] + df_dI[IJK(ix,iy,iz)]);
 
+  END_FOR_IJK
 
-	
-
-      }
-    }
-  }
 
 }
 
@@ -904,77 +947,87 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
 void SDM::Free_VX(VecI Init,VecI Iend,int zh){
   int iz = Iend.z + HALO.z - zh ;
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,Lindx,Gindx)\
-  firstprivate(zh,iz)
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (sxx[IJK(ix,iy,iz)] - sxx[IJK(ix-1,iy,iz)]) - \
+ FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+   
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxx[IJK(ix,iy,iz)] - sxx[IJK(ix-1,iy,iz)]) - \
 		  C0 * (sxx[IJK(ix+1,iy,iz)] - sxx[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (sxy[IJK(ix,iy,iz)] - sxy[IJK(ix,iy-1,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (sxy[IJK(ix,iy,iz)] - sxy[IJK(ix,iy-1,iz)]) - \
 		  C0 * (sxy[IJK(ix,iy+1,iz)] - sxy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 
+ END_FOR_IJ
 
 	if (zh == 1) { // Free Surface Z = 0;
-	
-	  df_dK = -( (35.0 / 8.0) * sxz[IJK(ix,iy,iz-1)] \
+
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	    
+	  df_dK[IJK(ix,iy,iz)] = -( (35.0 / 8.0) * sxz[IJK(ix,iy,iz-1)] \
 		    - (35.0 / 24.0) * sxz[IJK(ix,iy,iz-2)] \
 		    + (21.0 / 40.0) * sxz[IJK(ix,iy,iz-3)] \
 		    - (5.0 / 56.0) * sxz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
+	  END_FOR_IJ
 
 	} else if (zh == 2) { // Free Surface Z == h;
 
-
-	  df_dK = -( - (31.0 / 24.0) * sxz[IJK(ix,iy,iz)] \
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	    
+	  df_dK[IJK(ix,iy,iz)] = -( - (31.0 / 24.0) * sxz[IJK(ix,iy,iz)] \
 		    + (29.0 / 24.0) * sxz[IJK(ix,iy,iz-1)] \
 		    - (3.0 / 40.0) * sxz[IJK(ix,iy,iz-2)] \
 		    + (1.0 / 168.0) * sxz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	  END_FOR_IJ
 	  
 	}
 
 
 	if (PROPAGATION == 0) {
+
+        FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
 	  
 	dsxx_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dsxx_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dI;
+	  + pml_x->A_HALF(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsxy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsxy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dsxz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsxz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxx_dx[IJK(ix,iy,iz)];
-	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
-	df_dK += dsxz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxx_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsxy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dsxz_dz[IJK(ix,iy,iz)];
+
+	END_FOR_IJ
 
 	}
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 	}
-	
-	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
-	  (df_dI + df_dJ + df_dK);
 
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
+	END_FOR_IJ
+	  
 	if (PROPAGATION == 0){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 	  
 	}
-
-	
-      }
-    }
 
   
 }
@@ -983,152 +1036,164 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 void SDM::FD_VX(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 
-	df_dI = ( C1 * (sxx[IJK(ix,iy,iz)] - sxx[IJK(ix-1,iy,iz)]) - \
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxx[IJK(ix,iy,iz)] - sxx[IJK(ix-1,iy,iz)]) - \
 		  C0 * (sxx[IJK(ix+1,iy,iz)] - sxx[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (sxy[IJK(ix,iy,iz)] - sxy[IJK(ix,iy-1,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (sxy[IJK(ix,iy,iz)] - sxy[IJK(ix,iy-1,iz)]) - \
 		  C0 * (sxy[IJK(ix,iy+1,iz)] - sxy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = ( C1 * (sxz[IJK(ix,iy,iz)] - sxz[IJK(ix,iy,iz-1)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (sxz[IJK(ix,iy,iz)] - sxz[IJK(ix,iy,iz-1)]) - \
 		  C0 * (sxz[IJK(ix,iy,iz+1)] - sxz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
+
+ END_FOR_IJK
 
 	if (PROPAGATION == 0) {
 
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
 	dsxx_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dsxx_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dI;
+	  + pml_x->A_HALF(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsxy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsxy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dsxz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsxz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxx_dx[IJK(ix,iy,iz)];
-	df_dJ += dsxy_dy[IJK(ix,iy,iz)];
-	df_dK += dsxz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxx_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsxy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dsxz_dz[IJK(ix,iy,iz)];
+ END_FOR_IJK
 
 	}
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJK
 	}
-	
+
+
+	FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	vx[IJK(ix,iy,iz)] = vx[IJK(ix,iy,iz)] + sgn * (dt / rho[IJK(ix,iy,iz)]) * \
-	  (df_dI + df_dJ + df_dK);
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
+	END_FOR_IJK
 
 	if (PROPAGATION == 0){
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  ux[IJK(ix,iy,iz)] = ux[IJK(ix,iy,iz)] + sgn * vx[IJK(ix,iy,iz)] * dt;
-
+	  END_FOR_IJK
 	}
 
-
-	
-      }
-    }
-  }
-
-
-  
-
-  
 }
 
 
 void SDM::Free_VY(VecI Init,VecI Iend, int zh){
   int iz = Iend.z + HALO.z - zh;
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat rho_avg;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)\
-  firstprivate(zh,iz)
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
+ FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
-	df_dI = ( C1 * (sxy[IJK(ix+1,iy,iz)] - sxy[IJK(ix,iy,iz)]) - \
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxy[IJK(ix+1,iy,iz)] - sxy[IJK(ix,iy,iz)]) - \
 		  C0 * (sxy[IJK(ix+2,iy,iz)] - sxy[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (syy[IJK(ix,iy+1,iz)] - syy[IJK(ix,iy,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (syy[IJK(ix,iy+1,iz)] - syy[IJK(ix,iy,iz)]) - \
 		  C0 * (syy[IJK(ix,iy+2,iz)] - syy[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
-
+ END_FOR_IJ
 
 	if (zh == 1) { // Free Surface Z = 0;
+
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	
-	  df_dK = -( (35.0 / 8.0) * syz[IJK(ix,iy,iz-1)] \
+	  df_dK[IJK(ix,iy,iz)] = -( (35.0 / 8.0) * syz[IJK(ix,iy,iz-1)] \
 		    - (35.0 / 24.0) * syz[IJK(ix,iy,iz-2)] \
 		    + (21.0 / 40.0) * syz[IJK(ix,iy,iz-3)] \
 		    - (5.0 / 56.0) * syz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
 
+	  END_FOR_IJ
+
 	} else if (zh == 2) { // Free Surface Z == h;
 
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
-	  df_dK = -( - (31.0 / 24.0) * syz[IJK(ix,iy,iz)] \
+	  df_dK[IJK(ix,iy,iz)] = -( - (31.0 / 24.0) * syz[IJK(ix,iy,iz)] \
 		    + (29.0 / 24.0) * syz[IJK(ix,iy,iz-1)] \
 		    - (3.0 / 40.0) * syz[IJK(ix,iy,iz-2)] \
 		    + (1.0 / 168.0) * syz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+
+	  END_FOR_IJ
 	  
 	}	
 
 
 	if (PROPAGATION == 0){
 
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
 	dsxy_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxy_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsyy_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dsyy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.y) * df_dJ;
+	  + pml_y->A(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dsyz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsyz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxy_dx[IJK(ix,iy,iz)];
-	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
-	df_dK += dsyz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxy_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsyy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dsyz_dz[IJK(ix,iy,iz)];
+
+	END_FOR_IJ
 
 	}
 	
-	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
-		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 	}
 
-	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
-	  (df_dI + df_dJ + df_dK);
 
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
+		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+	
+	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
+
+	END_FOR_IJ
 
 	if (PROPAGATION == 0){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 
 	}
-
-
-
-	
-      }
-    }
 
   
 }
@@ -1137,75 +1202,76 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 void SDM::FD_VY(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat rho_avg;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (sxy[IJK(ix+1,iy,iz)] - sxy[IJK(ix,iy,iz)]) - \
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+    
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxy[IJK(ix+1,iy,iz)] - sxy[IJK(ix,iy,iz)]) - \
 		  C0 * (sxy[IJK(ix+2,iy,iz)] - sxy[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (syy[IJK(ix,iy+1,iz)] - syy[IJK(ix,iy,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (syy[IJK(ix,iy+1,iz)] - syy[IJK(ix,iy,iz)]) - \
 		  C0 * (syy[IJK(ix,iy+2,iz)] - syy[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy,iz-1)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy,iz-1)]) - \
 		  C0 * (syz[IJK(ix,iy,iz+1)] - syz[IJK(ix,iy,iz-2)]) ) / SDMGeom->Dz();
 
+ END_FOR_IJK
 
 	if (PROPAGATION == 0) {
 
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+
 	dsxy_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxy_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsyy_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dsyy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.y) * df_dJ;
+	  + pml_y->A(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dsyz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dsyz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxy_dx[IJK(ix,iy,iz)];
-	df_dJ += dsyy_dy[IJK(ix,iy,iz)];
-	df_dK += dsyz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxy_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsyy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dsyz_dz[IJK(ix,iy,iz)];
+
+      END_FOR_IJK
 
 	}
-
-	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
-		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
-
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJK
 	}
 
-	vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
-	  (df_dI + df_dJ + df_dK);
+	FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	  
+	  rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +	\
+		rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+	
+	  vy[IJK(ix,iy,iz)] = vy[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) *	\
+	   (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
+	END_FOR_IJK
 
 	if (PROPAGATION == 0){
+
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  uy[IJK(ix,iy,iz)] = uy[IJK(ix,iy,iz)] + sgn * vy[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJK
 
 	}
-
-
-
-	
-      }
-    }
-  }
-
-
-  
-
   
 }
 
@@ -1213,74 +1279,80 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 
   int iz = Iend.z + HALO.z;
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat rho_avg;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)\
-  firstprivate(iz)
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
 
-	df_dI = ( C1 * (sxz[IJK(ix+1,iy,iz)] - sxz[IJK(ix,iy,iz)]) - \
+ FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+   
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxz[IJK(ix+1,iy,iz)] - sxz[IJK(ix,iy,iz)]) - \
 		  C0 * (sxz[IJK(ix+2,iy,iz)] - sxz[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy-1,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy-1,iz)]) - \
 		  C0 * (syz[IJK(ix,iy+1,iz)] - syz[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 
 
-	df_dK = -( - (11.0 / 12.0) * szz[IJK(ix,iy,iz+1)] \
+	df_dK[IJK(ix,iy,iz)] = -( - (11.0 / 12.0) * szz[IJK(ix,iy,iz+1)] \
 		  + (17.0 / 24.0) * szz[IJK(ix,iy,iz)] \
 		  + (3.0 / 8.0) * szz[IJK(ix,iy,iz-1)]\
 		  - (5.0 / 24.0) * szz[IJK(ix,iy,iz-2)] \
 		  + (1.0 / 24.0) * szz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
-	
+ END_FOR_IJ	
 	
 
 	if (PROPAGATION == 0) {
 
+        FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+	
 	dsxz_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxz_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsyz_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsyz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dszz_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dszz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxz_dx[IJK(ix,iy,iz)];
-	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
-	df_dK += dszz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxz_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsyz_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dszz_dz[IJK(ix,iy,iz)];
 
+	END_FOR_IJ
+	  
 	}
-
-	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
-		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 	}
 
 
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
+		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+	
 	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn * (dt / rho_avg) * \
-	  (df_dI + df_dJ + df_dK);
-
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
+	
+	END_FOR_IJ
 
 	if (PROPAGATION == 0){
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJ
 
 	}
 
-
-	
-      }
-    }
   
 }
 
@@ -1288,71 +1360,76 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 void SDM::FD_VZ(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat rho_avg;
-  
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,rho_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
-
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (sxz[IJK(ix+1,iy,iz)] - sxz[IJK(ix,iy,iz)]) - \
+	
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+   
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (sxz[IJK(ix+1,iy,iz)] - sxz[IJK(ix,iy,iz)]) - \
 		  C0 * (sxz[IJK(ix+2,iy,iz)] - sxz[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dJ = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy-1,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (syz[IJK(ix,iy,iz)] - syz[IJK(ix,iy-1,iz)]) - \
 		  C0 * (syz[IJK(ix,iy+1,iz)] - syz[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = ( C1 * (szz[IJK(ix,iy,iz+1)] - szz[IJK(ix,iy,iz)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (szz[IJK(ix,iy,iz+1)] - szz[IJK(ix,iy,iz)]) - \
 		  C0 * (szz[IJK(ix,iy,iz+2)] - szz[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
-
+ END_FOR_IJK
 
 	if (PROPAGATION == 0) {
-	  
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+	
 	dsxz_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dsxz_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dsyz_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dsyz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dszz_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dszz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dsxz_dx[IJK(ix,iy,iz)];
-	df_dJ += dsyz_dy[IJK(ix,iy,iz)];
-	df_dK += dszz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dsxz_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dsyz_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dszz_dz[IJK(ix,iy,iz)];
+
+      END_FOR_IJK
 
 	}
 	
-	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
-		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+	
 
 
 
 	if (PROPAGATION == 1){
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJK
 	}
 
-	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
-	  (df_dI + df_dJ + df_dK);
 
+	FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	  
+	rho_avg = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] + \
+		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+	
+	vz[IJK(ix,iy,iz)] = vz[IJK(ix,iy,iz)] + sgn *  (dt / rho_avg) * \
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
+
+	END_FOR_IJK
 
 	if (PROPAGATION == 0){
+	  FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	  uz[IJK(ix,iy,iz)] = uz[IJK(ix,iy,iz)] + sgn * vz[IJK(ix,iy,iz)] * dt;
+	  END_FOR_IJK
 	}
-
-
-	
-	
-      }
-    }
-  }
-
   
 }
 
@@ -1361,51 +1438,55 @@ void SDM::FD_VZ(VecI Init,VecI Iend){
 void SDM::FD_SXY(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dJ = ( C1 * (vx[IJK(ix,iy+1,iz)] - vx[IJK(ix,iy,iz)]) - \
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+    
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (vx[IJK(ix,iy+1,iz)] - vx[IJK(ix,iy,iz)]) - \
 		  C0 * (vx[IJK(ix,iy+2,iz)] - vx[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
 	
-	df_dI = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix-1,iy,iz)]) - \
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix-1,iy,iz)]) - \
 		  C0 * (vy[IJK(ix+1,iy,iz)] - vy[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
-	
+ END_FOR_IJK
 
 	if (PROPAGATION == 0) {
+
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
 	  
 	dvy_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvy_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dI;
+	  + pml_x->A_HALF(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dvx_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvx_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.y) * df_dJ;
+	  + pml_y->A(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
-	df_dI += dvy_dx[IJK(ix,iy,iz)];
-	df_dJ += dvx_dy[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dvy_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dvx_dy[IJK(ix,iy,iz)];
 
+      END_FOR_IJK
 
 	}
-      
-	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy+1,iz)]));
-
-
-	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
-	  (df_dI + df_dJ);
-
 
 	
-      }
-    }
-  }
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy+1,iz)]));
+
+	sxy[IJK(ix,iy,iz)] = sxy[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
+	  (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)]);
+	
+      END_FOR_IJK
+
+
 
 }
 
@@ -1414,109 +1495,110 @@ void SDM::Free_SXZ(VecI Init,VecI Iend){
 
   int iz = Iend.z + HALO.z;
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)\
-  firstprivate(iz)
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
+ FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix-1,iy,iz)]) - \
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix-1,iy,iz)]) - \
 		  C0 * (vz[IJK(ix+1,iy,iz)] - vz[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
 
 
-	df_dK = -( - (11.0 / 12.0) * vx[IJK(ix,iy,iz+1)] \
+	df_dK[IJK(ix,iy,iz)] = -( - (11.0 / 12.0) * vx[IJK(ix,iy,iz+1)] \
 		  + (17.0 / 24.0) * vx[IJK(ix,iy,iz)] \
 		  + (3.0 / 8.0) * vx[IJK(ix,iy,iz-1)]\
 		  - (5.0 / 24.0) * vx[IJK(ix,iy,iz-2)] \
 		  + (1.0 / 24.0) * vx[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
-	
-	
+
+ END_FOR_IJ
 
 	if (PROPAGATION == 0) {
 
+
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	    
+	  Lindx = {ix,iy,iz};
+	  Gindx = Loc2Glo(Lindx);
+
 	  dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dI;
+	  + pml_x->A_HALF(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	  dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	  df_dI += dvz_dx[IJK(ix,iy,iz)];
-	  df_dK += dvx_dz[IJK(ix,iy,iz)];
+	  df_dI[IJK(ix,iy,iz)] += dvz_dx[IJK(ix,iy,iz)];
+	  df_dK[IJK(ix,iy,iz)] += dvx_dz[IJK(ix,iy,iz)];
+
+	  END_FOR_IJ
 
 	}
 
-	
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
 	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy,iz+1)]));
 
 	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
-	  (df_dI + df_dK);
+	  (df_dI[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
-
-	
-      }
-    }
+	END_FOR_IJ
 
 }
 
 void SDM::FD_SXZ(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dI = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix-1,iy,iz)]) - \
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+    
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (vz[IJK(ix,iy,iz)] - vz[IJK(ix-1,iy,iz)]) - \
 		  C0 * (vz[IJK(ix+1,iy,iz)] - vz[IJK(ix-2,iy,iz)]) ) / SDMGeom->Dx();
 	
-	df_dK = ( C1 * (vx[IJK(ix,iy,iz+1)] - vx[IJK(ix,iy,iz)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (vx[IJK(ix,iy,iz+1)] - vx[IJK(ix,iy,iz)]) - \
 		  C0 * (vx[IJK(ix,iy,iz+2)] - vx[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
+ END_FOR_IJK
 	
 
 
 	if (PROPAGATION == 0) {
-	  
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+	
 	dvz_dx[IJK(ix,iy,iz)] = pml_x->B_HALF(Gindx.x) * dvz_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A_HALF(Gindx.x) * df_dI;
+	  + pml_x->A_HALF(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dvx_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvx_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dvz_dx[IJK(ix,iy,iz)];
-	df_dK += dvx_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dvz_dx[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dvx_dz[IJK(ix,iy,iz)];
 
+      END_FOR_IJK
+	
 	}
 
+
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
 	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix,iy,iz+1)]));
 
 	sxz[IJK(ix,iy,iz)] = sxz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
-	  (df_dI + df_dK);
+	  (df_dI[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
-
-	
-      }
-    }
-  }
-
-
-
-  
-
+      END_FOR_IJK
   
 }
 
@@ -1525,43 +1607,48 @@ void SDM::Free_SYZ(VecI Init,VecI Iend){
 
   int iz = Iend.z + HALO.z;
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)\
-  firstprivate(iz)
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
+ FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
-
-	df_dJ = ( C1 * (vz[IJK(ix,iy+1,iz)] - vz[IJK(ix,iy,iz)]) - \
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (vz[IJK(ix,iy+1,iz)] - vz[IJK(ix,iy,iz)]) - \
 		  C0 * (vz[IJK(ix,iy+2,iz)] - vz[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
 
-	df_dK = -( - (11.0 / 12.0) * vy[IJK(ix,iy,iz+1)] \
+	df_dK[IJK(ix,iy,iz)] = -( - (11.0 / 12.0) * vy[IJK(ix,iy,iz+1)] \
 		  + (17.0 / 24.0) * vy[IJK(ix,iy,iz)] \
 		  + (3.0 / 8.0) * vy[IJK(ix,iy,iz-1)]\
 		  - (5.0 / 24.0) * vy[IJK(ix,iy,iz-2)] \
 		  + (1.0 / 24.0) * vy[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
-	
+ END_FOR_IJ	
 
 
 	if (PROPAGATION == 0) {
+
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
 	  
 	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.y) * df_dJ;
+	  + pml_y->A(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dJ += dvz_dy[IJK(ix,iy,iz)];
-	df_dK += dvy_dz[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dvz_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dvy_dz[IJK(ix,iy,iz)];
+
+	END_FOR_IJ
 
 	}
 
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	
 	mu_avg = 1.0 / ((0.1250 / mu[IJK(ix,iy,iz)]) + (0.1250 / mu[IJK(ix+1,iy,iz)]) + \
 		(0.1250 / mu[IJK(ix,iy+1,iz)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz)]) + \
@@ -1569,57 +1656,58 @@ void SDM::Free_SYZ(VecI Init,VecI Iend){
 		(0.1250 / mu[IJK(ix,iy+1,iz+1)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz+1)]));
 
 
-	
-
 	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + sgn * (dt * mu_avg) * \
-	  (df_dJ + df_dK);
+	  (df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
+	END_FOR_IJ
 
-	
-      }
-    }
-
-  
-}
+	  }
 
 
 void SDM::FD_SYZ(VecI Init,VecI Iend){
 
   VecI Lindx,Gindx;
-  Dfloat df_dI,df_dJ,df_dK;
   Dfloat mu_avg;
 
-#pragma omp parallel for num_threads(N_omp)\
-  private(df_dI,df_dJ,df_dK,mu_avg,Lindx,Gindx)
-  for (int iz=Init.z + HALO.z; iz<Iend.z + HALO.z; ++iz){
-    for (int iy=Init.y + HALO.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=Init.x + HALO.x; ix<Iend.x + HALO.x; ++ix){
+  int zinit,zend,xinit,xend,yinit,yend;
+  zinit = Init.z + HALO.z ; zend = Iend.z + HALO.z ;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
 
 
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
 
-	df_dJ = ( C1 * (vz[IJK(ix,iy+1,iz)] - vz[IJK(ix,iy,iz)]) - \
+ FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (vz[IJK(ix,iy+1,iz)] - vz[IJK(ix,iy,iz)]) - \
 		  C0 * (vz[IJK(ix,iy+2,iz)] - vz[IJK(ix,iy-1,iz)]) ) / SDMGeom->Dy();
 	
-	df_dK = ( C1 * (vy[IJK(ix,iy,iz+1)] - vy[IJK(ix,iy,iz)]) - \
+	df_dK[IJK(ix,iy,iz)] = ( C1 * (vy[IJK(ix,iy,iz+1)] - vy[IJK(ix,iy,iz)]) - \
 		  C0 * (vy[IJK(ix,iy,iz+2)] - vy[IJK(ix,iy,iz-1)]) ) / SDMGeom->Dz();
-	
 
+ END_FOR_IJK
 
 	if (PROPAGATION == 0) {
-	  
+
+
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+	
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
+	
 	dvz_dy[IJK(ix,iy,iz)] = pml_y->B(Gindx.y) * dvz_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A(Gindx.y) * df_dJ;
+	  + pml_y->A(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dvy_dz[IJK(ix,iy,iz)] = pml_z->B(Gindx.z) * dvy_dz[IJK(ix,iy,iz)] \
-	  + pml_z->A(Gindx.z) * df_dK;
+	  + pml_z->A(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dJ += dvz_dy[IJK(ix,iy,iz)];
-	df_dK += dvy_dz[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dvz_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dvy_dz[IJK(ix,iy,iz)];
+	
+      END_FOR_IJK
 
 	}
 	
+      FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	
 	mu_avg = 1.0 / ((0.1250 / mu[IJK(ix,iy,iz)]) + (0.1250 / mu[IJK(ix+1,iy,iz)]) + \
                 (0.1250 / mu[IJK(ix,iy+1,iz)]) + (0.1250 / mu[IJK(ix+1,iy+1,iz)]) + \
@@ -1628,13 +1716,9 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
 
 
 	syz[IJK(ix,iy,iz)] = syz[IJK(ix,iy,iz)] + sgn *  (dt * mu_avg) * \
-	  (df_dJ + df_dK);
+	  (df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
-
-	
-      }
-    }
-  }
+      END_FOR_IJK
 
   
 }
@@ -1645,42 +1729,41 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
   int iz = Iend.z + HALO.z - zh ;
   Dfloat d_free;
   VecI Lindx,Gindx;
-  Dfloat mu_avg,lamb_avg,df_dI,df_dJ,df_dK;
+  Dfloat mu_avg,lamb_avg;
   Dfloat df_dI_free,df_dJ_free;
 
+  int xinit,xend,yinit,yend;
+  yinit = Init.y + HALO.y ; yend = Iend.y + HALO.y ;
+  xinit = Init.x + HALO.x ; xend = Iend.x + HALO.x ;
+
    // Free Surface Implementation Stress Imaging
-  
-  #pragma omp parallel for num_threads(N_omp)\
-    private(df_dI,df_dJ,df_dI_free,df_dJ_free,df_dK,mu_avg,lamb_avg,Lindx,Gindx,d_free)	\
-    firstprivate(iz,zh)
-   for (int iy=HALO.y+Init.y; iy<Iend.y + HALO.y; ++iy){
-      for (int ix=HALO.x+Init.x; ix<Iend.x + HALO.x; ++ix){
-
-	Lindx = {ix,iy,iz};
-	Gindx = Loc2Glo(Lindx);
 
 
-	// Average properties
+  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+    
+	df_dI[IJK(ix,iy,iz)] = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
+		  C0 * (vx[IJK(ix+2,iy,iz)] - vx[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
+	
+	df_dJ[IJK(ix,iy,iz)] = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
+		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
+
+  END_FOR_IJ
+	
+	if (zh == 1) { // z = 0; Free Surface
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
+	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
+	df_dK[IJK(ix,iy,iz)] = - (df_dI[IJK(ix,iy,iz)] + df_dJ[IJK(ix,iy,iz)]) * (lamb_avg / (lamb_avg + 2.0 * mu_avg));
+	END_FOR_IJ
+	  
+	} else if (zh == 2) { // z = h; Free Surface
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
 	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
 	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
-
-	
-
-	df_dI = ( C1 * (vx[IJK(ix+1,iy,iz)] - vx[IJK(ix,iy,iz)]) - \
-		  C0 * (vx[IJK(ix+2,iy,iz)] - vx[IJK(ix-1,iy,iz)]) ) / SDMGeom->Dx();
-	
-	df_dJ = ( C1 * (vy[IJK(ix,iy,iz)] - vy[IJK(ix,iy-1,iz)]) - \
-		  C0 * (vy[IJK(ix,iy+1,iz)] - vy[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
-
-	
-	if (zh == 1) { // z = 0; Free Surface
-	
-	df_dK = - (df_dI + df_dJ) * (lamb_avg / (lamb_avg + 2.0 * mu_avg));
-
-	} else if (zh == 2) { // z = h; Free Surface
-
-
+	  
 	df_dI_free = ( C1 * (vx[IJK(ix+1,iy,iz+1)] - vx[IJK(ix,iy,iz+1)]) - \
 		  C0 * (vx[IJK(ix+2,iy,iz+1)] - vx[IJK(ix-1,iy,iz+1)]) ) / SDMGeom->Dx();
 	
@@ -1690,61 +1773,80 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
 	  d_free = - (df_dI_free + df_dJ_free) * (lamb_avg / (lamb_avg + 2.0 * mu_avg)) * SDMGeom->Dz();
 
-	  df_dK = -(1.0 / SDMGeom->Dz()) * ( - (1.0 / 22.0) * d_free - (577.0 / 528.0) * vz[IJK(ix,iy,iz)] \
+	  df_dK[IJK(ix,iy,iz)] = -(1.0 / SDMGeom->Dz()) * ( - (1.0 / 22.0) * d_free - (577.0 / 528.0) * vz[IJK(ix,iy,iz)] \
 				    + (201.0 / 176.0) * vz[IJK(ix,iy,iz-1)] \
 				    - (9.0 / 176.0) * vz[IJK(ix,iy,iz-2)] \
 					    + (1.0 / 528.0) * vz[IJK(ix,iy,iz-3)] );
+
+	END_FOR_IJ
+	   
 	}
 
 
 
 	if (PROPAGATION == 0) {
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	Lindx = {ix,iy,iz};
+	Gindx = Loc2Glo(Lindx);
 	  
 	dvx_dx[IJK(ix,iy,iz)] = pml_x->B(Gindx.x) * dvx_dx[IJK(ix,iy,iz)] \
-	  + pml_x->A(Gindx.x) * df_dI;
+	  + pml_x->A(Gindx.x) * df_dI[IJK(ix,iy,iz)];
 
 	dvy_dy[IJK(ix,iy,iz)] = pml_y->B_HALF(Gindx.y) * dvy_dy[IJK(ix,iy,iz)] \
-	  + pml_y->A_HALF(Gindx.y) * df_dJ;
+	  + pml_y->A_HALF(Gindx.y) * df_dJ[IJK(ix,iy,iz)];
 
 	dvz_dz[IJK(ix,iy,iz)] = pml_z->B_HALF(Gindx.z) * dvz_dz[IJK(ix,iy,iz)]  \
-	  + pml_z->A_HALF(Gindx.z) * df_dK;
+	  + pml_z->A_HALF(Gindx.z) * df_dK[IJK(ix,iy,iz)];
 
-	df_dI += dvx_dx[IJK(ix,iy,iz)];
-	df_dJ += dvy_dy[IJK(ix,iy,iz)];
-	df_dK += dvz_dz[IJK(ix,iy,iz)];
+	df_dI[IJK(ix,iy,iz)] += dvx_dx[IJK(ix,iy,iz)];
+	df_dJ[IJK(ix,iy,iz)] += dvy_dy[IJK(ix,iy,iz)];
+	df_dK[IJK(ix,iy,iz)] += dvz_dz[IJK(ix,iy,iz)];
+
+	END_FOR_IJ
 
 	}
+
+
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  
+	// Average properties
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
+	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
 	
 	// SXX
-
 	sxx[IJK(ix,iy,iz)] = sxx[IJK(ix,iy,iz)] +  sgn * \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI) + sgn * \
-	  dt * lamb_avg *  (df_dJ + df_dK);
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dI[IJK(ix,iy,iz)]) + sgn * \
+	  dt * lamb_avg *  (df_dJ[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
 	// SYY
 	
 	syy[IJK(ix,iy,iz)] = syy[IJK(ix,iy,iz)] + sgn * \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ) + sgn * \
-	  dt * lamb_avg *  (df_dI + df_dK);
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dJ[IJK(ix,iy,iz)]) + sgn * \
+	  dt * lamb_avg *  (df_dI[IJK(ix,iy,iz)] + df_dK[IJK(ix,iy,iz)]);
 
+	END_FOR_IJ
 
 	// SZZ
 
 	if (zh == 1) {
-	  
+	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	szz[IJK(ix,iy,iz)] = 0.0;
-	
+	END_FOR_IJ
 	} else if (zh == 2) {
 
-	  szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + sgn * \
-	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK) + sgn * \
-	  dt * lamb_avg *  (df_dJ + df_dI);
-	}
 
+	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
+	  // Average properties
+	  mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
+	  lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
 	
-
-      }
-   }
+	  szz[IJK(ix,iy,iz)] = szz[IJK(ix,iy,iz)] + sgn * \
+	  (dt * (lamb_avg + 2.0 * mu_avg) * df_dK[IJK(ix,iy,iz)]) + sgn * \
+	  dt * lamb_avg *  (df_dJ[IJK(ix,iy,iz)] + df_dI[IJK(ix,iy,iz)]);
+	  END_FOR_IJ
+	}
 
 
 

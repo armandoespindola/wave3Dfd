@@ -51,6 +51,7 @@ protected:
 	VecF thickness_PML;
         VecI NT;
 	int PROPAGATION;
+        int SIMULATION_TYPE;
         Dfloat sgn;
 
 	
@@ -63,6 +64,7 @@ protected:
 	Dfloat *dvx_dy,*dvy_dx,*dvx_dz;
 	Dfloat *dvz_dx,*dvy_dz,*dvz_dy;
         Dfloat *Rvx,*Rvy,*Rvz;
+        Dfloat *df_dI,*df_dJ,*df_dK;
 
   // SOURCE MOMENT TENSOR
 
@@ -102,6 +104,9 @@ public:
 	Dfloat *vx,*vy,*vz;
 	Dfloat *ux,*uy,*uz;
 	Dfloat *mu,*lamb,*rho;
+        Dfloat *ux_dx,*ux_dy,*ux_dz;
+        Dfloat *uy_dx,*uy_dy,*uy_dz;
+        Dfloat *uz_dx,*uz_dy,*uz_dz;
 
   VecI NumSubDom,Nsdm;
 	VecI NodLoc;
