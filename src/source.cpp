@@ -38,13 +38,35 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
   xcoord = new Dfloat[ns];
   ycoord = new Dfloat[ns];
   zcoord = new Dfloat[ns];
+
+  pos_vx = new VecI[ns];
+  pos_vy = new VecI[ns];
+  pos_vz = new VecI[ns];
+  pos_sii = new VecI[ns];
+  pos_sxy = new VecI[ns];
+  pos_sxz = new VecI[ns];
+  pos_syz = new VecI[ns];
+
   pos_src = new VecI[ns];
+  src_r_half = new Dfloat[ns];
+  src_r = new Dfloat[ns];
+  src_flag_r = new int[ns];
+    
+  coor_vx = new VecF[ns];
+  coor_vy = new VecF[ns];
+  coor_vz = new VecF[ns];
+  coor_sii = new VecF[ns];
+  coor_sxy = new VecF[ns];
+  coor_sxz = new VecF[ns];
+  coor_syz = new VecF[ns];
+  
   M0 = new Dfloat[ns];
   d_t0 = new Dfloat[ns];
   strike = new Dfloat[ns];
   dip = new Dfloat[ns];
   slip = new Dfloat[ns];
   azimuth = new Dfloat[ns];
+  nameSource = new std::string[ns];
 
   //std::cout<<FileS.c_str()<<std::endl;
   
@@ -61,6 +83,10 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
     //std::cout<<line<<std::endl;
     npos2 = line.find(",",npos1);
     //std::cout<<npos1<<" :"<<npos2<<std::endl;
+    nameSource[i] = line.substr(npos1,npos2-npos1);
+    npos1 = npos2 + 1;
+
+    npos2 = line.find(",",npos1);
     xcoord[i] = std::stof(line.substr(npos1,npos2-npos1));
     npos1 = npos2 + 1;
     //std::cout<<" X:"<<xcoord[i];
@@ -127,11 +153,72 @@ source::source(geometry3D *domain, std::string nFile,int nsource) {
     npos1 = 0;
     npos2 = 0;
 
-    pos_src[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,1});
 
-    nshift[i] = GDomain->HALO_NodeZ()-pos_src[i].z-1; 
+    pos_vx[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,0,0});
+    coor_vx[i] = {GDomain->CoorX(pos_vx[i].x),GDomain->CoorY(pos_vx[i].y),\
+                  GDomain->CoorZ(GDomain->HALO_NodeZ() - 1 - pos_vx[i].z)};
+
+
+    pos_vy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,0});
+    coor_vy[i] = {GDomain->CoorXHalf(pos_vy[i].x),GDomain->CoorYHalf(pos_vy[i].y),\
+                  GDomain->CoorZ(GDomain->HALO_NodeZ() - 1 - pos_vy[i].z)};
+
+    pos_vz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,1});
+    coor_vz[i] = {GDomain->CoorXHalf(pos_vz[i].x),GDomain->CoorY(pos_vz[i].y),\
+                  GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 - pos_vz[i].z)};
+
+    pos_sii[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,0});
+    coor_sii[i] = {GDomain->CoorXHalf(pos_sii[i].x),GDomain->CoorY(pos_sii[i].y),\
+                  GDomain->CoorZ(GDomain->HALO_NodeZ() - 1 - pos_sii[i].z)};
+
+    pos_sxy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,1,0});
+    coor_sxy[i] = {GDomain->CoorX(pos_sxy[i].x),GDomain->CoorYHalf(pos_sxy[i].y),       \
+                  GDomain->CoorZ(GDomain->HALO_NodeZ() - 1 - pos_sxy[i].z)};
+
+    pos_sxz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,0,1});
+    coor_sxz[i] = {GDomain->CoorX(pos_sxz[i].x),GDomain->CoorY(pos_sxz[i].y),\
+                  GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 - pos_sxz[i].z)};
+
+    pos_syz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,1});
+    coor_syz[i] = {GDomain->CoorXHalf(pos_syz[i].x),GDomain->CoorYHalf(pos_syz[i].y),\
+                  GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 - pos_syz[i].z)};
+
+
+    src_r_half[i] = sqrt(pow(coor_syz[i].x - xcoord[i],2.0) + \
+			 pow(coor_syz[i].y - ycoord[i],2.0) + \
+			 pow(coor_syz[i].z - zcoord[i],2.0));
+    
+    src_r[i] = sqrt(pow(coor_vx[i].x - xcoord[i],2.0) + \
+		    pow(coor_vx[i].y - ycoord[i],2.0) +	\
+		    pow(coor_vx[i].z - zcoord[i],2.0));
+
+
+    // Selecting best candidate for source position
+
+    //std::cout<<src_r_half[i]<<" "<<src_r[i]<<std::endl;
+    if (src_r_half[i] <= src_r[i]){
+      src_flag_r[i] = -1;
+      pos_src[i] = pos_syz[i];
+      //  std::cout<<" f "<<src_flag_r[i]<<std::endl;
+    } else {
+      src_flag_r[i] = 1;
+      pos_src[i] = pos_vx[i];
+      // std::cout<<" f "<<src_flag_r[i]<<std::endl;
+	}
+      
+     
+    nshift[i] = GDomain->HALO_NodeZ()-pos_src[i].z-1;
+
+    // std::cout<<"sii "<<coor_sii[i].x<<" "<<coor_sii[i].y<<" "<<coor_sii[i].z<<std::endl;
+    // std::cout<<"sxy "<<coor_sxy[i].x<<" "<<coor_sxy[i].y<<" "<<coor_sxy[i].z<<std::endl;
+    // std::cout<<"sxz "<<coor_sxz[i].x<<" "<<coor_sxz[i].y<<" "<<coor_sxz[i].z<<std::endl;
+    // std::cout<<"syz "<<coor_syz[i].x<<" "<<coor_syz[i].y<<" "<<coor_syz[i].z<<std::endl;
+    // std::cout<<"pos_syz "<<pos_syz[i].x<<" "<<pos_syz[i].y<<" "<<pos_syz[i].z<<std::endl;
 
 //   std::cout<<pos_src[i].x<<pos_src[i].y<<pos_src[i].z<<"SOURCE"<<std::endl;
+   //  std::cout<<pos_vx[i].x<<" "<<pos_vx[i].y<<" "<<pos_vx[i].z<<"Source"<<std::endl;
+   //  std::cout<<pos_vy[i].x<<" "<<pos_vy[i].y<<" "<<pos_vy[i].z<<"Source"<<std::endl;
+   // std::cout<<pos_vz[i].x<<" "<<pos_vz[i].y<<" "<<pos_vz[i].z<<"Source"<<std::endl;
     
   }
   
@@ -161,8 +248,28 @@ source::~source(){
   delete [] dip;
   delete [] slip;
   delete [] azimuth;
-  delete [] pos_src;
   delete [] nshift;
+  delete [] pos_vx;
+  delete [] pos_vy;
+  delete [] pos_vz;
+  delete [] pos_sii;
+  delete [] pos_sxy;
+  delete [] pos_sxz;
+  delete [] pos_syz;
+
+  delete [] pos_src;
+  delete [] src_r_half;
+  delete [] src_r;
+  delete [] src_flag_r;
+
+  delete [] coor_vx;
+  delete [] coor_vy;
+  delete [] coor_vz;
+  delete [] coor_sii;
+  delete [] coor_sxy;
+  delete [] coor_sxz;
+  delete [] coor_syz;
+  
   R.close();
   
 }
@@ -238,10 +345,12 @@ Dfloat source::sourceType(Dfloat t0, Dfloat f0 , int itime,Dfloat dt, int T_SRC)
   // HEAVISIDE STEP FUNCTION
   
   if (T_SRC==3){
-    if (itime > t0) {    
-	src = 1.0; 
-    } else {
+    if (t0 <= 0.0) {
+      if (itime >= 1){
+	src = 1.0;
+      } else {
       src = 0.0;
+      }
     }
   }
 
@@ -266,7 +375,7 @@ void source::PrintInf(){
 
     std::cout<<""<<std::endl;
     std::cout<<"##################"<<std::endl;
-    std::cout<<"Source #: "<<i<<std::endl;
+    std::cout<<"Source #: "<<i + 1<<" : "<<nameSource[i]<<std::endl;
     
     std::cout<<" X: "<<xcoord[i]<<std::endl;
     std::cout<<" Y: "<<ycoord[i]<<std::endl;
@@ -282,9 +391,9 @@ void source::PrintInf(){
     std::cout<<" Node_Z(Mesh Location) : "<<GDomain->HALO_NodeZ()-pos_src[i].z-1<<std::endl;
 
 
-    xm = GDomain->CoorXHalf(pos_src[i].x);
-    ym = GDomain->CoorYHalf(pos_src[i].y);
-    zm = GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 -pos_src[i].z);
+    xm = GDomain->CoorXHalf(pos_vx[i].x);
+    ym = GDomain->CoorYHalf(pos_vx[i].y);
+    zm = GDomain->CoorZHalf(GDomain->HALO_NodeZ() - 1 -pos_vx[i].z);
 
     std::cout<<" X(Mesh Location) : "<<xm<<std::endl;
     std::cout<<" Y(Mesh Location) : "<<ym<<std::endl;
@@ -299,10 +408,12 @@ void source::PrintInf(){
   
 }
 
+
 void source::w_sinc(int freeSurf,int is){
   Dfloat arg;
   Dfloat win;
-  Dfloat b=4.14;  
+  Dfloat b=4.14;
+  int int_j,end_j;
 
   for (int j =0;j<8;j++){
     sinc_wx[j] = ZERO;
@@ -310,39 +421,46 @@ void source::w_sinc(int freeSurf,int is){
     sinc_wz[j] = ZERO;
   }
 
-  
-  if (freeSurf) {
 
-    //b = 6.31;
-    for (int j = -3;j<=nshift[is];j++){
-    arg = pi * (j - 0.5);
-    win = bessi0( b * sqrt(1 - pow((j-0.5) / 4.0,2.0))) / bessi0(b);
-    sinc_wx[3 + j] = win * sin(arg) / (GDomain->Dx() * arg);
-    sinc_wy[3 + j] = win * sin(arg) / (GDomain->Dy() * arg);
-    sinc_wz[3 + j] = win * sin(arg) / (GDomain->Dz() * arg);
-  }
-
-    int np = 3 + nshift[is];
-    for (int j =nshift[is];j<=4;j++){
-    arg = pi * (j - 0.5);
-    win = bessi0( b * sqrt(1 - pow((j-0.5) / 4.0,2.0))) / bessi0(b);
-    sinc_wx[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dx() * arg);
-    sinc_wy[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dy() * arg);
-    sinc_wz[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dz() * arg);
-      
+  if (src_flag_r[is] < 0) {
+    int_j = 3; end_j = 4;
+  } else if (src_flag_r[is] > 0){
+    int_j = 4; end_j = 3;
     }
+  
+  // if (freeSurf) {
 
-  } else {
+  //   //b = 6.31;
+  //   for (int j = -3;j<=nshift[is];j++){
+  //   arg = pi * (j - 0.5);
+  //   win = bessi0( b * sqrt(1 - pow((j-0.5) / 4.0,2.0))) / bessi0(b);
+  //   sinc_wx[3 + j] = win * sin(arg) / (GDomain->Dx() * arg);
+  //   sinc_wy[3 + j] = win * sin(arg) / (GDomain->Dy() * arg);
+  //   sinc_wz[3 + j] = win * sin(arg) / (GDomain->Dz() * arg);
+  // }
+
+  //   int np = 3 + nshift[is];
+  //   for (int j =nshift[is];j<=4;j++){
+  //   arg = pi * (j - 0.5);
+  //   win = bessi0( b * sqrt(1 - pow((j-0.5) / 4.0,2.0))) / bessi0(b);
+  //   sinc_wx[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dx() * arg);
+  //   sinc_wy[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dy() * arg);
+  //   sinc_wz[np - j + nshift[is]] -= win * sin(arg) / (GDomain->Dz() * arg);
+      
+  //   }
+
+  // } else {
     
-  for (int j = -3;j<=4;j++){
-    arg = pi * (j - 0.5);
-    win = bessi0( b * sqrt(1 - pow((j-0.5) / 4.0,2.0))) / bessi0(b);
-    sinc_wx[3 + j] = win * sin(arg) / (GDomain->Dx() * arg);
-    sinc_wy[3 + j] = win * sin(arg) / (GDomain->Dy() * arg);
-    sinc_wz[3 + j] = win * sin(arg) / (GDomain->Dz() * arg);
+  for (int j = -int_j;j<=end_j;j++){
+    idx[int_j + j] = j;
+    arg = pi * (j + 0.5 * src_flag_r[is]);
+    win = bessi0( b * sqrt(1 - pow((j + 0.5 * src_flag_r[is]) / 4.0,2.0))) / bessi0(b);
+    sinc_wx[int_j + j] = win * sin(arg) / (GDomain->Dx() * arg);
+    sinc_wy[int_j + j] = win * sin(arg) / (GDomain->Dy() * arg);
+    sinc_wz[int_j + j] = win * sin(arg) / (GDomain->Dz() * arg);
   }
 
-  }
+  // }
   
 }
 

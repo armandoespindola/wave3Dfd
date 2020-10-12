@@ -109,12 +109,16 @@ int main (int argc, char* argv[]) {
 
   const int t_snap = std::stoi(par.ParamReturn("-t_snap"));
   const int snap = std::stoi(par.ParamReturn("-snap"));
-
+   // DOWNSAMPLING SPACE AXES PARAMETERS
+  const VecI dsf = {std::stoi(par.ParamReturn("-dsf_x")), \
+                          std::stoi(par.ParamReturn("-dsf_y")), \
+                          std::stoi(par.ParamReturn("-dsf_z"))};
+  
   const int t_snapR = std::stoi(par.ParamReturn("-t_snapR"));
   const int snapR = std::stoi(par.ParamReturn("-snapR"));
 
-  // ADJOINT PROPAGATION
-  const int ADJ_P = std::stoi(par.ParamReturn("-adj"));
+  // SIMULATION TYPE
+  const int simulation_type = std::stoi(par.ParamReturn("-simulation_type"));
 
   // FREQUENCY KERNELS
   // const int nfreq = std::stoi(par.ParamReturn("-nfq"));
@@ -123,11 +127,19 @@ int main (int argc, char* argv[]) {
 
    // SRCFILE
   const int SrcFile = std::stoi(par.ParamReturn("-srcFile"));
+
+  // ### STRAIN GREEN'S FUNCTION PARAMETERS ###
+  // DOWNSAMPLING TIME AXIS PARAMETER
+  const int dsk = std::stoi(par.ParamReturn("-dsk"));
+  // DOWNSAMPLING SPACE AXES PARAMETERS
+  const VecI dsg = {std::stoi(par.ParamReturn("-dsg_x")), \
+                          std::stoi(par.ParamReturn("-dsg_y")), \
+                          std::stoi(par.ParamReturn("-dsg_z"))};
   
   
 
-  int  nt = round(t / dt);                                     // TIME MARCHING STEP
-  VecI SubN = {Sx,Sy,Sz};                                     // NUMBER OF SUBDOMAINS
+  int  nt = round(t / dt);                      // TIME MARCHING STEP
+  VecI SubN = {Sx,Sy,Sz};                       // NUMBER OF SUBDOMAINS
   double time1,time2,time;
 
 
@@ -138,7 +150,6 @@ int main (int argc, char* argv[]) {
   Show show;                                    // Print Class
   MPI_DATA *HALO,*HALO_ADJ;                     // Subdoamin HALO Transfer Class
   MODEL *model;                                 // Model
-  DFT *uw_sdm, *uw_adj;
   char name[100];
   int NXT,NYT, NZT;
   int cfl;
@@ -328,7 +339,8 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, COM3D);
 
  if (rank == 0) { 
 
-   sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
+   sdm = new SDM(Gdomain,GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],\
+		 SubN,0,simulation_type);
   
 
 // OMP NUMBER OF THREADS
@@ -363,7 +375,8 @@ MPI_Bcast(&cfl, 1, MPI_INT, 0, COM3D);
 
 if (rank > 0) {
 
-  sdm = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
+  sdm = new SDM(Gdomain,GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],\
+		SubN,0,simulation_type);
   
 
   // OMP NUMBER OF THREADS
@@ -430,6 +443,7 @@ MPI_Barrier(COM3D);
 
   int kk = t_snap;
   int tinf = t_snap;
+  int sgt_k = 0;
    
 
   // #############################
@@ -443,9 +457,10 @@ MPI_Barrier(COM3D);
 
     time1 = MPI_Wtime();
 
-     // Source #########
-     sdm->AddSource(k,s_type);
-
+     // Source - Forward propagation#########
+    if (simulation_type == 0){ 
+      sdm->AddSource(k,s_type);
+    }
     
     MPI_Barrier(COM3D);
     
@@ -455,7 +470,7 @@ MPI_Barrier(COM3D);
 
     // SAVE BOUNDARIES TO RECONSTRUCT WAVEFIELD
 
-    if (ADJ_P){
+    if (simulation_type == 1){
      sdm->SaveBoundaries_S(k);
      sdm->SaveBoundaries_V(k);
      sdm->WriteBoundaries(k+1,nt);
@@ -465,6 +480,11 @@ MPI_Barrier(COM3D);
     sdm->FDVX();
     sdm->FDVY();
     sdm->FDVZ();
+
+    // Source - SGT simulation#########
+    if (simulation_type == 2){ 
+      sdm->AddSource(k,s_type);
+    }
 
     // TRANSFER VELOCITIES
     HALO->TRANSFER(1,COM3D);
@@ -488,27 +508,26 @@ MPI_Barrier(COM3D);
     time2 = MPI_Wtime();
 
     if ((rank == 0) && (tinf == k)){
-      //printf("Forward Propagation ->  Time step : %d of %d - MPI_Time %f - Nproc %d\n",k,nt,(time2-time1)*t_snap,total_proc);
-      std::cout<<"Forward Propagation ->  Time step: "<< \
+      std::cout<<"Forward Propagation ->  Time step: "<<      \
 	k<<" of "<<nt<<" - MPI_Time "<<(time2-time1)*t_snap<< \
 	" - Nproc "<<total_proc<<std::endl;
       tinf += t_snap;
     }
 
-    time += (time2-time1)/ (Dfloat) nt;
+    time += (time2-time1);
     
     if (snap){ 
 
       if (kk == k){
 
 	  sprintf(name,"DATA/VX-%d.bin",k);
-	  HALO->MergePrint(sdm->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO->MergePrint(sdm->vx,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/VY-%d.bin",k);
-	  HALO->MergePrint(sdm->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO->MergePrint(sdm->vy,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/VZ-%d.bin",k);
-	  HALO->MergePrint(sdm->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO->MergePrint(sdm->vz,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
       
 	  kk += t_snap;
       }
@@ -516,9 +535,19 @@ MPI_Barrier(COM3D);
 
 
 
+    if (simulation_type == 2){
+      for (int is=0;is<sdm->sourceM->ns;is++){
+    	sprintf(name,"%s",sdm->sourceM->nameSource[is].c_str());
+    	sdm->WriteSGT(k,nt,dsg,dsk,name);
+      }
+    }
+    
+
+
+
 
     // SAVE THE LAST BOUNDARY FOR RETROPROPAGATION
-    if (ADJ_P) {
+    if (simulation_type == 1) {
       if (k == nt-1){
 
 	sdm->file("VZ",k,0);
@@ -542,7 +571,7 @@ MPI_Barrier(COM3D);
 
   
   if (rank == 0){
-    printf("END\t TIME(STEP): %f\t HOLE TIME: %f\n",time,time*nt);
+    printf("END\t TOTAL TIME: %f\n",time);
   }
 
   sdm->EndRecept();
@@ -552,7 +581,7 @@ MPI_Barrier(COM3D);
 
 
 
-  if (ADJ_P) {
+  if (simulation_type == 1) {
 
 
 
@@ -565,11 +594,13 @@ MPI_Barrier(COM3D);
     
     // ADJOINT-PROPAGATION
 
-    ADJ = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,0);
+    ADJ = new SDM(Gdomain,GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],\
+		  SubN,0,simulation_type);
     ADJ->set_omp(N_omp);
 
     // RETRO-PROPAGATION
-    RTP = new SDM(GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],SubN,1);
+    RTP = new SDM(Gdomain,GI,GF,GNod,SGI[rank],SGF[rank],SubNodes,CPML,f0,dt,subi[rank],\
+		  SubN,1,simulation_type);
     RTP->set_omp(N_omp);
 
   
@@ -692,13 +723,13 @@ MPI_Barrier(COM3D);
       if (Rkk == k){
 
 	  sprintf(name,"DATA/AVX-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO_ADJ->MergePrint(ADJ->vx,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/AVY-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO_ADJ->MergePrint(ADJ->vy,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/AVZ-%d.bin",k);
-	  HALO_ADJ->MergePrint(ADJ->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO_ADJ->MergePrint(ADJ->vz,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  //Rkk -= t_snapR;
 
@@ -722,13 +753,13 @@ MPI_Barrier(COM3D);
 	  int NZT = Gdomain->HALO_NodeZ();
 	
 	 sprintf(name,"DATA/RVX-%d.bin",k);
-	 HALO->MergePrint(RTP->vx,NXT,NYT,NZT,subi,rank,name,COM3D);
+	 HALO->MergePrint(RTP->vx,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/RVY-%d.bin",k);
-	  HALO->MergePrint(RTP->vy,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO->MergePrint(RTP->vy,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  sprintf(name,"DATA/RVZ-%d.bin",k);
-	  HALO->MergePrint(RTP->vz,NXT,NYT,NZT,subi,rank,name,COM3D);
+	  HALO->MergePrint(RTP->vz,NXT,NYT,NZT,subi,rank,name,"wb",COM3D,dsf);
 
 	  
       Rkk -= t_snapR;
@@ -771,14 +802,13 @@ MPI_Barrier(COM3D);
     time2 = MPI_Wtime();
 
     if ((rank == 0) && (tinf_adj == k)){
-      //printf("Adjoint Simulation -> Time step : %d of %d - MPI_Time %f - Nproc %d\n",k,nt,(time2-time1)*t_snap,total_proc);
-      std::cout<<"Adjoint Propagation ->  Time step: "<< \
+      std::cout<<"Adjoint Propagation ->  Time step: "<<      \
 	k<<" of "<<nt<<" - MPI_Time "<<(time2-time1)*t_snap<< \
 	" - Nproc "<<total_proc<<std::endl;
       tinf_adj -= t_snap;
     }
 
-    time += (time2-time1)/(Dfloat)nt;    
+    time += (time2-time1);    
     
 
   } // TIME ADJOINT
@@ -786,7 +816,7 @@ MPI_Barrier(COM3D);
 
 
   if (rank == 0){
-    printf("END\t TIME(STEP) ADJOINT: %f\t HOLE TIME: %f\n",time,time*nt);
+    printf("END\t ADJOINT TOTAL TIME: %f\n",time);
   }
 
 

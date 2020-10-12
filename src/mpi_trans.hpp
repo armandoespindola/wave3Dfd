@@ -52,7 +52,8 @@ public:
   ~MPI_DATA();
   void TRANSFER(int  Var,MPI_Comm ICOM3D);
   void Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank,MPI_Comm ICOM3D);
-  void MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name,MPI_Comm ICOM3D);
+  void MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name,char *filemode,\
+		  MPI_Comm ICOM3D,VecI ds);
   void KernPrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name,MPI_Comm ICOM3D);
 };
 

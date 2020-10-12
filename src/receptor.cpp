@@ -100,7 +100,9 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
    pos_vy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,0});
    pos_vz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,1});
   
-   //std::cout<<pos_recep[i].x<<pos_recep[i].y<<pos_recep[i].z<<"Receptor"<<std::endl;  
+   // std::cout<<i<<" "<<pos_vx[i].x<<" "<<pos_vx[i].y<<" "<<pos_vx[i].z<<"Receptor"<<std::endl;
+   // std::cout<<i<<" "<<pos_vy[i].x<<" "<<pos_vy[i].y<<" "<<pos_vy[i].z<<"Receptor"<<std::endl;
+   // std::cout<<i<<" "<<pos_vz[i].x<<" "<<pos_vz[i].y<<" "<<pos_vz[i].z<<"Receptor"<<std::endl; 
   }
   
 
@@ -211,7 +213,7 @@ void receptor::PrintInf(){
 
     std::cout<<""<<std::endl;
     std::cout<<"##########################"<<std::endl;
-    std::cout<<" STATION # "<<i<<" : "<<nameStation[i]<<std::endl;
+    std::cout<<" STATION # "<<i + 1<<" : "<<nameStation[i]<<std::endl;
     
     std::cout<<" X: "<<xcoord[i]<<std::endl;
     std::cout<<" Y: "<<ycoord[i]<<std::endl;

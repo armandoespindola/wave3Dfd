@@ -29,9 +29,7 @@
 #include "sdm.hpp"
 #include "mpi_trans.hpp"
 #include "parameters.hpp"
-#include "kernelsw.hpp"
 #include "kernels.hpp"
-#include "fdt.hpp"
 
 
 #endif

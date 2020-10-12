@@ -5,7 +5,7 @@ E=bin
 
 
 _OBJS=geometry3D.o model.o mpi_trans.o pml.o sdm.o show.o source.o parameters.o\
-	source.o receptor.o kernels.o fdt.o utilities.o wave3Dfd.o
+	source.o receptor.o kernels.o utilities.o wave3Dfd.o
 
 OBJS=$(patsubst %,$(O)/%,$(_OBJS))
 

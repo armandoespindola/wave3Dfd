@@ -22,8 +22,9 @@
 
 #include "sdm.hpp"
 
-SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
-	 VecI ICPML,Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom,int iPROPAGATION) {
+SDM::SDM(geometry3D *iGDMGeom,VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, \
+	  VecI INod,VecI ICPML,Dfloat If0, Dfloat Idt, VecI INsdm, VecI INumSubDom, \
+	  int iPROPAGATION,int iSIMULATION_TYPE) {
 
 	// GI INITIAL GLOBAL LIMIT WITH PML 
 	// GF END GLOBAL LIMIT WITH PML
@@ -35,8 +36,9 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	// f0 FREQUENCY
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
-  // NumSubDom Number total of subdomains
+	// NumSubDom Number total of subdomains
 
+	GDMGeom = iGDMGeom;
 	GI = IGI;
 	GF = IGF;
 	f0 = If0;
@@ -50,7 +52,7 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	Nsdm = INsdm;
 	NumSubDom = INumSubDom;
 	PROPAGATION = iPROPAGATION;
-	//SIMULATION_TYPE = iSIMULATION_TYPE;
+	SIMULATION_TYPE = iSIMULATION_TYPE;
 
 	if (PROPAGATION == 0){
 	  sgn = 1.0;
@@ -117,18 +119,18 @@ SDM::SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, \
 	df_dK = new Dfloat [SDMGeom->HALO_Node()];
 
 
-	// CREATE VARIABLES FOR ADJOINT SIMULATION OR STRAIN GREEN'S TENSOR (STG)
-	// if ((SUMALATION_TYPE == 1) || (SIMULATION_TYPE==2)){
-	//   ux_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   ux_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   ux_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uy_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uy_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uy_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uz_dx = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uz_dy = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	//   uz_dz = new Dfloat [FWD->SDMGeom->HALO_Node()];
-	// }
+	// STRAIN GREEN'S TENSOR (STG)
+	if (SIMULATION_TYPE==2){
+	  ux_dx = new Dfloat [SDMGeom->HALO_Node()];
+	  ux_dy = new Dfloat [SDMGeom->HALO_Node()];
+	  ux_dz = new Dfloat [SDMGeom->HALO_Node()];
+	  uy_dx = new Dfloat [SDMGeom->HALO_Node()];
+	  uy_dy = new Dfloat [SDMGeom->HALO_Node()];
+	  uy_dz = new Dfloat [SDMGeom->HALO_Node()];
+	  uz_dx = new Dfloat [SDMGeom->HALO_Node()];
+	  uz_dy = new Dfloat [SDMGeom->HALO_Node()];
+	  uz_dz = new Dfloat [SDMGeom->HALO_Node()];
+	}
 
 
 
@@ -204,18 +206,24 @@ SDM::~SDM(){
 
 
 
-	// DELETE VARIABLES FOR ADJOINT SIMULATION OR STRAIN GREEN'S TENSOR (STG)
-	// if ((SUMALATION_TYPE == 1) || (SIMULATION_TYPE==2)){
-	//   delete [] ux_dx;
-	//   delete [] ux_dy;
-	//   delete [] ux_dz;
-	//   delete [] uy_dx;
-	//   delete [] uy_dy;
-	//   delete [] uy_dz;
-	//   delete [] uz_dx;
-	//   delete [] uz_dy;
-	//   delete [] uz_dz;
-	// }
+	// DELETE STRAIN GREEN'S TENSOR (STG)
+	if (SIMULATION_TYPE==2){
+	  delete [] ux_dx;
+	  delete [] ux_dy;
+	  delete [] ux_dz;
+	  delete [] uy_dx;
+	  delete [] uy_dy;
+	  delete [] uy_dz;
+	  delete [] uz_dx;
+	  delete [] uz_dy;
+	  delete [] uz_dz;
+	  delete [] Hxx;
+	  delete [] Hxy;
+	  delete [] Hxz;
+	  delete [] Hyy;
+	  delete [] Hyz;
+	  delete [] Hzz;
+	}
 	
 
 	if (Nsdm.x == 0){
@@ -326,9 +334,21 @@ void SDM::InitVar(Dfloat f){
     df_dI[i] = f;
     df_dJ[i] = f;
     df_dK[i] = f;
-
-
   }
+
+  if (SIMULATION_TYPE==2){
+    for (int i=0; i<SDMGeom->HALO_Node(); ++i){
+      ux_dx[i] = f;
+      ux_dy[i] = f;
+      ux_dz[i] = f;
+      uy_dx[i] = f;
+      uy_dy[i] = f;
+      uy_dz[i] = f;
+      uz_dx[i] = f;
+      uz_dy[i] = f;
+      uz_dz[i] = f;
+    }
+	}
 
   
 
@@ -757,6 +777,7 @@ void SDM::AddVal(VecI indx, char *NameVar, Dfloat Val){
   int i;
   
   ind = SFindNode(indx);
+  //ind = indx;
 
   if ((ind.x > -1) && (ind.y > -1) && (ind.z > -1)) {
 
@@ -814,6 +835,7 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
   int i;
 
   ind = SFindNode(indx);
+  //ind = indx;
 
   if ((ind.x > -1) && (ind.y > -1) && (ind.z > -1)) {
 
@@ -912,6 +934,18 @@ void SDM:: FD_SII(VecI Init,VecI Iend){
     
     }
 
+  if ((PROPAGATION == 0) && (SIMULATION_TYPE == 2)){
+    FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+      // ux_dx[IJK(ix,iy,iz)] = ux_dx[IJK(ix,iy,iz)] + sgn * df_dI[IJK(ix,iy,iz)] * dt;
+      // uy_dy[IJK(ix,iy,iz)] = uy_dy[IJK(ix,iy,iz)] + sgn * df_dJ[IJK(ix,iy,iz)] * dt;
+      // uz_dz[IJK(ix,iy,iz)] = uz_dz[IJK(ix,iy,iz)] + sgn * df_dK[IJK(ix,iy,iz)] * dt;
+      
+      ux_dx[IJK(ix,iy,iz)] = df_dI[IJK(ix,iy,iz)];
+      uy_dy[IJK(ix,iy,iz)] = df_dJ[IJK(ix,iy,iz)];
+      uz_dz[IJK(ix,iy,iz)] = df_dK[IJK(ix,iy,iz)];
+      
+    END_FOR_IJK
+      }
 
 
   FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
@@ -968,9 +1002,9 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	    
 	  df_dK[IJK(ix,iy,iz)] = -( (35.0 / 8.0) * sxz[IJK(ix,iy,iz-1)] \
-		    - (35.0 / 24.0) * sxz[IJK(ix,iy,iz-2)] \
-		    + (21.0 / 40.0) * sxz[IJK(ix,iy,iz-3)] \
-		    - (5.0 / 56.0) * sxz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
+				    - (35.0 / 24.0) * sxz[IJK(ix,iy,iz-2)] \
+				    + (21.0 / 40.0) * sxz[IJK(ix,iy,iz-3)] \
+				    - (5.0 / 56.0) * sxz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
 	  END_FOR_IJ
 
 	} else if (zh == 2) { // Free Surface Z == h;
@@ -978,9 +1012,9 @@ void SDM::Free_VX(VecI Init,VecI Iend,int zh){
 	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	    
 	  df_dK[IJK(ix,iy,iz)] = -( - (31.0 / 24.0) * sxz[IJK(ix,iy,iz)] \
-		    + (29.0 / 24.0) * sxz[IJK(ix,iy,iz-1)] \
-		    - (3.0 / 40.0) * sxz[IJK(ix,iy,iz-2)] \
-		    + (1.0 / 168.0) * sxz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+				    + (29.0 / 24.0) * sxz[IJK(ix,iy,iz-1)] \
+				    - (3.0 / 40.0) * sxz[IJK(ix,iy,iz-2)] \
+				    + (1.0 / 168.0) * sxz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
 	  END_FOR_IJ
 	  
 	}
@@ -1123,10 +1157,10 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 
 	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 	
-	  df_dK[IJK(ix,iy,iz)] = -( (35.0 / 8.0) * syz[IJK(ix,iy,iz-1)] \
-		    - (35.0 / 24.0) * syz[IJK(ix,iy,iz-2)] \
-		    + (21.0 / 40.0) * syz[IJK(ix,iy,iz-3)] \
-		    - (5.0 / 56.0) * syz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
+	    df_dK[IJK(ix,iy,iz)] = -((35.0 / 8.0) * syz[IJK(ix,iy,iz-1)] \
+				      - (35.0 / 24.0) * syz[IJK(ix,iy,iz-2)] \
+				      + (21.0 / 40.0) * syz[IJK(ix,iy,iz-3)] \
+				      - (5.0 / 56.0) * syz[IJK(ix,iy,iz-4)] ) / SDMGeom->Dz();
 
 	  END_FOR_IJ
 
@@ -1135,9 +1169,9 @@ void SDM::Free_VY(VecI Init,VecI Iend, int zh){
 	  FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
 	  df_dK[IJK(ix,iy,iz)] = -( - (31.0 / 24.0) * syz[IJK(ix,iy,iz)] \
-		    + (29.0 / 24.0) * syz[IJK(ix,iy,iz-1)] \
-		    - (3.0 / 40.0) * syz[IJK(ix,iy,iz-2)] \
-		    + (1.0 / 168.0) * syz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+				    + (29.0 / 24.0) * syz[IJK(ix,iy,iz-1)] \
+				    - (3.0 / 40.0) * syz[IJK(ix,iy,iz-2)] \
+				    + (1.0 / 168.0) * syz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
 
 	  END_FOR_IJ
 	  
@@ -1296,11 +1330,10 @@ void SDM::Free_VZ(VecI Init,VecI Iend){
 		  C0 * (syz[IJK(ix,iy+1,iz)] - syz[IJK(ix,iy-2,iz)]) ) / SDMGeom->Dy();
 
 
-	df_dK[IJK(ix,iy,iz)] = -( - (11.0 / 12.0) * szz[IJK(ix,iy,iz+1)] \
-		  + (17.0 / 24.0) * szz[IJK(ix,iy,iz)] \
-		  + (3.0 / 8.0) * szz[IJK(ix,iy,iz-1)]\
-		  - (5.0 / 24.0) * szz[IJK(ix,iy,iz-2)] \
-		  + (1.0 / 24.0) * szz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
+	df_dK[IJK(ix,iy,iz)] = -( + (17.0 / 24.0) * szz[IJK(ix,iy,iz)] \
+				  + (3.0 / 8.0) * szz[IJK(ix,iy,iz-1)] \
+				  - (5.0 / 24.0) * szz[IJK(ix,iy,iz-2)] \
+				  + (1.0 / 24.0) * szz[IJK(ix,iy,iz-3)] ) / SDMGeom->Dz();
  END_FOR_IJ	
 	
 
@@ -1476,6 +1509,17 @@ void SDM::FD_SXY(VecI Init,VecI Iend){
 
 	}
 
+
+   if ((PROPAGATION == 0) && (SIMULATION_TYPE == 2)){
+    FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+      // ux_dy[IJK(ix,iy,iz)] = ux_dy[IJK(ix,iy,iz)] + sgn * df_dJ[IJK(ix,iy,iz)] * dt;
+      // uy_dx[IJK(ix,iy,iz)] = uy_dx[IJK(ix,iy,iz)] + sgn * df_dI[IJK(ix,iy,iz)] * dt;
+
+      ux_dy[IJK(ix,iy,iz)] = df_dJ[IJK(ix,iy,iz)];
+      uy_dx[IJK(ix,iy,iz)] = df_dI[IJK(ix,iy,iz)];
+      
+    END_FOR_IJK
+      }
 	
       FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	
@@ -1589,6 +1633,18 @@ void SDM::FD_SXZ(VecI Init,VecI Iend){
 	
 	}
 
+
+   if ((PROPAGATION == 0) && (SIMULATION_TYPE == 2)){
+    FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+
+      // ux_dz[IJK(ix,iy,iz)] = ux_dz[IJK(ix,iy,iz)] + sgn * df_dK[IJK(ix,iy,iz)] * dt;
+      // uz_dx[IJK(ix,iy,iz)] = uz_dx[IJK(ix,iy,iz)] + sgn * df_dI[IJK(ix,iy,iz)] * dt;
+
+      ux_dz[IJK(ix,iy,iz)] = df_dK[IJK(ix,iy,iz)];
+      uz_dx[IJK(ix,iy,iz)] = df_dI[IJK(ix,iy,iz)];
+      
+    END_FOR_IJK
+      }
 
 
       FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
@@ -1706,6 +1762,19 @@ void SDM::FD_SYZ(VecI Init,VecI Iend){
       END_FOR_IJK
 
 	}
+
+
+   if ((PROPAGATION == 0) && (SIMULATION_TYPE == 2)){
+    FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
+
+      // uy_dz[IJK(ix,iy,iz)] = uy_dz[IJK(ix,iy,iz)] + sgn * df_dK[IJK(ix,iy,iz)] * dt;
+      // uz_dy[IJK(ix,iy,iz)] = uz_dy[IJK(ix,iy,iz)] + sgn * df_dJ[IJK(ix,iy,iz)] * dt;
+
+      uy_dz[IJK(ix,iy,iz)] = df_dK[IJK(ix,iy,iz)];
+      uz_dy[IJK(ix,iy,iz)] = df_dJ[IJK(ix,iy,iz)];
+      
+    END_FOR_IJK
+      }
 	
       FOR_IJK(iz,zinit,zend,iy,yinit,yend,ix,xinit,xend)
 	
@@ -1761,8 +1830,8 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
 	FOR_IJ(iy,yinit,yend,ix,xinit,xend)
 
-	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz)]) + (0.50 / mu[IJK(ix+1,iy,iz)]));
-	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz)]) + (0.50 / lamb[IJK(ix+1,iy,iz)]));
+	mu_avg = 1.0 / ((0.50 / mu[IJK(ix,iy,iz+1)]) + (0.50 / mu[IJK(ix+1,iy,iz+1)]));
+	lamb_avg = 1.0 / ((0.50 / lamb[IJK(ix,iy,iz+1)]) + (0.50 / lamb[IJK(ix+1,iy,iz+1)]));
 	  
 	df_dI_free = ( C1 * (vx[IJK(ix+1,iy,iz+1)] - vx[IJK(ix,iy,iz+1)]) - \
 		  C0 * (vx[IJK(ix+2,iy,iz+1)] - vx[IJK(ix-1,iy,iz+1)]) ) / SDMGeom->Dx();
@@ -1773,10 +1842,18 @@ void SDM::Free_SII(VecI Init,VecI Iend, int zh){
 
 	  d_free = - (df_dI_free + df_dJ_free) * (lamb_avg / (lamb_avg + 2.0 * mu_avg)) * SDMGeom->Dz();
 
-	  df_dK[IJK(ix,iy,iz)] = -(1.0 / SDMGeom->Dz()) * ( - (1.0 / 22.0) * d_free - (577.0 / 528.0) * vz[IJK(ix,iy,iz)] \
-				    + (201.0 / 176.0) * vz[IJK(ix,iy,iz-1)] \
-				    - (9.0 / 176.0) * vz[IJK(ix,iy,iz-2)] \
-					    + (1.0 / 528.0) * vz[IJK(ix,iy,iz-3)] );
+	  df_dK[IJK(ix,iy,iz)] = - (1.0 / SDMGeom->Dz()) * ( - (1.0 / 22.0) * d_free \
+	  						     - (577.0 / 528.0) * vz[IJK(ix,iy,iz)] \
+	  						     + (201.0 / 176.0) * vz[IJK(ix,iy,iz-1)] \
+	  						     - (9.0 / 176.0) * vz[IJK(ix,iy,iz-2)] \
+							     + (1.0 / 528.0) * vz[IJK(ix,iy,iz-3)] );
+
+
+	 // df_dK[IJK(ix,iy,iz)] = - (1.0 / SDMGeom->Dz()) * ( - (11.0 / 12.0) * vz[IJK(ix,iy,iz)] \
+	 // 						     + (17.0 / 24.0) * vz[IJK(ix,iy,iz-1)] \
+	 // 						     + (3.0 / 8.0) * vz[IJK(ix,iy,iz-2)] \
+	 // 						     - (5.0 / 24.0) * vz[IJK(ix,iy,iz-3)] \
+	 // 						     + (1.0 / 24.0) * vz[IJK(ix,iy,iz-4)] );
 
 	END_FOR_IJ
 	   
@@ -2349,11 +2426,11 @@ void SDM::InitSource(geometry3D *GDomain,std::string nFile,int nsource,int SrcFi
   }
 
 
-  idx_source = new VecI[nsource];
+  // idx_source = new VecI[nsource];
 	  
-  for (int i = 0; i<sourceM->ns; ++i){
-    idx_source[i] = SFindNode(sourceM->pos_src[i]);
-  }
+  // for (int i = 0; i<sourceM->ns; ++i){
+  //   idx_source[i] = SFindNode(sourceM->pos_src[i]);
+  // }
   
 }
 
@@ -2400,20 +2477,36 @@ void SDM::InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
 
 void SDM::AddSourceAdj(int itime){
   Dfloat Rvx,Rvy,Rvz;
-  Dfloat rho_cte;
+  //Dfloat rho_cte;
+  Dfloat rho_vz,rho_vx,rho_vy;
+  int ix,iy,iz;
 
    for (int i = 0; i<station->nr; ++i){
     
      
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
 	   (idx_station[i].z > -1) ){
+    
+	ix = idx_station[i].x;
+	iy = idx_station[i].y;
+	iz = idx_station[i].z;
+    
+	rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		   rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+
+	rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		   rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+	rho_vx = rho[IJK(ix,iy,iz)];
+
+	//std::cout<<rho_vx<<" "<<rho_vy<<" "<<rho_vx<<std::endl;
 
 
-	rho_cte = 2700.0;
+	//rho_cte = 2700.0;
 
-	AddVal(station->pos_recep[i],"VX", (dt / rho_cte) * station->vx_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VY", (dt / rho_cte) * station->vy_ad[itime + station->nt * i]);
-	AddVal(station->pos_recep[i],"VZ", (dt / rho_cte) * station->vz_ad[itime + station->nt * i]);
+	AddVal(idx_station[i],"VX", (dt / rho_vx) * station->vx_ad[itime + station->nt * i]);
+	AddVal(idx_station[i],"VY", (dt / rho_vy) * station->vy_ad[itime + station->nt * i]);
+	AddVal(idx_station[i],"VZ", (dt / rho_vz) * station->vz_ad[itime + station->nt * i]);
         
       }
    }
@@ -2465,9 +2558,9 @@ void SDM::GetRecept(int ktime){
       if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
 	   (idx_station[i].z > -1) ){
 
-	Rvx[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VX");
-	Rvy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VY");
-	Rvz[ktime + i * station->nt] = GetVal(station->pos_recep[i],"VZ");
+	Rvx[ktime + i * station->nt] = GetVal(station->pos_vx[i],"VX");
+	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
+	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
 
 	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
@@ -2484,10 +2577,14 @@ void SDM::AddSource(int itime, int T_SRC){
 
   Dfloat st = 0;
   Dfloat st_sinc;
+  VecI b_vx,b_vy,b_vz,b;
+  int ix,iy,iz;
+  Dfloat rho_vz,rho_vx,rho_vy;
+  VecI idx_source_rho;
 
 
   for (int i = 0; i<sourceM->ns; ++i){
-
+      
     if (FileSrcB == 0){
     st = sourceM->sourceType(sourceM->d_t0[i],f0,itime,dt,T_SRC);
     } else if (FileSrcB == 1){
@@ -2497,17 +2594,69 @@ void SDM::AddSource(int itime, int T_SRC){
     // SAVE SOURCE TIME FUNCTION FILE 
     srct[itime] = st;
     
-    VecI b = sourceM->pos_src[i];
+    b_vx = sourceM->pos_vx[i];
+    b_vy = sourceM->pos_vy[i];
+    b_vz = sourceM->pos_vz[i];
+   
 
-
-    // Vertical Source
+     // Vertical Source
     if (sourceM->M0[i] < 0) {
 
-      Dfloat rho_cte = 2700.0;
-      st *= (dt / rho_cte);
-      AddVal({b.x,b.y,b.z},"VX", st * sourceM->Myy[i]*sgn);
-      AddVal({b.x,b.y,b.z},"VY", st * sourceM->Mxx[i]*sgn);
-      AddVal({b.x,b.y,b.z},"VZ", st * sourceM->Mzz[i]*sgn);
+
+      st *= (dt / (SDMGeom->Dx() * SDMGeom->Dy() * SDMGeom->Dz()));
+      
+      idx_source_rho = SFindNode(b_vx);
+
+      if ( (idx_source_rho.x > -1) && (idx_source_rho.y > -1) && \
+	   (idx_source_rho.z > -1) ){
+	
+      ix = idx_source_rho.x;
+      iy = idx_source_rho.y;
+      iz = idx_source_rho.z;
+
+      rho_vx = rho[IJK(ix,iy,iz)];
+
+      //std::cout<<rho_vx<<" vx_rho "<<std::endl;
+
+      AddVal({b_vx.x,b_vx.y,b_vx.z},"VX", st * sourceM->Mxx[i]*sgn / rho_vx);
+
+      }
+
+      idx_source_rho = SFindNode(b_vy);
+
+      if ( (idx_source_rho.x > -1) && (idx_source_rho.y > -1) && \
+	   (idx_source_rho.z > -1) ){
+	
+      ix = idx_source_rho.x;
+      iy = idx_source_rho.y;
+      iz = idx_source_rho.z;
+
+      rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		 rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+      //std::cout<<rho_vy<<" vy_rho "<<std::endl;
+
+      AddVal({b_vy.x,b_vy.y,b_vy.z},"VY", st * sourceM->Myy[i]*sgn / rho_vy);
+
+      }
+
+      idx_source_rho = SFindNode(b_vz);
+
+      if ( (idx_source_rho.x > -1) && (idx_source_rho.y > -1) && \
+	   (idx_source_rho.z > -1) ){
+	
+      ix = idx_source_rho.x;
+      iy = idx_source_rho.y;
+      iz = idx_source_rho.z;
+
+      rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+
+      //std::cout<<rho_vz<<" vz_rho "<<std::endl;
+
+      AddVal({b_vz.x,b_vz.y,b_vz.z},"VZ", st * sourceM->Mzz[i]*sgn / rho_vz);
+
+      }
 	
       // Moment Tensor Source
     } else if (sourceM->M0[i] > 0) {
@@ -2536,32 +2685,64 @@ void SDM::AddSource(int itime, int T_SRC){
     // AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
     // AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
 
-
+    b = sourceM->pos_src[i];
     
-
-    Dfloat w_sii,w_sxy,w_sxz;
+    if (sourceM->src_flag_r < 0) {
+      Dfloat w_sii,w_sxy,w_sxz;
     AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
     
-    for (int j = -3;j<=4;j++){
-      for (int k = -3;k<=4;k++){
+    for (int j = 0;j<8;j++){
+      for (int k = 0;k<=8;k++){
 	
-    	w_sii = sourceM->sinc_wy[3 + j] * sourceM->sinc_wz[3 + k] * (1.0 / SDMGeom->Dx());
-    	w_sxy = sourceM->sinc_wx[3 + j] * sourceM->sinc_wz[3 + k] * (1.0 / SDMGeom->Dy());
-    	w_sxz = sourceM->sinc_wx[3 + j] * sourceM->sinc_wy[3 + k] * (1.0 / SDMGeom->Dz());
+    	w_sii = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dx());
+    	w_sxy = sourceM->sinc_wx[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dy());
+    	w_sxz = sourceM->sinc_wx[j] * sourceM->sinc_wy[k] * (1.0 / SDMGeom->Dz());
 	
-    	AddVal({b.x,b.y+j,b.z+k},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
-    	AddVal({b.x,b.y+j,b.z+k},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
-    	AddVal({b.x,b.y+j,b.z+k},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
-    	AddVal({b.x+j,b.y,b.z+k},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
-    	AddVal({b.x+j,b.y+k,b.z},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
+    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
+    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
+    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
+    	AddVal({b.x + sourceM->idx[j],b.y,b.z + sourceM->idx[k]},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
+    	AddVal({b.x + sourceM->idx[j],b.y + sourceM->idx[k],b.z},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
       }
     }
-    
-  
+
     }
 
+
+    if (sourceM->src_flag_r > 0) {
+      Dfloat w_sii,w_sxy,w_sxz,w_syz;
+      for (int k = 0;k<8;k++){
+	for (int j = 0;j<8;j++){
+	  for (int i = 0;i<8;i++){
+
+	    w_syz = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * sourceM->sinc_wx[i];
+	    AddVal({b.x + sourceM->idx[i],b.y + sourceM->idx[j] ,b.z + sourceM->idx[k]},"SYZ",\
+		   -st_sinc * sourceM->Mxz[i]*sgn* w_syz);
+	  }
+	}
+      }
+      
+      for (int j = 0;j<8;j++){
+    	w_sii = sourceM->sinc_wx[j] * (1.0 / SDMGeom->Dy()) * (1.0 / SDMGeom->Dz()) ;
+    	w_sxy = sourceM->sinc_wy[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dz()) ;
+    	w_sxz = sourceM->sinc_wz[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dy()) ;
+	
+    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
+    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
+    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
+    	AddVal({b.x,b.y + sourceM->idx[j],b.z},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
+    	AddVal({b.x,b.y,b.z + sourceM->idx[j]},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
+      }
+    }
+
+    
+
+    }
+
+
+    
+
   }
-  
 
 }
 
@@ -3594,6 +3775,107 @@ void SDM::ReadBoundaries(int itime,int nt){
    }
   
 }
+
+
+void SDM::WriteFile(Dfloat *var,int size,char *nfile){
+  int idx_sub;
+  MPI_File fhw;
+  MPI_Status status;
+  char filename[200];
+
+  idx_sub = Nsdm.x + Nsdm.y * NumSubDom.x + Nsdm.z *  NumSubDom.x *  NumSubDom.y;
+  
+  sprintf(filename,"DATA/%s-%d.bin",nfile,idx_sub);
+  MPI_File_open(MPI_COMM_SELF,filename,MPI_MODE_CREATE|MPI_MODE_WRONLY|MPI_MODE_APPEND,MPI_INFO_NULL,&fhw);
+  MPI_File_write(fhw,var,size,MY_MPI_Dfloat,&status);
+  MPI_File_close(&fhw);
+
+}
+
+
+
+void SDM::WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource){
+  int nxt,nyt,nzt,nk;
+  char name[200];
+  int ktime,xt,yt,zt,idx;
+
+  nxt = (int) (SDMGeom->L_NodeX() / sgt.x);
+  nyt = (int) (SDMGeom->L_NodeY() / sgt.y);
+  nzt = (int) (SDMGeom->L_NodeZ() / sgt.z);
+
+ 
+  if (itime == 0){
+    Hxx = new Dfloat [nxt * nyt * nzt * dsk];
+    Hxy = new Dfloat [nxt * nyt * nzt * dsk];
+    Hxz = new Dfloat [nxt * nyt * nzt * dsk];
+    Hyy = new Dfloat [nxt * nyt * nzt * dsk];
+    Hyz = new Dfloat [nxt * nyt * nzt * dsk];
+    Hzz = new Dfloat [nxt * nyt * nzt * dsk];
+
+  }
+
+  ktime = itime - dsk * (int) (itime/dsk);
+
+  zt = 0;
+   for (int k=HALO.z;k<SDMGeom->L_NodeZ() + HALO.z;k +=sgt.z){
+     yt = 0;
+      for (int j=HALO.y;j<SDMGeom->L_NodeY() + HALO.y;j +=sgt.y){
+  	xt = 0;
+  	for (int i=HALO.x;i<SDMGeom->L_NodeX() + HALO.x;i +=sgt.x){
+  	  idx = xt + yt * nxt + zt * nyt * nxt + ktime * ( nxt * nyt * nzt);	  
+  	  Hxx[idx] = ux_dx[IJK(i,j,k)];
+  	  Hxy[idx] = 0.5 * (ux_dy[IJK(i,j,k)] + uy_dx[IJK(i,j,k)]);
+  	  Hxz[idx] = 0.5 * (ux_dz[IJK(i,j,k)] + uz_dx[IJK(i,j,k)]);
+  	  Hyy[idx] = uy_dy[IJK(i,j,k)];
+  	  Hyz[idx] = 0.5 * (uy_dz[IJK(i,j,k)] + uz_dy[IJK(i,j,k)]);
+  	  Hzz[idx] = uz_dz[IJK(i,j,k)];
+
+  	  xt++;
+  	}
+  	yt++;
+      }
+      zt++;
+   }
+
+  
+
+
+   if ( ((ktime + 1) == dsk)  || ((itime + 1) == nt) ){
+
+     
+
+     if ((nt % dsk) == 0){
+       nk = dsk;
+     } else {
+       nk = int(nt % dsk);
+     }
+
+
+     sprintf(name,"Hxx-%s",NameSource);
+     WriteFile(Hxx,nxt*nyt*nzt * nk,name);
+     
+     sprintf(name,"Hxy-%s",NameSource);
+     WriteFile(Hxy,nxt*nyt*nzt * nk,name);
+
+     sprintf(name,"Hxz-%s",NameSource);
+     WriteFile(Hxz,nxt*nyt*nzt * nk,name);
+
+     sprintf(name,"Hyy-%s",NameSource);
+     WriteFile(Hyy,nxt*nyt*nzt * nk,name);
+
+     sprintf(name,"Hyz-%s",NameSource);
+     WriteFile(Hyz,nxt*nyt*nzt * nk,name);
+
+     sprintf(name,"Hzz-%s",NameSource);
+     WriteFile(Hzz,nxt*nyt*nzt * nk,name);
+
+   }
+   
+
+}
+
+
+
 
 void SDM::PrintInf(){
   // SOURCE INFORMATION

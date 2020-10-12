@@ -26,8 +26,8 @@
 
 // PRECISION OF OPERATIONS //
 
-#define ZERO 0.0
-#define ONE  1.0
+#define ZERO 0.000000000000
+#define ONE  1.000000000000
 #define DREAL float
 typedef DREAL Dfloat;
 

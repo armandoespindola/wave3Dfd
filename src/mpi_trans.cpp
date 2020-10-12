@@ -433,7 +433,8 @@ void MPI_DATA::Merge(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank,MP
 
 
 
-void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name,MPI_Comm COM3D){
+void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int rank, char *name,char *filemode,\
+			  MPI_Comm COM3D,VecI ds){
 
   if (rank == 0) {
 
@@ -493,11 +494,11 @@ void MPI_DATA::MergePrint(Dfloat *LocVar,int NX,int NY, int NZ,VecI *subi,int ra
 
     FILE *R;
 
-    R=fopen(name,"wb");
+    R=fopen(name,filemode);
 
-    for (int k=PML.z;k<NZ;k++){
-	for (int j=PML.y;j<NY-PML.y;j++){
-	  for (int i=PML.x;i<NX-PML.x;i++){
+    for (int k=PML.z;k<NZ;k=k+ds.z){
+	for (int j=PML.y;j<NY-PML.y;j=j+ds.y){
+	  for (int i=PML.x;i<NX-PML.x;i=i+ds.x){
 
 
 	     GlobIdx = i + j * NX + k * NX * NY;

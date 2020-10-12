@@ -46,10 +46,15 @@ public:
   Dfloat *Mxx,*Myy,*Mzz,*Mxy,*Mxz,*Myz;
   Dfloat *strike,*dip,*slip,*azimuth,*M0,*d_t0;
   Dfloat *xcoord,*ycoord,*zcoord;
+  std::string *nameSource;
   Dfloat sinc_wx[8],sinc_wy[8],sinc_wz[8];
-  VecI *pos_src;
+  Dfloat idx[8];
+  VecI *pos_vx,*pos_vy,*pos_vz,*pos_sii,*pos_sxy,*pos_sxz,*pos_syz,*pos_src;
+  VecF *coor_vx,*coor_vy,*coor_vz,*coor_sii,*coor_sxy,*coor_sxz,*coor_syz;
   int ns;
   int *nshift;
+  Dfloat *src_r_half,*src_r;
+  int *src_flag_r;
 
   source(geometry3D* domain, std::string nFile,int nsource);
 
@@ -62,10 +67,10 @@ public:
 
   // PRINT INFORMATION ABOUT SOURCES
   void PrintInf();
-
+  
   // WEIGHT SINC FUNCTION
   void w_sinc(int freeSurf,int is);
-
+  
   
   
 

@@ -43,7 +43,7 @@ protected:
 	// dt DELTA T
         // Nsdm SUBDOMAIN INDEX
         // TOTAL NUMBER SUBDOMAIN NumSubDom
-	// PROPAGATION; 0 FORWARD PROPAGATION; 1 REVERSE PROPAGATION
+	// PROPAGATION; 0 FORWARD PROPAGATION; 1 FORWARD PROPAGATION RECONSTRUCTION
 
 	VecF GI,GF;
 	DPML *pml_x,*pml_y,*pml_z;
@@ -67,8 +67,6 @@ protected:
         Dfloat *df_dI,*df_dJ,*df_dK;
 
   // SOURCE MOMENT TENSOR
-
-  source *sourceM;
   VecI *idx_source;
   int ntimesrc;
   // RECEPTORS
@@ -93,7 +91,7 @@ protected:
 public:
 
   // GEOMETRY MODEL
-  geometry3D *SDMGeom;
+  geometry3D *SDMGeom,*GDMGeom;
   Dfloat f0,dt;
   int N_omp;
   VecI PML;
@@ -107,12 +105,14 @@ public:
         Dfloat *ux_dx,*ux_dy,*ux_dz;
         Dfloat *uy_dx,*uy_dy,*uy_dz;
         Dfloat *uz_dx,*uz_dy,*uz_dz;
+        Dfloat *Hxx,*Hyy,*Hzz,*Hxy,*Hxz,*Hyz;
 
   VecI NumSubDom,Nsdm;
 	VecI NodLoc;
   std::string FileSrc;
   int FileSrcB;
   Dfloat *srct;
+  source *sourceM;
 
 	// GI INITIAL GLOBAL LIMIT
 	// GF END GLOBAL LIMIT 
@@ -124,8 +124,8 @@ public:
 	// dt DELTA T 
 
 
-  SDM(VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, VecI CMPL, \
-      Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom,int iPROPAGATION);
+  SDM(geometry3D *iGDMGeom,VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF IlimF, VecI INod, VecI CMPL, \
+      Dfloat If0, Dfloat Idt, VecI INsdm,VecI INumSubDom,int iPROPAGATION,int iSIMULATION_TYPE);
 
 
   ~SDM();
@@ -272,6 +272,10 @@ public:
   void loadfile(Dfloat * Var,char *nfile, int ktime);
 
   void file(char* NameVar,int time, int io);
+
+  void WriteFile(Dfloat *var,int size,char *nfile);
+  
+  void WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource);
 
   int BNorth();
   int BSouth();
