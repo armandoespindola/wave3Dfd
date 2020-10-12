@@ -4,14 +4,19 @@ O=obj
 E=bin
 
 
-_OBJS=geometry3D.o model.o mpi_trans.o pml.o sdm.o show.o source.o parameters.o\
-	source.o receptor.o kernels.o utilities.o wave3Dfd.o
+_OBJS1=geometry3D.o model.o mpi_trans.o pml.o sdm.o show.o source.o parameters.o\
+	source.o receptor.o kernels.o fdt.o utilities.o wave3Dfd.o
 
-OBJS=$(patsubst %,$(O)/%,$(_OBJS))
+OBJS1=$(patsubst %,$(O)/%,$(_OBJS1))
+
+
+_OBJS2=geometry3D.o model.o mpi_trans.o pml.o sdm.o show.o source.o parameters.o\
+	source.o receptor.o kernels.o fdt.o utilities.o MergeSGT.o
+
+OBJS2=$(patsubst %,$(O)/%,$(_OBJS2))
 
 CFLAGS = -std=c++11 -w -O2 -I   
 LIBS = -lm
-TARGET = wave3Dfd.out
 
 detected_OS := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 
@@ -23,10 +28,13 @@ ifeq ($(detected_OS),Linux)
 endif
 
 
-all: ${TARGET}
+all: wave3Dfd.out MergeSGT.out
 
-${TARGET}: $(OBJS)
-	${CC} -o ${E}/${TARGET} $^ $(CFLAGS) $(LIBS)
+wave3Dfd.out: $(OBJS1) 
+	${CC} -o ${E}/wave3Dfd.out $^ $(CFLAGS) $(LIBS)
+
+MergeSGT.out: $(OBJS2)
+	${CC} -o ${E}/MergeSGT.out $^ $(CFLAGS) $(LIBS)
 
 $O/%.o: $S/%.cpp $S/%.hpp
 	${CC} -c -o $@ $< ${CFLAGS}
