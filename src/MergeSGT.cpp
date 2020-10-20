@@ -56,7 +56,7 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
   sprintf(name,"DATA/%s-%d.bin",FileName,rank);
 
   if (rank ==0){
-  std::cout<< "Reading File: "<<name<<std::endl;
+  std::cout<< "Reading File: "<<FileName<<std::endl;
   }
 
   

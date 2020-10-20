@@ -36,6 +36,10 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
   pos_vx = new VecI[nr];
   pos_vy = new VecI[nr];
   pos_vz = new VecI[nr];
+  pos_sii = new VecI[nr];
+  pos_sxy = new VecI[nr];
+  pos_sxz = new VecI[nr];
+  pos_syz = new VecI[nr];
 
   vx_ad = new Dfloat[nt * nr];
   vy_ad = new Dfloat[nt * nr];
@@ -99,6 +103,10 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
    pos_vx[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,0,0});
    pos_vy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,0});
    pos_vz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,1});
+   pos_sii[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,0,0});
+   pos_sxy[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,1,0});
+   pos_sxz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{0,0,1});
+   pos_syz[i] = GDomain->FindNode({xcoord[i],ycoord[i],zcoord[i]},{1,1,1});
   
    // std::cout<<i<<" "<<pos_vx[i].x<<" "<<pos_vx[i].y<<" "<<pos_vx[i].z<<"Receptor"<<std::endl;
    // std::cout<<i<<" "<<pos_vy[i].x<<" "<<pos_vy[i].y<<" "<<pos_vy[i].z<<"Receptor"<<std::endl;
@@ -189,6 +197,10 @@ receptor::~receptor(){
   delete [] pos_vx;
   delete [] pos_vy;
   delete [] pos_vz;
+  delete [] pos_sii;
+  delete [] pos_sxy;
+  delete [] pos_sxz;
+  delete [] pos_syz;
   
 
   GDomain = NULL;

@@ -130,6 +130,15 @@ SDM::SDM(geometry3D *iGDMGeom,VecF IGI, VecF IGF,VecI I_NodG,VecF IlimI, VecF Il
 	  uz_dx = new Dfloat [SDMGeom->HALO_Node()];
 	  uz_dy = new Dfloat [SDMGeom->HALO_Node()];
 	  uz_dz = new Dfloat [SDMGeom->HALO_Node()];
+	  
+	  Hxx_r = new Dfloat [SDMGeom->HALO_Node()];
+	  Hyy_r = new Dfloat [SDMGeom->HALO_Node()];
+	  Hzz_r = new Dfloat [SDMGeom->HALO_Node()];
+	  Hxy_r = new Dfloat [SDMGeom->HALO_Node()];
+	  Hxz_r = new Dfloat [SDMGeom->HALO_Node()];
+	  Hyz_r = new Dfloat [SDMGeom->HALO_Node()];
+
+	  
 	}
 
 
@@ -223,6 +232,13 @@ SDM::~SDM(){
 	  delete [] Hyy;
 	  delete [] Hyz;
 	  delete [] Hzz;
+
+	  delete [] Hxx_r;
+	  delete [] Hxy_r;
+	  delete [] Hxz_r;
+	  delete [] Hyy_r;
+	  delete [] Hyz_r;
+	  delete [] Hzz_r;
 	}
 	
 
@@ -879,6 +895,30 @@ Dfloat SDM::GetVal(VecI indx, char *NameVar){
     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
       SDMGeom->HALO_NodeY();
     Val = vz[i];
+  } else if (strcmp("Hxx",NameVar) == 0){
+    i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+      SDMGeom->HALO_NodeY();
+    Val = Hxx_r[i];
+  } else if (strcmp("Hyy",NameVar) == 0){
+    i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+      SDMGeom->HALO_NodeY();
+    Val = Hyy_r[i];
+   } else if (strcmp("Hzz",NameVar) == 0){
+     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+       SDMGeom->HALO_NodeY();
+     Val = Hzz_r[i];
+   } else if (strcmp("Hxy",NameVar) == 0){
+     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+       SDMGeom->HALO_NodeY();
+     Val = Hxy_r[i];
+   } else if (strcmp("Hxz",NameVar) == 0){
+     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+       SDMGeom->HALO_NodeY();
+     Val = Hxz_r[i];
+   } else if (strcmp("Hyz",NameVar) == 0){
+     i = ind.x + ind.y * SDMGeom->HALO_NodeX() + ind.z * SDMGeom->HALO_NodeX() * \
+       SDMGeom->HALO_NodeY();
+     Val = Hyz_r[i];
   } else {
     std::cout<<"SDM::GetVal:: IT IS NOT A VARIABLE OPTION:"<<NameVar<<std::endl;
   }
@@ -2453,6 +2493,26 @@ void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
 }
 
 
+void SDM::InitReceptSGT(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
+
+  station  = new receptor(GDomain,nFile,nrecep,nt);
+  Rhxx = new Dfloat[station->nt * station->nr];
+  Rhxy = new Dfloat[station->nt * station->nr];
+  Rhxz = new Dfloat[station->nt * station->nr];
+  Rhyy = new Dfloat[station->nt * station->nr];
+  Rhyz = new Dfloat[station->nt * station->nr];
+  Rhzz = new Dfloat[station->nt * station->nr];
+  
+  idx_station = new VecI[nrecep];
+
+  for (int i = 0; i<station->nr; ++i){
+    idx_station[i] = SFindNode(station->pos_recep[i]);
+  }
+  
+ 
+}
+
+
 void SDM::InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
   
   station  = new receptor(GDomain,nFile,nrecep,nt);
@@ -2550,6 +2610,83 @@ void SDM::EndRecept(){
 }
 
 
+
+void SDM::EndReceptSGT(){
+  FILE *F;
+  char NameFile[200];
+  
+  for (int i = 0; i<station->nr; ++i){
+ 
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) &&\
+	   (idx_station[i].z > -1) ){
+
+	//station->FileOpen(i,PROPAGATION);
+
+	sprintf(NameFile,"DATA/%s-Mxx.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhyy + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+
+	sprintf(NameFile,"DATA/%s-Myy.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhxx + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+
+	sprintf(NameFile,"DATA/%s-Mzz.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhzz + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+	
+	sprintf(NameFile,"DATA/%s-Mxy.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhxy + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+	// The negative sign is in  GetVal()
+	
+	sprintf(NameFile,"DATA/%s-Mxz.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhyz + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+	sprintf(NameFile,"DATA/%s-Myz.bin" ,station->nameStation[i].c_str());
+	F = fopen(NameFile,"wb");
+	fwrite( Rhxz + i * station->nt,sizeof(Dfloat),station->nt,F);
+	fclose(F);
+
+
+	
+
+	//for (int ktime=0; ktime<station->nt; ++ktime){
+
+	//station->WriteFile(i,Rvx + i * station->nt,	\
+	//		   Rvy + i * station->nt,\
+	//		   Rvz + i * station->nt);
+	//}
+
+	
+	//station->FileClose(i);
+	
+
+      }
+    
+  }
+
+  delete [] Rhxx;
+  delete [] Rhyy;
+  delete [] Rhzz;
+  delete [] Rhxz;
+  delete [] Rhyz;
+  delete [] Rhxy;
+  delete [] idx_station;
+  delete station;
+  
+}
+
+
 void SDM::GetRecept(int ktime){
 
    for (int i = 0; i<station->nr; ++i){
@@ -2561,6 +2698,39 @@ void SDM::GetRecept(int ktime){
 	Rvx[ktime + i * station->nt] = GetVal(station->pos_vx[i],"VX");
 	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
 	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
+
+	//station->WriteFile(i,Rvx,Rvy,Rvz);
+	
+      }
+    
+   }
+  
+
+}
+
+
+void SDM::GetReceptSGT(int ktime){
+
+   for (int i = 0; i<station->nr; ++i){
+    
+     
+      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
+	   (idx_station[i].z > -1) ){
+
+
+	// Rhxx[ktime + i * station->nt] = GetVal(station->pos_sii[i],"Hxx");
+	// Rhxy[ktime + i * station->nt] = GetVal(station->pos_sxy[i],"Hxy");
+	// Rhxz[ktime + i * station->nt] = -1.0 * GetVal(station->pos_sxz[i],"Hxz");
+	// Rhyy[ktime + i * station->nt] = GetVal(station->pos_sii[i],"Hyy");
+	// Rhyz[ktime + i * station->nt] = -1.0 * GetVal(station->pos_syz[i],"Hyz");
+	// Rhzz[ktime + i * station->nt] = GetVal(station->pos_sii[i],"Hzz");
+
+	 Rhxx[ktime + i * station->nt] = GetVal(station->pos_recep[i],"Hxx");
+	 Rhxy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"Hxy");
+	 Rhxz[ktime + i * station->nt] = -1.0 * GetVal(station->pos_recep[i],"Hxz");
+	 Rhyy[ktime + i * station->nt] = GetVal(station->pos_recep[i],"Hyy");
+	 Rhyz[ktime + i * station->nt] = -1.0 * GetVal(station->pos_recep[i],"Hyz");
+	 Rhzz[ktime + i * station->nt] = GetVal(station->pos_recep[i],"Hzz");
 
 	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
@@ -3823,12 +3993,19 @@ void SDM::WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource){
   	xt = 0;
   	for (int i=HALO.x;i<SDMGeom->L_NodeX() + HALO.x;i +=sgt.x){
   	  idx = xt + yt * nxt + zt * nyt * nxt + ktime * ( nxt * nyt * nzt);	  
-  	  Hxx[idx] = ux_dx[IJK(i,j,k)];
-  	  Hxy[idx] = 0.5 * (ux_dy[IJK(i,j,k)] + uy_dx[IJK(i,j,k)]);
-  	  Hxz[idx] = 0.5 * (ux_dz[IJK(i,j,k)] + uz_dx[IJK(i,j,k)]);
-  	  Hyy[idx] = uy_dy[IJK(i,j,k)];
-  	  Hyz[idx] = 0.5 * (uy_dz[IJK(i,j,k)] + uz_dy[IJK(i,j,k)]);
-  	  Hzz[idx] = uz_dz[IJK(i,j,k)];
+  	  // Hxx[idx] = ux_dx[IJK(i,j,k)];
+  	  // Hxy[idx] = 0.5 * (ux_dy[IJK(i,j,k)] + uy_dx[IJK(i,j,k)]);
+  	  // Hxz[idx] = 0.5 * (ux_dz[IJK(i,j,k)] + uz_dx[IJK(i,j,k)]);
+  	  // Hyy[idx] = uy_dy[IJK(i,j,k)];
+  	  // Hyz[idx] = 0.5 * (uy_dz[IJK(i,j,k)] + uz_dy[IJK(i,j,k)]);
+  	  // Hzz[idx] = uz_dz[IJK(i,j,k)];
+
+	  Hxx[idx] = Hxx_r[IJK(i,j,k)];
+  	  Hxy[idx] = Hxy_r[IJK(i,j,k)];
+  	  Hxz[idx] = Hxz_r[IJK(i,j,k)];
+  	  Hyy[idx] = Hyy_r[IJK(i,j,k)];
+	  Hyz[idx] = Hyz_r[IJK(i,j,k)];
+	  Hzz[idx] = Hzz_r[IJK(i,j,k)];
 
   	  xt++;
   	}
@@ -3874,6 +4051,24 @@ void SDM::WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource){
 
 }
 
+
+void SDM::ComputeSGT(){
+  
+  for (int k=0;k<SNodeZ();k++){
+    for (int j=0;j<SNodeY();j++){
+      for (int i=0;i<SNodeX();i++){
+
+	Hxx_r[IJK(i,j,k)] = ux_dx[IJK(i,j,k)];
+	Hxy_r[IJK(i,j,k)] = 0.5 * (ux_dy[IJK(i,j,k)] + uy_dx[IJK(i,j,k)]);
+	Hxz_r[IJK(i,j,k)] = 0.5 * (ux_dz[IJK(i,j,k)] + uz_dx[IJK(i,j,k)]);
+	Hyy_r[IJK(i,j,k)] = uy_dy[IJK(i,j,k)];
+	Hyz_r[IJK(i,j,k)] = 0.5 * (uy_dz[IJK(i,j,k)] + uz_dy[IJK(i,j,k)]);
+	Hzz_r[IJK(i,j,k)] = uz_dz[IJK(i,j,k)];
+      }
+    }
+  }
+
+}
 
 
 

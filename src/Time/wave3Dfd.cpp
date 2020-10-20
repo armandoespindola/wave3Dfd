@@ -131,6 +131,10 @@ int main (int argc, char* argv[]) {
   // ### STRAIN GREEN'S FUNCTION PARAMETERS ###
   // DOWNSAMPLING TIME AXIS PARAMETER
   const int dsk = std::stoi(par.ParamReturn("-dsk"));
+
+  // SAVE FLAG SGT VOLUME OR SGT AT RECEIVERS
+  const int sgt_vol = std::stoi(par.ParamReturn("-sgt_vol"));
+  
   // DOWNSAMPLING SPACE AXES PARAMETERS
   const VecI dsg = {std::stoi(par.ParamReturn("-dsg_x")), \
                           std::stoi(par.ParamReturn("-dsg_y")), \
@@ -424,7 +428,14 @@ MPI_Barrier(COM3D);
 
   // SOURCE INITIALIZATION
   sdm->InitSource(Gdomain,sourceFile,nsource,SrcFile,nt);
+
+  if ((simulation_type == 0)||(simulation_type == 1)) {
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
+  } else if (simulation_type == 2){
+    if (sgt_vol == 0){
+    sdm->InitReceptSGT(Gdomain,recepFile,nrecep,nt);
+    }
+  }
 
   // PRINT INFORMATION
   if (rank==0){
@@ -489,7 +500,9 @@ MPI_Barrier(COM3D);
     // TRANSFER VELOCITIES
     HALO->TRANSFER(1,COM3D);
 
+    if ((simulation_type == 0)||(simulation_type == 1)) {
     sdm->GetRecept(k);
+    }
 
     // if (ADJ_P){
     // sdm->SaveBoundaries_V(k);
@@ -536,9 +549,15 @@ MPI_Barrier(COM3D);
 
 
     if (simulation_type == 2){
+      sdm->ComputeSGT();
+
+      if (sgt_vol){
       for (int is=0;is<sdm->sourceM->ns;is++){
     	sprintf(name,"%s",sdm->sourceM->nameSource[is].c_str());
     	sdm->WriteSGT(k,nt,dsg,dsk,name);
+      }
+      } else {
+	sdm->GetReceptSGT(k);
       }
     }
     
@@ -573,9 +592,17 @@ MPI_Barrier(COM3D);
   if (rank == 0){
     printf("END\t TOTAL TIME: %f\n",time);
   }
-
-  sdm->EndRecept();
+  
   sdm->EndSource();
+  
+  if ((simulation_type == 0)||(simulation_type == 1)) {
+    sdm->EndRecept();
+  } else if (simulation_type == 2){
+    if (sgt_vol == 0){
+    sdm->EndReceptSGT();
+    }
+  }
+  
   delete sdm;
   delete HALO;
 

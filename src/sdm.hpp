@@ -106,6 +106,8 @@ public:
         Dfloat *uy_dx,*uy_dy,*uy_dz;
         Dfloat *uz_dx,*uz_dy,*uz_dz;
         Dfloat *Hxx,*Hyy,*Hzz,*Hxy,*Hxz,*Hyz;
+        Dfloat *Hxx_r,*Hyy_r,*Hzz_r,*Hxy_r,*Hxz_r,*Hyz_r;
+        Dfloat *Rhxx,*Rhxy,*Rhxz,*Rhyy,*Rhyz,*Rhzz;
 
   VecI NumSubDom,Nsdm;
 	VecI NodLoc;
@@ -237,6 +239,10 @@ public:
   void Free_VZ(VecI Init ,VecI Iend);
   void FDVZ();
 
+  // COMPUTE SGT STRAIN  GREEN'S TENSOR
+
+  void ComputeSGT();
+
   // SOURCE MOMENT TENSOR
 
   // INITIALIZE SOURCE
@@ -256,6 +262,8 @@ public:
   // INITIALIZE RECEPTORS
   void InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt);
 
+  void InitReceptSGT(geometry3D *GDomain,std::string nFile,int nrecep,int nt);
+
   // Adjoint Source
 
   void InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt);
@@ -263,9 +271,13 @@ public:
  // FINALIZE RECEPTORS
   void EndRecept();
 
+  void EndReceptSGT();
+
 
   // ADD VALUES RECEPTORS
-    void GetRecept(int ktime);
+  void GetRecept(int ktime);
+  
+  void GetReceptSGT(int ktime);
 
   void printfile(Dfloat * Var,char *nfile, int ktime);
 

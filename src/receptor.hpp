@@ -47,7 +47,7 @@ public:
   VecI *pos_recep;
   VecI *pos_vx;
   VecI *pos_vy;
-  VecI *pos_vz;
+  VecI *pos_vz,*pos_sii,*pos_sxy,*pos_sxz,*pos_syz;
   int nr;
   Dfloat *vx_ad,*vy_ad,*vz_ad;
   int nt;

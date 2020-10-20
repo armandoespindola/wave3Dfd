@@ -386,8 +386,8 @@ void source::PrintInf(){
 	     <<Mxz[i]<<", "<<Myy[i]<<", "\
 	     <<Myz[i]<<", "<<Mzz[i] <<std::endl;
 
-    std::cout<<" Node_X(Mesh Location) : "<<pos_src[i].x<<std::endl;
-    std::cout<<" Node_Y(Mesh Location) : "<<pos_src[i].y<<std::endl;
+    std::cout<<" Node_X(Mesh Location) : "<<pos_src[i].x - int(GDomain->thickness_PML().x / GDomain->Dx()) <<std::endl;
+    std::cout<<" Node_Y(Mesh Location) : "<<pos_src[i].y - int(GDomain->thickness_PML().y / GDomain->Dy())<<std::endl;
     std::cout<<" Node_Z(Mesh Location) : "<<GDomain->HALO_NodeZ()-pos_src[i].z-1<<std::endl;
 
 
