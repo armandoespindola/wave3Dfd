@@ -55,13 +55,13 @@ public:
 
   receptor(geometry3D* domain, std::string nFile,int nrecep,int in_nt);
 
-  void FileOpen(int i,int PROPAGATION);
+  void FileOpen(int i,int PROPAGATION,char *NameVar);
   
-  void FileClose(int i);
+  void FileClose(int i,char *NameVar);
 
-  void WriteFile(int i, Dfloat *vx, Dfloat *vy,Dfloat *vz);
+  void WriteFile(int i, Dfloat *var,char *NameVar);
 
-  void LoadFile(int i);
+  void LoadFile(int i,char *NameVar);
 
   ~receptor();
 

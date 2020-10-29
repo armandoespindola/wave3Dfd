@@ -72,7 +72,7 @@ protected:
   // RECEPTORS
 
   receptor *station;
-  VecI *idx_station;
+  VecI *idx_station_vx,*idx_station_vy,*idx_station_vz,*idx_station;
 
   // BOUNDARIES RETRO-PROPAGATION
   Dfloat *bn_lx,*bn_rx;

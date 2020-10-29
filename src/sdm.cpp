@@ -2483,10 +2483,14 @@ void SDM::InitRecept(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
   Rvy = new Dfloat[station->nt * station->nr];
   Rvz = new Dfloat[station->nt * station->nr];
 
-  idx_station = new VecI[nrecep];
+  idx_station_vx = new VecI[nrecep];
+  idx_station_vy = new VecI[nrecep];
+  idx_station_vz = new VecI[nrecep];
 
   for (int i = 0; i<station->nr; ++i){
-    idx_station[i] = SFindNode(station->pos_recep[i]);
+    idx_station_vx[i] = SFindNode(station->pos_vx[i]);
+    idx_station_vy[i] = SFindNode(station->pos_vy[i]);
+    idx_station_vz[i] = SFindNode(station->pos_vz[i]);
   }
   
  
@@ -2517,16 +2521,37 @@ void SDM::InitAdj(geometry3D *GDomain,std::string nFile,int nrecep,int nt){
   
   station  = new receptor(GDomain,nFile,nrecep,nt);
 
-  idx_station = new VecI[nrecep];
+  idx_station_vx = new VecI[nrecep];
+  idx_station_vy = new VecI[nrecep];
+  idx_station_vz = new VecI[nrecep];
 
   for (int i = 0; i<station->nr; ++i){
-    idx_station[i] = SFindNode(station->pos_recep[i]);
+    idx_station_vx[i] = SFindNode(station->pos_vx[i]);
+    idx_station_vy[i] = SFindNode(station->pos_vy[i]);
+    idx_station_vz[i] = SFindNode(station->pos_vz[i]);
 
-      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) && \
-	   (idx_station[i].z > -1) ){
+      if ( (idx_station_vx[i].x > -1) && (idx_station_vx[i].y > -1) && \
+	   (idx_station_vx[i].z > -1) ){
 
-	station->FileOpen(i,1);
-	station->LoadFile(i);
+	station->FileOpen(i,1,"VX");
+	station->LoadFile(i,"VX");
+
+      }
+
+      if ( (idx_station_vy[i].x > -1) && (idx_station_vy[i].y > -1) && \
+	   (idx_station_vy[i].z > -1) ){
+
+	station->FileOpen(i,1,"VY");
+	station->LoadFile(i,"VY");
+
+      }
+
+
+      if ( (idx_station_vz[i].x > -1) && (idx_station_vz[i].y > -1) && \
+	   (idx_station_vz[i].z > -1) ){
+
+	station->FileOpen(i,1,"VZ");
+	station->LoadFile(i,"VZ");
 
       }
     
@@ -2542,33 +2567,81 @@ void SDM::AddSourceAdj(int itime){
   int ix,iy,iz;
 
    for (int i = 0; i<station->nr; ++i){
-    
-     
-      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
-	   (idx_station[i].z > -1) ){
-    
-	ix = idx_station[i].x;
-	iy = idx_station[i].y;
-	iz = idx_station[i].z;
-    
-	rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
-		   rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
-	rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
-		   rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+      if ( (idx_station_vx[i].x > -1) && (idx_station_vx[i].y > -1) && \
+	   (idx_station_vx[i].z > -1) ){
+
+	ix = idx_station_vx[i].x;
+	iy = idx_station_vx[i].y;
+	iz = idx_station_vx[i].z;
 
 	rho_vx = rho[IJK(ix,iy,iz)];
 
-	//std::cout<<rho_vx<<" "<<rho_vy<<" "<<rho_vx<<std::endl;
-
-
-	//rho_cte = 2700.0;
-
 	AddVal(idx_station[i],"VX", (dt / rho_vx) * station->vx_ad[itime + station->nt * i]);
-	AddVal(idx_station[i],"VY", (dt / rho_vy) * station->vy_ad[itime + station->nt * i]);
-	AddVal(idx_station[i],"VZ", (dt / rho_vz) * station->vz_ad[itime + station->nt * i]);
-        
+	
       }
+
+
+
+      if ( (idx_station_vy[i].x > -1) && (idx_station_vy[i].y > -1) && \
+	   (idx_station_vy[i].z > -1) ){
+
+	ix = idx_station_vy[i].x;
+	iy = idx_station_vy[i].y;
+	iz = idx_station_vy[i].z;
+
+	rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		 rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+	AddVal(idx_station[i],"VY", (dt / rho_vy) * station->vy_ad[itime + station->nt * i]);
+	
+      }
+
+
+
+      if ( (idx_station_vz[i].x > -1) && (idx_station_vz[i].y > -1) && \
+	   (idx_station_vz[i].z > -1) ){
+
+	ix = idx_station_vz[i].x;
+	iy = idx_station_vz[i].y;
+	iz = idx_station_vz[i].z;
+
+
+	rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+
+	AddVal(idx_station[i],"VZ", (dt / rho_vz) * station->vz_ad[itime + station->nt * i]);
+
+	
+      }
+    
+     
+      // if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
+      // 	   (idx_station[i].z > -1) ){
+    
+      // 	ix = idx_station[i].x;
+      // 	iy = idx_station[i].y;
+      // 	iz = idx_station[i].z;
+    
+      // 	rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+      // 		   rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
+
+      // 	rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
+      // 		   rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
+
+      // 	rho_vx = rho[IJK(ix,iy,iz)];
+
+      // 	//std::cout<<rho_vx<<" "<<rho_vy<<" "<<rho_vx<<std::endl;
+
+
+      // 	//rho_cte = 2700.0;
+      // }
+	
+	
+	
+        
+      
    }
   
 
@@ -2581,30 +2654,40 @@ void SDM::EndRecept(){
   
   for (int i = 0; i<station->nr; ++i){
  
-      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1) &&\
-	   (idx_station[i].z > -1) ){
-
-	station->FileOpen(i,PROPAGATION);
-
-	//for (int ktime=0; ktime<station->nt; ++ktime){
-
-	station->WriteFile(i,Rvx + i * station->nt,\
-			   Rvy + i * station->nt,\
-			   Rvz + i * station->nt);
-	//}
-
+      if ( (idx_station_vx[i].x > -1) && (idx_station_vx[i].y > -1) &&\
+	   (idx_station_vx[i].z > -1) ){
 	
-	station->FileClose(i);
-	
-
+	station->FileOpen(i,PROPAGATION,"VX");
+	station->WriteFile(i,Rvx + i * station->nt,"VX");
+	  station->FileClose(i,"VX");
       }
+
+       if ( (idx_station_vy[i].x > -1) && (idx_station_vy[i].y > -1) &&\
+	   (idx_station_vy[i].z > -1) ){
+	
+	station->FileOpen(i,PROPAGATION,"VY");
+	station->WriteFile(i,Rvy + i * station->nt,"VY");
+	  station->FileClose(i,"VY");
+      }
+
+       if ( (idx_station_vz[i].x > -1) && (idx_station_vz[i].y > -1) &&	\
+	   (idx_station_vz[i].z > -1) ){
+	
+	station->FileOpen(i,PROPAGATION,"VZ");
+	station->WriteFile(i,Rvz + i * station->nt,"VZ");
+	  station->FileClose(i,"VZ");
+      }
+
+      
     
   }
 
   delete [] Rvx;
   delete [] Rvy;
   delete [] Rvz;
-  delete [] idx_station;
+  delete [] idx_station_vx;
+  delete [] idx_station_vy;
+  delete [] idx_station_vz;
   delete station;
   
 }
@@ -2692,16 +2775,35 @@ void SDM::GetRecept(int ktime){
    for (int i = 0; i<station->nr; ++i){
     
      
-      if ( (idx_station[i].x > -1) && (idx_station[i].y > -1)  &&\
-	   (idx_station[i].z > -1) ){
+      if ( (idx_station_vx[i].x > -1) && (idx_station_vx[i].y > -1)  &&\
+	   (idx_station_vx[i].z > -1) ){
 
 	Rvx[ktime + i * station->nt] = GetVal(station->pos_vx[i],"VX");
-	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
-	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
+
 
 	//station->WriteFile(i,Rvx,Rvy,Rvz);
 	
       }
+
+       if ( (idx_station_vy[i].x > -1) && (idx_station_vy[i].y > -1)  &&\
+	   (idx_station_vy[i].z > -1) ){
+
+	Rvy[ktime + i * station->nt] = GetVal(station->pos_vy[i],"VY");
+
+
+	//station->WriteFile(i,Rvx,Rvy,Rvz);
+	
+       }
+
+        if ( (idx_station_vz[i].x > -1) && (idx_station_vz[i].y > -1)  &&\
+	   (idx_station_vz[i].z > -1) ){
+
+
+	Rvz[ktime + i * station->nt] = GetVal(station->pos_vz[i],"VZ");
+
+	//station->WriteFile(i,Rvx,Rvy,Rvz);
+	
+	}
     
    }
   

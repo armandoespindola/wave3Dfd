@@ -118,12 +118,18 @@ receptor::receptor(geometry3D *domain, std::string nFile,int nrecep,int in_nt) {
     
 }
 
-void receptor::FileOpen(int i, int PROPAGATION){
+void receptor::FileOpen(int i, int PROPAGATION,char *NameVar){
 
   if (!PROPAGATION){
+
+    if  (strcmp("VX",NameVar) == 0){
   RX[i].open("DATA/"+nameStation[i] + "-VX.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+    } else  if (strcmp("VY",NameVar) == 0){
   RY[i].open("DATA/"+nameStation[i] + "-VY.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+    } else if  (strcmp("VZ",NameVar) == 0){
   RZ[i].open("DATA/"+nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::trunc | std::ios::out);
+    }
+
   }
 
   if (PROPAGATION){
@@ -132,47 +138,73 @@ void receptor::FileOpen(int i, int PROPAGATION){
   // RY[i].open("DATA/"+nameStation[i] + "-VY.bin",std::ios::binary | std::ios::in);
   // RZ[i].open("DATA/"+nameStation[i] + "-VZ.bin",std::ios::binary | std::ios::in);
 
+    if  (strcmp("VX",NameVar) == 0){
   RX[i].open("DATA/"+nameStation[i] + "-ADJX.bin",std::ios::binary | std::ios::in);
+    }else if  (strcmp("VY",NameVar) == 0){
   RY[i].open("DATA/"+nameStation[i] + "-ADJY.bin",std::ios::binary | std::ios::in);
+    } else if  (strcmp("VZ",NameVar) == 0){
   RZ[i].open("DATA/"+nameStation[i] + "-ADJZ.bin",std::ios::binary | std::ios::in);
+    }
 
   }
   
 
-}
+  }
 
-void receptor::FileClose(int i){
+  void receptor::FileClose(int i,char *NameVar){
 
-  RX[i].close();
-  RY[i].close();
-  RZ[i].close();
+  
+     if  (strcmp("VX",NameVar) == 0){
+      RX[i].close();
+    }else if  (strcmp("VY",NameVar) == 0){
+       RY[i].close();
+    }else if  (strcmp("VZ",NameVar) == 0){
+       RZ[i].close();
+    }
+  
+
   
   
 
 }
 
-void receptor::WriteFile(int i, Dfloat *vx, Dfloat *vy,Dfloat *vz){
+  void receptor::WriteFile(int i, Dfloat *var,char *NameVar){
 
-  RX[i].write( (char*)&vx[0], sizeof(Dfloat) * nt);
-  RY[i].write( (char*)&vy[0], sizeof(Dfloat) * nt );
-  RZ[i].write( (char*)&vz[0], sizeof(Dfloat) * nt);
+
+     if  (strcmp("VX",NameVar) == 0){
+       RX[i].write( (char*)&var[0], sizeof(Dfloat) * nt);
+    }else if  (strcmp("VY",NameVar) == 0){
+      RY[i].write( (char*)&var[0], sizeof(Dfloat) * nt );
+    }else if  (strcmp("VZ",NameVar) == 0){
+     RZ[i].write( (char*)&var[0], sizeof(Dfloat) * nt); 
+    }
 
 }
 
 
-void receptor::LoadFile(int i){
+  void receptor::LoadFile(int i,char *NameVar){
 
-
+    if  (strcmp("VX",NameVar) == 0){
+       RX[i].read( (char*)&vx_ad[nt * i], sizeof(Dfloat) * nt);
+       RX[i].close();
+      
+    }else if  (strcmp("VY",NameVar) == 0){
+       RY[i].read( (char*)&vy_ad[nt * i], sizeof(Dfloat) * nt);
+        RY[i].close();
+    }else if  (strcmp("VZ",NameVar) == 0){
+      RZ[i].read( (char*)&vz_ad[nt * i], sizeof(Dfloat) * nt);
+       RZ[i].close();
+    }
+    
   //for (int it = 0; it<nt;++it){
-    RX[i].read( (char*)&vx_ad[nt * i], sizeof(Dfloat) * nt);
-    RY[i].read( (char*)&vy_ad[nt * i], sizeof(Dfloat) * nt);
-    RZ[i].read( (char*)&vz_ad[nt * i], sizeof(Dfloat) * nt);
+   
+  
+   
     //  }
 
 
-  RX[i].close();
-  RY[i].close();
-  RZ[i].close();
+  
+ 
 
   
 }
