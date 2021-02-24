@@ -2950,62 +2950,63 @@ void SDM::AddSource(int itime, int T_SRC){
 // Y: NORTH
 // Z: UPWARD
 
-    // AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Myy[i]*sgn);
-    // AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Mxx[i]*sgn);
-    // AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
-    // AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
-    // AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
-    // AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
-
     b = sourceM->pos_src[i];
-    
-    if (sourceM->src_flag_r < 0) {
-      Dfloat w_sii,w_sxy,w_sxz;
+    AddVal({b.x,b.y,b.z},"SXX", st * sourceM->Myy[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SYY", st * sourceM->Mxx[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SZZ", st * sourceM->Mzz[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SXY", st * sourceM->Mxy[i]*sgn);
+    AddVal({b.x,b.y,b.z},"SXZ", -st * sourceM->Myz[i]*sgn);
     AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
+
+    // b = sourceM->pos_src[i];
     
-    for (int j = 0;j<8;j++){
-      for (int k = 0;k<=8;k++){
+    // if (sourceM->src_flag_r < 0) {
+    //   Dfloat w_sii,w_sxy,w_sxz;
+    // AddVal({b.x,b.y,b.z},"SYZ", -st * sourceM->Mxz[i]*sgn);
+    
+    // for (int j = 0;j<8;j++){
+    //   for (int k = 0;k<=8;k++){
 	
-    	w_sii = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dx());
-    	w_sxy = sourceM->sinc_wx[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dy());
-    	w_sxz = sourceM->sinc_wx[j] * sourceM->sinc_wy[k] * (1.0 / SDMGeom->Dz());
+    // 	w_sii = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dx());
+    // 	w_sxy = sourceM->sinc_wx[j] * sourceM->sinc_wz[k] * (1.0 / SDMGeom->Dy());
+    // 	w_sxz = sourceM->sinc_wx[j] * sourceM->sinc_wy[k] * (1.0 / SDMGeom->Dz());
 	
-    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
-    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
-    	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
-    	AddVal({b.x + sourceM->idx[j],b.y,b.z + sourceM->idx[k]},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
-    	AddVal({b.x + sourceM->idx[j],b.y + sourceM->idx[k],b.z},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
-      }
-    }
+    // 	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
+    // 	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
+    // 	AddVal({b.x,b.y + sourceM->idx[j],b.z + sourceM->idx[k]},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
+    // 	AddVal({b.x + sourceM->idx[j],b.y,b.z + sourceM->idx[k]},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
+    // 	AddVal({b.x + sourceM->idx[j],b.y + sourceM->idx[k],b.z},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
+    //   }
+    // }
 
-    }
+    // }
 
 
-    if (sourceM->src_flag_r > 0) {
-      Dfloat w_sii,w_sxy,w_sxz,w_syz;
-      for (int k = 0;k<8;k++){
-	for (int j = 0;j<8;j++){
-	  for (int i = 0;i<8;i++){
+    // if (sourceM->src_flag_r > 0) {
+    //   Dfloat w_sii,w_sxy,w_sxz,w_syz;
+    //   for (int k = 0;k<8;k++){
+    // 	for (int j = 0;j<8;j++){
+    // 	  for (int i = 0;i<8;i++){
 
-	    w_syz = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * sourceM->sinc_wx[i];
-	    AddVal({b.x + sourceM->idx[i],b.y + sourceM->idx[j] ,b.z + sourceM->idx[k]},"SYZ",\
-		   -st_sinc * sourceM->Mxz[i]*sgn* w_syz);
-	  }
-	}
-      }
+    // 	    w_syz = sourceM->sinc_wy[j] * sourceM->sinc_wz[k] * sourceM->sinc_wx[i];
+    // 	    AddVal({b.x + sourceM->idx[i],b.y + sourceM->idx[j] ,b.z + sourceM->idx[k]},"SYZ",\
+    // 		   -st_sinc * sourceM->Mxz[i]*sgn* w_syz);
+    // 	  }
+    // 	}
+    //   }
       
-      for (int j = 0;j<8;j++){
-    	w_sii = sourceM->sinc_wx[j] * (1.0 / SDMGeom->Dy()) * (1.0 / SDMGeom->Dz()) ;
-    	w_sxy = sourceM->sinc_wy[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dz()) ;
-    	w_sxz = sourceM->sinc_wz[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dy()) ;
+    //   for (int j = 0;j<8;j++){
+    // 	w_sii = sourceM->sinc_wx[j] * (1.0 / SDMGeom->Dy()) * (1.0 / SDMGeom->Dz()) ;
+    // 	w_sxy = sourceM->sinc_wy[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dz()) ;
+    // 	w_sxz = sourceM->sinc_wz[j] * (1.0 / SDMGeom->Dx()) * (1.0 / SDMGeom->Dy()) ;
 	
-    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
-    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
-    	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
-    	AddVal({b.x,b.y + sourceM->idx[j],b.z},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
-    	AddVal({b.x,b.y,b.z + sourceM->idx[j]},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
-      }
-    }
+    // 	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SXX", st_sinc * sourceM->Myy[i]*sgn * w_sii);
+    // 	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SYY", st_sinc * sourceM->Mxx[i]*sgn * w_sii);
+    // 	AddVal({b.x + sourceM->idx[j],b.y,b.z},"SZZ", st_sinc * sourceM->Mzz[i]*sgn * w_sii);
+    // 	AddVal({b.x,b.y + sourceM->idx[j],b.z},"SXY", st_sinc * sourceM->Mxy[i]*sgn * w_sxy);
+    // 	AddVal({b.x,b.y,b.z + sourceM->idx[j]},"SXZ", -st_sinc * sourceM->Myz[i] * sgn * w_sxz);
+    //   }
+    // }
 
     
 
