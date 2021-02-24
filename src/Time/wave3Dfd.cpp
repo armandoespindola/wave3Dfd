@@ -469,9 +469,9 @@ MPI_Barrier(COM3D);
     time1 = MPI_Wtime();
 
      // Source - Forward propagation#########
-    if (simulation_type == 0){ 
+ if ((simulation_type == 0)||(simulation_type == 1)) {
       sdm->AddSource(k,s_type);
-    }
+ }
     
     MPI_Barrier(COM3D);
     
@@ -820,6 +820,9 @@ MPI_Barrier(COM3D);
 
     // Source #########
     RTP->AddSource(k,s_type);
+
+    // TRANSFER STRESESS
+    HALO->TRANSFER(2,COM3D);
      
     // TRANSFER VELOCITIES
     HALO->TRANSFER(1,COM3D);    

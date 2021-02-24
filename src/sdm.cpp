@@ -2578,7 +2578,7 @@ void SDM::AddSourceAdj(int itime){
 
 	rho_vx = rho[IJK(ix,iy,iz)];
 
-	AddVal(idx_station[i],"VX", (dt / rho_vx) * station->vx_ad[itime + station->nt * i]);
+	AddVal(station->pos_vx[i],"VX", (dt / rho_vx) * station->vx_ad[itime + station->nt * i]);
 	
       }
 
@@ -2594,7 +2594,7 @@ void SDM::AddSourceAdj(int itime){
 	rho_vy = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
 		 rho[IJK(ix,iy+1,iz)] + rho[IJK(ix+1,iy+1,iz)]) / 4.0;
 
-	AddVal(idx_station[i],"VY", (dt / rho_vy) * station->vy_ad[itime + station->nt * i]);
+	AddVal(station->pos_vy[i],"VY", (dt / rho_vy) * station->vy_ad[itime + station->nt * i]);
 	
       }
 
@@ -2611,7 +2611,7 @@ void SDM::AddSourceAdj(int itime){
 	rho_vz = ( rho[IJK(ix,iy,iz)] + rho[IJK(ix+1,iy,iz)] +		\
 		rho[IJK(ix,iy,iz+1)] + rho[IJK(ix+1,iy,iz+1)]) / 4.0;
 
-	AddVal(idx_station[i],"VZ", (dt / rho_vz) * station->vz_ad[itime + station->nt * i]);
+	AddVal(station->pos_vz[i],"VZ", (dt / rho_vz) * station->vz_ad[itime + station->nt * i]);
 
 	
       }
