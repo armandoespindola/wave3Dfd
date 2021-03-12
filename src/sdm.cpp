@@ -4103,11 +4103,11 @@ void SDM::WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource){
   	  // Hyz[idx] = 0.5 * (uy_dz[IJK(i,j,k)] + uz_dy[IJK(i,j,k)]);
   	  // Hzz[idx] = uz_dz[IJK(i,j,k)];
 
-	  Hxx[idx] = Hxx_r[IJK(i,j,k)];
+	  Hxx[idx] = Hyy_r[IJK(i,j,k)];
   	  Hxy[idx] = Hxy_r[IJK(i,j,k)];
-  	  Hxz[idx] = Hxz_r[IJK(i,j,k)];
-  	  Hyy[idx] = Hyy_r[IJK(i,j,k)];
-	  Hyz[idx] = Hyz_r[IJK(i,j,k)];
+  	  Hxz[idx] = - Hyz_r[IJK(i,j,k)];
+  	  Hyy[idx] = Hxx_r[IJK(i,j,k)];
+	  Hyz[idx] = - Hxz_r[IJK(i,j,k)];
 	  Hzz[idx] = Hzz_r[IJK(i,j,k)];
 
   	  xt++;
