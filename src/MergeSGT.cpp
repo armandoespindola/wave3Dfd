@@ -26,16 +26,16 @@
 
 
 void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI CPML, \
-	      VecI dsg,int rank,int nt,MPI_Comm comm){
+	      VecI dsg,int rank,int nt,int dsk,MPI_Comm comm){
   
   char name[200];
   MPI_File fhw;
-  int idx,idx2;
+  int idx,idx2,ik1;
   Dfloat *GlobalArray = NULL;
   Dfloat *SortGlobalArray = NULL;
   int Nsub = Nrank;
   MPI_Status status;
-  
+  int nk = int(nt / dsk);
   VecI dim_data = {int(SubNodes.x / dsg.x),\
 		   int(SubNodes.y / dsg.y),\
 		   int(SubNodes.z / dsg.z)};
@@ -45,13 +45,14 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
   }
 
 
-  int size = dim_data.x * dim_data.y * dim_data.z * nt;
+  int size0 = dim_data.x * dim_data.y * dim_data.z * nt;
+  int size1 = dim_data.x * dim_data.y * dim_data.z * nk;
 
 
   Dfloat *ReadArray,*SortArray;
 
-  ReadArray = new Dfloat[size];
-  SortArray = new Dfloat[size];
+  ReadArray = new Dfloat[size0];
+  SortArray = new Dfloat[size1];
 
   sprintf(name,"DATA/%s-%d.bin",FileName,rank);
 
@@ -61,16 +62,19 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
 
   
   MPI_File_open(MPI_COMM_SELF,name,MPI_MODE_RDONLY|MPI_MODE_DELETE_ON_CLOSE,MPI_INFO_NULL,&fhw);
-  MPI_File_read(fhw,ReadArray,size,MY_MPI_Dfloat,&status);
+  MPI_File_read(fhw,ReadArray,size0,MY_MPI_Dfloat,&status);
   MPI_File_close(&fhw);
   //MPI_File_delete(name, MPI_INFO_NULL );
 
 
   FOR_IJK(iz,0,dim_data.z,iy,0,dim_data.y,ix,0,dim_data.x)
-    for (int ik =0;ik<nt;ik++){
-      idx = ik * dim_data.x * dim_data.y * dim_data.z \
+    for (int ik =0;ik<nk;ik++){
+      ik1 = (ik * dsk) - 1;
+      if (ik == 0)
+	ik1 = 0;
+      idx = ik1 * dim_data.x * dim_data.y * dim_data.z \
   	+ ix + iy * dim_data.x + iz * dim_data.x * dim_data.y;
-      idx2 = ik + (ix + iy * dim_data.x + iz * dim_data.x * dim_data.y) * nt;
+      idx2 = ik + (ix + iy * dim_data.x + iz * dim_data.x * dim_data.y) * nk;
       SortArray[idx2] = ReadArray[idx];
     }
   END_FOR_IJK
@@ -78,14 +82,14 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
 
 
   if (rank==0){
-    GlobalArray = new Dfloat[size * Nrank];
-    SortGlobalArray = new Dfloat[size * Nrank];
+    GlobalArray = new Dfloat[size1 * Nrank];
+    SortGlobalArray = new Dfloat[size1 * Nrank];
   }
 
 
   // ReadArray -> SortArray
-  MPI_Gather(SortArray,size,MY_MPI_Dfloat,\
-	     GlobalArray,size,MY_MPI_Dfloat,\
+  MPI_Gather(SortArray,size1,MY_MPI_Dfloat,\
+	     GlobalArray,size1,MY_MPI_Dfloat,\
 	     0,comm);
 
 
@@ -99,19 +103,19 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
 
       // std::cout<<subi[isub].x<<","<<subi[isub].y<<","<<subi[isub].z<<std::endl;
       FOR_IJK(iz,0,dim_data.z,iy,0,dim_data.y,ix,0,dim_data.x)
-    	for (int ik =0;ik<nt;ik++){
+    	for (int ik =0;ik<nk;ik++){
 	  
 
     	  ixg = ix + subi[isub].x * dim_data.x;
     	  iyg = iy + subi[isub].y * dim_data.y;
     	  izg = iz + subi[isub].z * dim_data.z;
 	  
-    	  idx = ik + ixg * nt + iyg * nt * dim_data.x * SubN.x + \
-	    izg * nt * dim_data.x * dim_data.y * SubN.x * SubN.y;
+    	  idx = ik + ixg * nk + iyg * nk * dim_data.x * SubN.x + \
+	    izg * nk * dim_data.x * dim_data.y * SubN.x * SubN.y;
 	  
-    	  idx2 = ik + (ix + iy * dim_data.x + iz * dim_data.x * dim_data.y) * nt;
+    	  idx2 = ik + (ix + iy * dim_data.x + iz * dim_data.x * dim_data.y) * nk;
 
-    	  SortGlobalArray[idx] = GlobalArray[idx2 + size * isub];
+    	  SortGlobalArray[idx] = GlobalArray[idx2 + size1 * isub];
 	   
 
     	}
@@ -137,9 +141,9 @@ void MergeSGT(char *FileName,VecI SubN,VecI SubNodes,VecI *subi,int Nrank,VecI C
        for (int j=s_cpml.y;j<dim_data.y * SubN.y - s_cpml.y;j++){
      	for (int i=s_cpml.x;i<dim_data.x * SubN.x - s_cpml.x;i++){
 
-     	  idx = i * nt + j * nt * dim_data.x * SubN.x +\
-     	    k * nt * dim_data.x * dim_data.y * SubN.x * SubN.y;
-    	  fwrite(SortGlobalArray + idx,sizeof(Dfloat),nt,R);
+     	  idx = i * nk + j * nk * dim_data.x * SubN.x +\
+     	    k * nk * dim_data.x * dim_data.y * SubN.x * SubN.y;
+    	  fwrite(SortGlobalArray + idx,sizeof(Dfloat),nk,R);
          
      	}
        }
@@ -419,7 +423,7 @@ VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1), \
  source *sourceM = new source(Gdomain,sourceFile,nsource);
  sprintf(name,"Hxx-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
 
  MPI_Barrier(COM3D);
@@ -427,31 +431,31 @@ VecF GF = {Gdomain->CoorX(Gdomain->HALO_NodeX()-1), \
 
  sprintf(name,"Hxy-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
   MPI_Barrier(COM3D);
 
  sprintf(name,"Hxz-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
   MPI_Barrier(COM3D);
   
  sprintf(name,"Hyy-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
   MPI_Barrier(COM3D);
   
  sprintf(name,"Hyz-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
   MPI_Barrier(COM3D);
   
  sprintf(name,"Hzz-%s",sourceM->nameSource[0].c_str());
  MergeSGT(name,SubN,SubNodes,subj,N_mpi,CPML,	\
-	  dsg,rank,nt,COM3D);
+	  dsg,rank,nt,dsk,COM3D);
 
 
  MPI_Finalize();

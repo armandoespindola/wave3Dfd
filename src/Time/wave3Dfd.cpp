@@ -432,7 +432,7 @@ MPI_Barrier(COM3D);
   if ((simulation_type == 0)||(simulation_type == 1)) {
   sdm->InitRecept(Gdomain,recepFile,nrecep,nt);
   } else if (simulation_type == 2){
-    if (sgt_vol == 0){
+    if (sgt_vol >= 0){
     sdm->InitReceptSGT(Gdomain,recepFile,nrecep,nt);
     }
   }
@@ -554,7 +554,7 @@ MPI_Barrier(COM3D);
       if (sgt_vol){
       for (int is=0;is<sdm->sourceM->ns;is++){
     	sprintf(name,"%s",sdm->sourceM->nameSource[is].c_str());
-    	sdm->WriteSGT(k,nt,dsg,dsk,name);
+    	sdm->WriteSGT(k,nt,dsg,stepb,name);
       }
       } else {
 	sdm->GetReceptSGT(k);
