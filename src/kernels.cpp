@@ -257,7 +257,7 @@ void KERNEL::MU(){
 
 	e[0][0] -= isot;
 	e[1][1] -= isot;
-	e[2][2] -= isot;
+	e[2][2] = e[0][0] + e[1][1];
 	
 	e_ad[0][0]= ux_dx_ad[ADJ->IJK(i,j,k)];
 	e_ad[0][1]= 0.5 * (ux_dy_ad[ADJ->IJK(i,j,k)] + uy_dx_ad[ADJ->IJK(i,j,k)]);
@@ -274,7 +274,7 @@ void KERNEL::MU(){
 
 	e_ad[0][0] -= isot;
 	e_ad[1][1] -= isot;
-	e_ad[2][2] -= isot;
+	e_ad[2][2] = e_ad[0][0] + e_ad[1][1];
 
 
 	buff = 0.0;
@@ -320,8 +320,8 @@ void KERNEL::CALC(){
 
 
 void  KERNEL::KERNELS(){
-   Dfloat Kk,Kmu,Kr;
-   Dfloat rho_p,vp_p,vs_p;
+  Dfloat rho,parkap,parmu,kappa,mu;
+
    /*
 Kernel Parametrization (Tromp,2005)
 k bulk modulus
@@ -337,30 +337,25 @@ vs S velocity
 
 
 
-
-	  rho_p = FWD->rho[FWD->IJK(i,j,k)];
-
-	  vp_p = sqrt((FWD->lamb[FWD->IJK(i,j,k)] + 2.0 * FWD->mu[FWD->IJK(i,j,k)]) / rho_p);
-
-	  vs_p = sqrt(FWD->mu[FWD->IJK(i,j,k)] / rho_p);
 	  
+	  rho = FWD->rho[FWD->IJK(i,j,k)] * KRHO[FWD->IJK(i,j,k)];
 
-	  Kr = KRHO[FWD->IJK(i,j,k)];
+	  parkap = (FWD->lamb[FWD->IJK(i,j,k)]		\
+		    + (2.0/3.0) * FWD->mu[FWD->IJK(i,j,k)]);
+
+	  parmu = FWD->mu[FWD->IJK(i,j,k)];
 	  
-	  Kk = KLAMBDA[FWD->IJK(i,j,k)];
-
-	  Kmu = KMU[FWD->IJK(i,j,k)];
 	  
+	  kappa = parkap *  KLAMBDA[FWD->IJK(i,j,k)];
 
+	  mu = parmu * KMU[FWD->IJK(i,j,k)];
+
+	  KDEN[FWD->IJK(i,j,k)] += rho + kappa + mu;
+
+	  KVS[FWD->IJK(i,j,k)] += 2.0 * (mu - (4.0 / 3.0) * (parmu / parkap) * kappa);
+
+	  KVP[FWD->IJK(i,j,k)] += 2.0 * ( 1.0 + (4.0 / 3.0) * (parmu / parkap)) * kappa ;
 	  
-
-	  
-	  KDEN[FWD->IJK(i,j,k)] = Kr + vs_p * vs_p * Kmu + Kk * ( vp_p * vp_p - (4.0/3.0) * vs_p * vs_p);
-
-	  KVS[FWD->IJK(i,j,k)] = 2.0 * rho_p * vs_p * Kmu - (8.0/3.0) * rho_p * vs_p * Kk;
-
-	  KVP[FWD->IJK(i,j,k)] = 2.0 * rho_p * vp_p * Kk;
-	    
 	  
 	}
       }
