@@ -321,7 +321,6 @@ void KERNEL::CALC(){
 
 void  KERNEL::KERNELS(){
   Dfloat rho,parkap,parmu,kappa,mu;
-
    /*
 Kernel Parametrization (Tromp,2005)
 k bulk modulus
