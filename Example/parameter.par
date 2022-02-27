@@ -2,7 +2,7 @@
 // FORWARD SIMULATION: 0
 // ADJOINT SIMULATION: 1
 // STRAIN GREEN'S TESOR SIMULATION: 2
--simulation_type 2
+-simulation_type 0
 // MODEL DIMENSIONS
 -xi 0.0
 -xf 11100.0

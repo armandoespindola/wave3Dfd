@@ -210,11 +210,12 @@ int main (int argc, char* argv[]) {
 				
 
 // Creation of SubDomain Index
- VecI subi[N_mpi];
+  VecI subi[N_mpi],subi_rank;
 
- subi[rank] = {coords[0],coords[1],coords[2]};
+  subi_rank = {coords[0],coords[1],coords[2]};  
+  //subi[rank] = {coords[0],coords[1],coords[2]};
 
- MPI_Allgather(&subi[rank],3,MPI_INT,&subi,3,MPI_INT,COM3D);
+ MPI_Allgather(&subi_rank,3,MPI_INT,&subi,3,MPI_INT,COM3D);
 
 
  // if (rank==5) {
@@ -602,9 +603,11 @@ MPI_Barrier(COM3D);
     sdm->EndReceptSGT();
     }
   }
+
   
   delete sdm;
   delete HALO;
+
 
 
 
@@ -872,7 +875,6 @@ MPI_Barrier(COM3D);
   delete HALO;
   
   } // IF ADJOINT
-
 
   delete [] SubMod;
 

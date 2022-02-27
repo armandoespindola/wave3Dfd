@@ -226,13 +226,7 @@ SDM::~SDM(){
 	  delete [] uz_dx;
 	  delete [] uz_dy;
 	  delete [] uz_dz;
-	  delete [] Hxx;
-	  delete [] Hxy;
-	  delete [] Hxz;
-	  delete [] Hyy;
-	  delete [] Hyz;
-	  delete [] Hzz;
-
+	  
 	  delete [] Hxx_r;
 	  delete [] Hxy_r;
 	  delete [] Hxz_r;
@@ -4150,6 +4144,16 @@ void SDM::WriteSGT(int itime,int nt,VecI sgt,int dsk,char *NameSource){
      WriteFile(Hzz,nxt*nyt*nzt * nk,name);
 
    }
+
+   if ((itime + 1) == nt) {
+     delete [] Hxx;                                                                                                                     
+     delete [] Hxy;                                                                                                                       
+     delete [] Hxz;	  
+     delete [] Hyy;                                                                                                                       
+     delete [] Hyz;                                                                                                                       
+     delete [] Hzz;                                                                                                                      
+   }
+   
    
 
 }
